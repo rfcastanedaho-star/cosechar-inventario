@@ -6,6 +6,7 @@ use App\Livewire\Auth\Login;
 use App\Livewire\DashboardGraficos;
 use App\Livewire\MovimientoForm;
 use App\Livewire\ProductoForm;
+use App\Livewire\ProductoLista;
 use App\Livewire\ReporteFiltro;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +32,7 @@ Route::post('/logout', function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardGraficos::class)->name('dashboard');
+    Route::get('/productos', ProductoLista::class)->name('productos.index');
     Route::get('/productos/nuevo', ProductoForm::class)->name('productos.nuevo');
     Route::get('/movimientos/nuevo', MovimientoForm::class)->name('movimientos.nuevo');
     Route::get('/lotes/{lote}/etiqueta', [LoteController::class, 'etiqueta'])->name('lotes.etiqueta');

@@ -19,7 +19,7 @@
                         <a href="{{ route('dashboard') }}" class="text-gray-600 hover:text-gray-900 {{ request()->routeIs('dashboard') ? 'font-semibold text-gray-900' : '' }}">
                             Dashboard
                         </a>
-                        <a href="{{ route('productos.nuevo') }}" class="text-gray-600 hover:text-gray-900 {{ request()->routeIs('productos.*') ? 'font-semibold text-gray-900' : '' }}">
+                        <a href="{{ route('productos.index') }}" class="text-gray-600 hover:text-gray-900 {{ request()->routeIs('productos.*') ? 'font-semibold text-gray-900' : '' }}">
                             Productos
                         </a>
                         <a href="{{ route('movimientos.nuevo') }}" class="text-gray-600 hover:text-gray-900 {{ request()->routeIs('movimientos.*') ? 'font-semibold text-gray-900' : '' }}">

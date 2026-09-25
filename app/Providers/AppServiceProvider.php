@@ -22,5 +22,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::define('exportar-reportes', fn (User $user) => $user->rol === 'administrador');
+        Gate::define('editar-stock-minimo', fn (User $user) => $user->rol === 'administrador');
     }
 }
