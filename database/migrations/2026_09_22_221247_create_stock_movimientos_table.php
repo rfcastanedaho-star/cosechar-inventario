@@ -16,7 +16,7 @@ return new class extends Migration
             $table->dateTime('fecha');
             $table->foreignId('responsable_id')->constrained('users');
             $table->enum('motivo', [
-                'venta', 'merma', 'producto_danado', 'ajuste_inventario', 'transferencia'
+                'venta', 'merma', 'producto_danado', 'ajuste_inventario', 'transferencia',
             ])->nullable();
             $table->timestamps();
         });

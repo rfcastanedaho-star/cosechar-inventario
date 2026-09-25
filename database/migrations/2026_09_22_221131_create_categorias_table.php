@@ -12,9 +12,9 @@ return new class extends Migration
             $table->id();
             $table->string('nombre', 100);
             $table->foreignId('categoria_padre_id')
-                  ->nullable()
-                  ->constrained('categorias')
-                  ->nullOnDelete();
+                ->nullable()
+                ->constrained('categorias')
+                ->nullOnDelete();
             $table->timestamps();
         });
     }
