@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Models\Lote;
 use App\Models\Producto;
-use App\Repositories\ProductoRepository;
 use App\Repositories\StockMovimientoRepository;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -27,10 +27,17 @@ class ReporteFiltro extends Component
         return Producto::orderBy('nombre')->get();
     }
 
+    /**
+     * Stock actual desagregado por producto y lote (RF-08).
+     */
     #[Computed]
     public function stock(): Collection
     {
-        return (new ProductoRepository)->conStockActual()->sortBy('nombre')->values();
+        return Lote::with('producto.categoria')
+            ->where('cantidad', '>', 0)
+            ->get()
+            ->sortBy([['producto.nombre', 'asc'], ['fecha_vencimiento', 'asc']])
+            ->values();
     }
 
     #[Computed]

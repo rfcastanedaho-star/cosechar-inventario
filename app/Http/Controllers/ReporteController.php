@@ -2,39 +2,42 @@
 
 namespace App\Http\Controllers;
 
-use App\Repositories\ProductoRepository;
+use App\Models\Lote;
 use App\Repositories\StockMovimientoRepository;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReporteController extends Controller
 {
-    public function stockPdf(ProductoRepository $productos): Response
+    public function stockPdf(): Response
     {
         $pdf = Pdf::loadView('reportes.stock-pdf', [
-            'productos' => $productos->conStockActual()->sortBy('nombre')->values(),
+            'lotes' => $this->stockPorLote(),
         ]);
 
         return $pdf->stream('reporte-stock.pdf');
     }
 
-    public function stockCsv(ProductoRepository $productos): StreamedResponse
+    public function stockCsv(): StreamedResponse
     {
-        $filas = $productos->conStockActual()->sortBy('nombre')->values();
+        $filas = $this->stockPorLote();
 
         return response()->streamDownload(function () use ($filas) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Código', 'Producto', 'Categoría', 'Stock actual', 'Stock mínimo']);
+            fputcsv($out, ['Código', 'Producto', 'Categoría', 'Lote', 'Vencimiento', 'Cantidad', 'Stock mínimo del producto']);
 
-            foreach ($filas as $producto) {
+            foreach ($filas as $lote) {
                 fputcsv($out, [
-                    $producto->codigo,
-                    $producto->nombre,
-                    $producto->categoria->nombre,
-                    (int) ($producto->stock_actual ?? 0),
-                    $producto->stock_minimo,
+                    $lote->producto->codigo,
+                    $lote->producto->nombre,
+                    $lote->producto->categoria->nombre,
+                    $lote->numero_lote,
+                    $lote->fecha_vencimiento?->format('d/m/Y') ?? 'No aplica',
+                    $lote->cantidad,
+                    $lote->producto->stock_minimo,
                 ]);
             }
 
@@ -80,5 +83,19 @@ class ReporteController extends Controller
 
             fclose($out);
         }, 'reporte-movimientos.csv');
+    }
+
+    /**
+     * Stock actual desagregado por producto y lote (RF-08).
+     *
+     * @return Collection<int, Lote>
+     */
+    private function stockPorLote(): Collection
+    {
+        return Lote::with('producto.categoria')
+            ->where('cantidad', '>', 0)
+            ->get()
+            ->sortBy([['producto.nombre', 'asc'], ['fecha_vencimiento', 'asc']])
+            ->values();
     }
 }

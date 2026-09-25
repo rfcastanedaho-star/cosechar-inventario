@@ -12,7 +12,7 @@
 
     @if ($tab === 'stock')
         <div class="mb-4 flex items-center justify-between">
-            <p class="text-sm text-gray-500">{{ $this->stock->count() }} productos</p>
+            <p class="text-sm text-gray-500">{{ $this->stock->count() }} lotes con stock</p>
             @can('exportar-reportes')
                 <div class="flex gap-2">
                     <a href="{{ route('reportes.stock.pdf') }}" target="_blank" class="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">PDF</a>
@@ -25,27 +25,27 @@
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 text-left text-xs uppercase text-gray-500">
                     <tr>
-                        <th class="px-4 py-2">Código</th>
                         <th class="px-4 py-2">Producto</th>
                         <th class="px-4 py-2">Categoría</th>
-                        <th class="px-4 py-2">Stock actual</th>
-                        <th class="px-4 py-2">Stock mínimo</th>
+                        <th class="px-4 py-2">Lote</th>
+                        <th class="px-4 py-2">Vencimiento</th>
+                        <th class="px-4 py-2">Cantidad</th>
+                        <th class="px-4 py-2">Stock mínimo del producto</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    @forelse ($this->stock as $producto)
+                    @forelse ($this->stock as $lote)
                         <tr>
-                            <td class="px-4 py-2">{{ $producto->codigo }}</td>
-                            <td class="px-4 py-2">{{ $producto->nombre }}</td>
-                            <td class="px-4 py-2">{{ $producto->categoria->nombre }}</td>
-                            <td class="px-4 py-2 {{ ($producto->stock_actual ?? 0) < $producto->stock_minimo ? 'font-semibold text-red-600' : '' }}">
-                                {{ $producto->stock_actual ?? 0 }}
-                            </td>
-                            <td class="px-4 py-2">{{ $producto->stock_minimo }}</td>
+                            <td class="px-4 py-2">{{ $lote->producto->codigo }} — {{ $lote->producto->nombre }}</td>
+                            <td class="px-4 py-2">{{ $lote->producto->categoria->nombre }}</td>
+                            <td class="px-4 py-2">{{ $lote->numero_lote }}</td>
+                            <td class="px-4 py-2">{{ $lote->fecha_vencimiento?->format('d/m/Y') ?? 'No aplica' }}</td>
+                            <td class="px-4 py-2">{{ $lote->cantidad }} {{ $lote->producto->unidad_medida }}</td>
+                            <td class="px-4 py-2">{{ $lote->producto->stock_minimo }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-6 text-center text-gray-400">No hay productos registrados.</td>
+                            <td colspan="6" class="px-4 py-6 text-center text-gray-400">No hay lotes con stock disponible.</td>
                         </tr>
                     @endforelse
                 </tbody>

@@ -14,28 +14,29 @@
     </style>
 </head>
 <body>
-    <h1>Cosechar E.I.R.L. — Reporte de Stock</h1>
+    <h1>Cosechar E.I.R.L. — Reporte de Stock (por producto y lote)</h1>
     <p class="subtitulo">Generado el {{ now()->format('d/m/Y H:i') }}</p>
 
     <table>
         <thead>
             <tr>
-                <th>Código</th>
                 <th>Producto</th>
                 <th>Categoría</th>
-                <th>Stock actual</th>
+                <th>Lote</th>
+                <th>Vencimiento</th>
+                <th>Cantidad</th>
                 <th>Stock mínimo</th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($productos as $producto)
-                @php $actual = (int) ($producto->stock_actual ?? 0); @endphp
+            @foreach ($lotes as $lote)
                 <tr>
-                    <td>{{ $producto->codigo }}</td>
-                    <td>{{ $producto->nombre }}</td>
-                    <td>{{ $producto->categoria->nombre }}</td>
-                    <td class="{{ $actual < $producto->stock_minimo ? 'bajo' : '' }}">{{ $actual }}</td>
-                    <td>{{ $producto->stock_minimo }}</td>
+                    <td>{{ $lote->producto->codigo }} — {{ $lote->producto->nombre }}</td>
+                    <td>{{ $lote->producto->categoria->nombre }}</td>
+                    <td>{{ $lote->numero_lote }}</td>
+                    <td>{{ $lote->fecha_vencimiento?->format('d/m/Y') ?? 'No aplica' }}</td>
+                    <td>{{ $lote->cantidad }}</td>
+                    <td>{{ $lote->producto->stock_minimo }}</td>
                 </tr>
             @endforeach
         </tbody>
