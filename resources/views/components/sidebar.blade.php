@@ -14,11 +14,7 @@
 <aside class="flex w-64 shrink-0 flex-col gap-1 bg-cosechar-forest px-4 py-6">
 
     <div class="flex items-center gap-2.5 px-2 pb-6">
-        <svg viewBox="0 0 24 24" width="24" height="24">
-            <path d="M12 21V11" stroke="#CFE0C9" stroke-width="1.6" stroke-linecap="round" fill="none"/>
-            <path d="M12 11C12 6.2 8.3 3.6 4 3.6 4 8.4 7.7 11 12 11z" fill="#8FBF6B"/>
-            <path d="M12 11c0-3.6 2.9-5.6 6.2-5.6 0 3.7-2.5 5.6-6.2 5.6z" fill="#6FA355"/>
-        </svg>
+        <img src="{{ asset('images/icono-cosechar.png') }}" alt="" class="h-9 w-auto object-contain">
         <span class="font-sans text-[19px] font-semibold tracking-wide text-cosechar-cream">COSECHAR</span>
     </div>
 
