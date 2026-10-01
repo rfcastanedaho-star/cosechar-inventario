@@ -16,7 +16,9 @@
     </div>
 
     <div class="relative z-10 m-6 w-full max-w-lg">
-        <div class="rounded-2xl bg-white p-10 shadow-2xl">
+        <div class="rounded-2xl bg-gradient-to-br from-white/70 via-cosechar-olive/40 to-white/10 p-px shadow-[0_8px_40px_rgba(0,0,0,0.2),0_0_60px_-15px_rgba(76,122,59,0.55)]">
+        <div class="relative overflow-hidden rounded-2xl bg-white/20 p-10 backdrop-blur-2xl">
+            <div class="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent"></div>
             <div class="mb-6 flex justify-center lg:hidden">
                 <img
                     src="{{ asset('images/logo-cosechar-blend.png') }}"
@@ -26,7 +28,7 @@
                 >
             </div>
 
-            <h1 class="mb-6 text-xl font-semibold text-gray-900">Ingresar a COSECHAR Inventario</h1>
+            <h1 class="mb-6 font-serif text-2xl font-semibold text-gray-900">Ingresar a COSECHAR Inventario</h1>
 
         <form wire:submit="autenticar" class="flex flex-col gap-4">
             <div>
@@ -99,6 +101,7 @@
                 <span wire:loading>Verificando...</span>
             </button>
         </form>
+        </div>
         </div>
     </div>
 </div>
