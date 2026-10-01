@@ -14,7 +14,7 @@
 <aside class="flex w-64 shrink-0 flex-col gap-1 bg-cosechar-forest px-4 py-6">
 
     <div class="flex items-center gap-2.5 px-2 pb-6">
-        <img src="{{ asset('images/icono-cosechar.png') }}" alt="" class="h-9 w-auto object-contain">
+        <img src="{{ asset('images/icono-cosechar-badge.png') }}" alt="" class="h-10 w-10 shrink-0 rounded-full object-cover">
         <span class="font-sans text-[19px] font-semibold tracking-wide text-cosechar-cream">COSECHAR</span>
     </div>
 
