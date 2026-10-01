@@ -56,4 +56,20 @@ class LoteRepository
             ->orderBy('fecha_vencimiento')
             ->get();
     }
+
+    public function contarActivos(): int
+    {
+        return Lote::where('cantidad', '>', 0)->count();
+    }
+
+    public function ordenadosParaSalidaEnAlmacen(int $productoId, int $almacenId, bool $manejaVencimiento): Collection
+    {
+        $query = Lote::where('producto_id', $productoId)
+            ->where('almacen_id', $almacenId)
+            ->where('cantidad', '>', 0);
+
+        return $manejaVencimiento
+            ? $query->orderBy('fecha_vencimiento', 'asc')->get()   // FEFO
+            : $query->orderBy('fecha_ingreso', 'asc')->get();       // FIFO
+    }
 }

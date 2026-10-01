@@ -7,6 +7,7 @@ use App\Repositories\ProductoRepository;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
@@ -14,6 +15,9 @@ class ProductoLista extends Component
 {
     /** @var array<int, int> */
     public array $stockMinimoEdit = [];
+
+    #[Url(as: 'buscar', history: true)]
+    public string $buscar = '';
 
     public function mount(): void
     {
@@ -23,7 +27,15 @@ class ProductoLista extends Component
     #[Computed]
     public function productos(): Collection
     {
-        return (new ProductoRepository)->conStockActual()->sortBy('nombre')->values();
+        $buscar = trim($this->buscar);
+
+        return (new ProductoRepository)->conStockActual()
+            ->when($buscar !== '', fn (Collection $productos) => $productos->filter(
+                fn (Producto $producto) => str_contains(mb_strtolower($producto->nombre), mb_strtolower($buscar))
+                    || str_contains(mb_strtolower($producto->codigo), mb_strtolower($buscar))
+            ))
+            ->sortBy('nombre')
+            ->values();
     }
 
     public function guardarStockMinimo(int $productoId): void

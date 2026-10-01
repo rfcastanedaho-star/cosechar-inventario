@@ -2,10 +2,16 @@
 
 namespace App\Livewire;
 
+use App\Models\Lote;
 use App\Models\Producto;
 use App\Models\StockMovimiento;
+use App\Repositories\LoteRepository;
+use App\Repositories\ProductoRepository;
+use App\Repositories\StockMovimientoRepository;
+use App\Services\AlertaService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -27,6 +33,64 @@ class DashboardGraficos extends Component
             'stockPorCategoria' => $this->calcularStockPorCategoria(),
             'movimientos' => $this->calcularMovimientos30Dias(),
         ];
+    }
+
+    /**
+     * Tarjetas de resumen del dashboard (RF-08 / vista general).
+     *
+     * @return array{totalProductos: int, stockBajo: int, porVencer: int, movimientosHoy: int}
+     */
+    #[Computed]
+    public function resumen(): array
+    {
+        $alertas = app(AlertaService::class);
+
+        return [
+            'totalProductos' => (new ProductoRepository)->conStockActual()->count(),
+            'stockBajo' => $alertas->productosConStockMinimo()->count(),
+            'porVencer' => $alertas->lotesPorVencer()->count(),
+            'movimientosHoy' => (new StockMovimientoRepository)->contarHoy(),
+        ];
+    }
+
+    /**
+     * @return array{porcentaje: int, lotesActivos: int, movimientosHoy: int, ultimoMovimientoTexto: string}
+     */
+    #[Computed]
+    public function saludStock(): array
+    {
+        $resumen = $this->resumen;
+        $ultimo = (new StockMovimientoRepository)->ultimo();
+
+        $porcentaje = $resumen['totalProductos'] > 0
+            ? (int) round((($resumen['totalProductos'] - $resumen['stockBajo']) / $resumen['totalProductos']) * 100)
+            : 100;
+
+        return [
+            'porcentaje' => $porcentaje,
+            'lotesActivos' => (new LoteRepository)->contarActivos(),
+            'movimientosHoy' => $resumen['movimientosHoy'],
+            'ultimoMovimientoTexto' => $ultimo ? $ultimo->fecha->locale('es')->diffForHumans() : 'Sin movimientos aún',
+        ];
+    }
+
+    /**
+     * Los 5 lotes más próximos a vencer (RF-07).
+     *
+     * @return Collection<int, array{producto: string, numeroLote: string, dias: int, cantidad: int}>
+     */
+    #[Computed]
+    public function proximosVencimientos(): Collection
+    {
+        return app(AlertaService::class)->lotesPorVencer()
+            ->take(5)
+            ->map(fn (Lote $lote) => [
+                'producto' => $lote->producto->nombre,
+                'numeroLote' => $lote->numero_lote,
+                'dias' => (int) now()->startOfDay()->diffInDays($lote->fecha_vencimiento, false),
+                'cantidad' => $lote->cantidad,
+            ])
+            ->values();
     }
 
     /**

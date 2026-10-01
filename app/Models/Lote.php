@@ -14,7 +14,7 @@ class Lote extends Model
     use HasFactory;
 
     protected $fillable = [
-        'producto_id', 'numero_lote', 'fecha_ingreso',
+        'producto_id', 'almacen_id', 'numero_lote', 'fecha_ingreso',
         'fecha_vencimiento', 'cantidad', 'codigo_qr',
     ];
 
@@ -26,6 +26,11 @@ class Lote extends Model
     public function producto(): BelongsTo
     {
         return $this->belongsTo(Producto::class);
+    }
+
+    public function almacen(): BelongsTo
+    {
+        return $this->belongsTo(Almacen::class);
     }
 
     public function movimientos(): HasMany

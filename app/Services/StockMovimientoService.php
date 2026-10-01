@@ -69,6 +69,55 @@ class StockMovimientoService
         });
     }
 
+    /**
+     * Igual que registrarSalida(), pero restringe FEFO/FIFO a los lotes de
+     * un almacén específico (usado por Ventas, que vende desde un origen
+     * determinado en vez de mezclar stock de todos los almacenes).
+     *
+     * @return Collection<int, StockMovimiento>
+     */
+    public function registrarSalidaEnAlmacen(Producto $producto, int $almacenId, int $cantidad, User $responsable, ?string $motivo = null): Collection
+    {
+        if ($cantidad <= 0) {
+            throw new InvalidArgumentException('La cantidad debe ser mayor a cero.');
+        }
+
+        return DB::transaction(function () use ($producto, $almacenId, $cantidad, $responsable, $motivo) {
+            $lotesDisponibles = $this->lotes->ordenadosParaSalidaEnAlmacen($producto->id, $almacenId, $producto->maneja_vencimiento);
+            $disponible = $lotesDisponibles->sum('cantidad');
+
+            if ($disponible < $cantidad) {
+                throw StockInsuficienteException::paraProducto($producto, $cantidad, $disponible);
+            }
+
+            $restante = $cantidad;
+            $movimientosCreados = new Collection;
+
+            foreach ($lotesDisponibles as $lote) {
+                if ($restante <= 0) {
+                    break;
+                }
+
+                $aDescontar = min($lote->cantidad, $restante);
+
+                $this->lotes->decrementar($lote, $aDescontar);
+
+                $movimientosCreados->push($this->movimientos->create([
+                    'lote_id' => $lote->id,
+                    'tipo' => 'salida',
+                    'cantidad' => $aDescontar,
+                    'fecha' => now(),
+                    'responsable_id' => $responsable->id,
+                    'motivo' => $motivo,
+                ]));
+
+                $restante -= $aDescontar;
+            }
+
+            return $movimientosCreados;
+        });
+    }
+
     public function registrarEntrada(Lote $lote, int $cantidad, User $responsable): StockMovimiento
     {
         if ($cantidad <= 0) {

@@ -21,4 +21,14 @@ class StockMovimientoRepository
             ->orderBy('fecha', 'desc')
             ->get();
     }
+
+    public function contarHoy(): int
+    {
+        return StockMovimiento::whereDate('fecha', today())->count();
+    }
+
+    public function ultimo(): ?StockMovimiento
+    {
+        return StockMovimiento::latest('fecha')->first();
+    }
 }
