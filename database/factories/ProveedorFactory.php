@@ -20,6 +20,7 @@ class ProveedorFactory extends Factory
             'ruc' => $this->faker->unique()->numerify('20##########'),
             'telefono' => $this->faker->phoneNumber(),
             'direccion' => $this->faker->streetAddress(),
+            'activo' => true,
         ];
     }
 }

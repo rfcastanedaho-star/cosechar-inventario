@@ -14,7 +14,11 @@ class Almacen extends Model
 
     protected $table = 'almacenes';
 
-    protected $fillable = ['nombre', 'direccion', 'encargado'];
+    protected $fillable = ['nombre', 'direccion', 'encargado', 'activo'];
+
+    protected $casts = [
+        'activo' => 'boolean',
+    ];
 
     public function lotes(): HasMany
     {

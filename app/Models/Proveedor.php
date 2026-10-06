@@ -14,7 +14,11 @@ class Proveedor extends Model
 
     protected $table = 'proveedores';
 
-    protected $fillable = ['nombre', 'ruc', 'telefono', 'direccion'];
+    protected $fillable = ['nombre', 'ruc', 'telefono', 'direccion', 'activo'];
+
+    protected $casts = [
+        'activo' => 'boolean',
+    ];
 
     public function compras(): HasMany
     {

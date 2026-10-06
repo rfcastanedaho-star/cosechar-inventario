@@ -9,7 +9,7 @@ class CompraRepository
 {
     public function all(): Collection
     {
-        return Compra::with(['proveedor', 'almacen', 'detalles.producto'])
+        return Compra::with(['proveedor', 'almacen', 'detalles.producto', 'anuladaPor'])
             ->orderByDesc('fecha')
             ->get();
     }

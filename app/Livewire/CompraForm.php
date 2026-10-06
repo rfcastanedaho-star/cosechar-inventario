@@ -61,13 +61,13 @@ class CompraForm extends Component
     #[Computed]
     public function proveedores(): Collection
     {
-        return Proveedor::orderBy('nombre')->get();
+        return Proveedor::where('activo', true)->orderBy('nombre')->get();
     }
 
     #[Computed]
     public function almacenes(): Collection
     {
-        return Almacen::orderBy('nombre')->get();
+        return Almacen::where('activo', true)->orderBy('nombre')->get();
     }
 
     #[Computed]

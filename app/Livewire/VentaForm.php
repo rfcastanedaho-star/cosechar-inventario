@@ -63,7 +63,7 @@ class VentaForm extends Component
     #[Computed]
     public function almacenes(): Collection
     {
-        return Almacen::orderBy('nombre')->get();
+        return Almacen::where('activo', true)->orderBy('nombre')->get();
     }
 
     #[Computed]

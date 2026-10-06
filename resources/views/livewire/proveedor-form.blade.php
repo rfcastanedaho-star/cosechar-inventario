@@ -1,9 +1,9 @@
 <div class="mx-auto max-w-xl p-8">
-    <h1 class="mb-6 text-lg font-semibold text-cosechar-ink">Registrar proveedor</h1>
+    <h1 class="mb-6 text-lg font-semibold text-cosechar-ink">{{ $this->editando ? 'Editar proveedor' : 'Registrar proveedor' }}</h1>
 
     @if ($creado)
         <div class="mb-4 rounded-md bg-green-100 px-4 py-2 text-sm text-green-800">
-            Proveedor registrado correctamente.
+            {{ $this->editando ? 'Cambios guardados correctamente.' : 'Proveedor registrado correctamente.' }}
         </div>
     @endif
 
@@ -14,7 +14,8 @@
                 type="text"
                 id="nombre"
                 wire:model.blur="nombre"
-                class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
+                @disabled(! $this->puedeEditarIdentidad)
+                class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring disabled:bg-cosechar-cream disabled:text-cosechar-muted"
             >
             @error('nombre')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -27,8 +28,12 @@
                 type="text"
                 id="ruc"
                 wire:model.blur="ruc"
-                class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
+                @disabled(! $this->puedeEditarIdentidad)
+                class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring disabled:bg-cosechar-cream disabled:text-cosechar-muted"
             >
+            @unless ($this->puedeEditarIdentidad)
+                <p class="mt-1 text-xs text-cosechar-muted">Solo el administrador puede cambiar el nombre y el RUC.</p>
+            @endunless
             @error('ruc')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
@@ -62,14 +67,20 @@
             </div>
         </div>
 
-        <button
-            type="submit"
-            wire:loading.attr="disabled"
-            wire:target="guardar"
-            class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-            <span wire:loading.remove wire:target="guardar">Guardar proveedor</span>
-            <span wire:loading wire:target="guardar">Guardando...</span>
-        </button>
+        <div class="flex items-center gap-3">
+            <button
+                type="submit"
+                wire:loading.attr="disabled"
+                wire:target="guardar"
+                class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+                <span wire:loading.remove wire:target="guardar">{{ $this->editando ? 'Guardar cambios' : 'Guardar proveedor' }}</span>
+                <span wire:loading wire:target="guardar">Guardando...</span>
+            </button>
+
+            @if ($this->editando)
+                <a href="{{ route('proveedores.index') }}" class="text-sm text-cosechar-muted underline hover:text-cosechar-ink">Volver a la lista</a>
+            @endif
+        </div>
     </form>
 </div>

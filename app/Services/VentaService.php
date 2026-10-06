@@ -45,6 +45,7 @@ class VentaService
                     (int) $linea['cantidad'],
                     $responsable,
                     'venta',
+                    $venta->id,
                 );
 
                 $venta->detalles()->create([

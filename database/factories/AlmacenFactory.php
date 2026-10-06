@@ -19,6 +19,7 @@ class AlmacenFactory extends Factory
             'nombre' => 'Almacén '.ucfirst($this->faker->unique()->city()),
             'direccion' => $this->faker->streetAddress(),
             'encargado' => $this->faker->name(),
+            'activo' => true,
         ];
     }
 }

@@ -9,7 +9,7 @@ class VentaRepository
 {
     public function all(): Collection
     {
-        return Venta::with(['almacen', 'detalles.producto'])
+        return Venta::with(['almacen', 'detalles.producto', 'anuladaPor'])
             ->orderByDesc('fecha')
             ->get();
     }

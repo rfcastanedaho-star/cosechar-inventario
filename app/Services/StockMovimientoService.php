@@ -76,13 +76,13 @@ class StockMovimientoService
      *
      * @return Collection<int, StockMovimiento>
      */
-    public function registrarSalidaEnAlmacen(Producto $producto, int $almacenId, int $cantidad, User $responsable, ?string $motivo = null): Collection
+    public function registrarSalidaEnAlmacen(Producto $producto, int $almacenId, int $cantidad, User $responsable, ?string $motivo = null, ?int $ventaId = null): Collection
     {
         if ($cantidad <= 0) {
             throw new InvalidArgumentException('La cantidad debe ser mayor a cero.');
         }
 
-        return DB::transaction(function () use ($producto, $almacenId, $cantidad, $responsable, $motivo) {
+        return DB::transaction(function () use ($producto, $almacenId, $cantidad, $responsable, $motivo, $ventaId) {
             $lotesDisponibles = $this->lotes->ordenadosParaSalidaEnAlmacen($producto->id, $almacenId, $producto->maneja_vencimiento);
             $disponible = $lotesDisponibles->sum('cantidad');
 
@@ -109,6 +109,7 @@ class StockMovimientoService
                     'fecha' => now(),
                     'responsable_id' => $responsable->id,
                     'motivo' => $motivo,
+                    'venta_id' => $ventaId,
                 ]));
 
                 $restante -= $aDescontar;

@@ -46,8 +46,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/lotes/{lote}/etiqueta', [LoteController::class, 'etiqueta'])->name('lotes.etiqueta');
     Route::get('/almacenes', AlmacenLista::class)->name('almacenes.index');
     Route::get('/almacenes/nuevo', AlmacenForm::class)->name('almacenes.nuevo');
+    Route::get('/almacenes/{almacen}/editar', AlmacenForm::class)->name('almacenes.editar');
     Route::get('/proveedores', ProveedorLista::class)->name('proveedores.index');
     Route::get('/proveedores/nuevo', ProveedorForm::class)->name('proveedores.nuevo');
+    Route::get('/proveedores/{proveedor}/editar', ProveedorForm::class)->name('proveedores.editar');
     Route::get('/compras', CompraLista::class)->name('compras.index');
     Route::get('/compras/nueva', CompraForm::class)->name('compras.nueva');
     Route::get('/ventas', VentaLista::class)->name('ventas.index');

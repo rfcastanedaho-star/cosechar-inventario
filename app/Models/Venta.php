@@ -17,12 +17,19 @@ class Venta extends Model
 
     protected $fillable = [
         'cliente_nombre', 'cliente_documento', 'almacen_id', 'responsable_id', 'fecha', 'numero_comprobante', 'total',
+        'anulada_at', 'anulada_por', 'motivo_anulacion',
     ];
 
     protected $casts = [
         'fecha' => 'date',
         'total' => 'decimal:2',
+        'anulada_at' => 'datetime',
     ];
+
+    public function anuladaPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'anulada_por');
+    }
 
     public function almacen(): BelongsTo
     {

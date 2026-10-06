@@ -22,6 +22,14 @@ class StockMovimientoRepository
             ->get();
     }
 
+    public function salidasDeVenta(int $ventaId): Collection
+    {
+        return StockMovimiento::with('lote')
+            ->where('venta_id', $ventaId)
+            ->where('tipo', 'salida')
+            ->get();
+    }
+
     public function contarHoy(): int
     {
         return StockMovimiento::whereDate('fecha', today())->count();
