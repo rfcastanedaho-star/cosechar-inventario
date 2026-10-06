@@ -58,12 +58,12 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('can:exportar-reportes')->group(function () {
         Route::get('/reportes/stock/pdf', [ReporteController::class, 'stockPdf'])->name('reportes.stock.pdf');
-        Route::get('/reportes/stock/csv', [ReporteController::class, 'stockCsv'])->name('reportes.stock.csv');
+        Route::get('/reportes/stock/excel', [ReporteController::class, 'stockExcel'])->name('reportes.stock.excel');
         Route::get('/reportes/movimientos/pdf', [ReporteController::class, 'movimientosPdf'])->name('reportes.movimientos.pdf');
-        Route::get('/reportes/movimientos/csv', [ReporteController::class, 'movimientosCsv'])->name('reportes.movimientos.csv');
+        Route::get('/reportes/movimientos/excel', [ReporteController::class, 'movimientosExcel'])->name('reportes.movimientos.excel');
         Route::get('/reportes/compras/pdf', [ReporteController::class, 'comprasPdf'])->name('reportes.compras.pdf');
-        Route::get('/reportes/compras/csv', [ReporteController::class, 'comprasCsv'])->name('reportes.compras.csv');
+        Route::get('/reportes/compras/excel', [ReporteController::class, 'comprasExcel'])->name('reportes.compras.excel');
         Route::get('/reportes/ventas/pdf', [ReporteController::class, 'ventasPdf'])->name('reportes.ventas.pdf');
-        Route::get('/reportes/ventas/csv', [ReporteController::class, 'ventasCsv'])->name('reportes.ventas.csv');
+        Route::get('/reportes/ventas/excel', [ReporteController::class, 'ventasExcel'])->name('reportes.ventas.excel');
     });
 });

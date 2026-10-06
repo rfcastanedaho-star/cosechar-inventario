@@ -11,10 +11,12 @@ use App\Models\User;
 use App\Models\Venta;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Tests\Concerns\LeeExcel;
 use Tests\TestCase;
 
 class ReporteComprasVentasTest extends TestCase
 {
+    use LeeExcel;
     use RefreshDatabase;
 
     public function test_el_reporte_de_compras_filtra_por_fechas_y_almacen(): void
@@ -95,34 +97,59 @@ class ReporteComprasVentasTest extends TestCase
         $this->assertSame(20, $componente->instance()->stock->first()->cantidad);
     }
 
-    public function test_el_csv_de_compras_respeta_los_filtros(): void
+    public function test_el_excel_de_compras_es_un_xlsx_real_y_respeta_los_filtros(): void
     {
         $admin = User::factory()->create(['rol' => 'administrador']);
         $norte = Almacen::factory()->create();
         $sur = Almacen::factory()->create();
 
-        Compra::factory()->create(['almacen_id' => $norte->id, 'fecha' => '2026-10-02', 'numero_comprobante' => 'F-NORTE']);
+        Compra::factory()->create(['almacen_id' => $norte->id, 'fecha' => '2026-10-02', 'numero_comprobante' => 'F-NORTE', 'total' => 250.5]);
         Compra::factory()->create(['almacen_id' => $sur->id, 'fecha' => '2026-10-02', 'numero_comprobante' => 'F-SUR']);
 
-        $contenido = $this->actingAs($admin)
-            ->get(route('reportes.compras.csv', ['almacen_id' => $norte->id]))
+        $respuesta = $this->actingAs($admin)
+            ->get(route('reportes.compras.excel', ['almacen_id' => $norte->id]))
             ->assertOk()
-            ->streamedContent();
+            ->assertDownload('reporte-compras.xlsx');
 
-        $this->assertStringContainsString('F-NORTE', $contenido);
-        $this->assertStringNotContainsString('F-SUR', $contenido);
+        $contenido = $respuesta->streamedContent();
+        $this->assertStringStartsWith('PK', $contenido);
+
+        $filas = $this->filasDeExcel($contenido);
+        $this->assertSame(['Fecha', 'Proveedor', 'Almacén', 'Comprobante', 'Total (S/)', 'Estado'], $filas[0]);
+        $this->assertCount(2, $filas);
+        $this->assertSame('F-NORTE', $filas[1][3]);
+        $this->assertEquals(250.5, $filas[1][4]);
     }
 
-    public function test_el_csv_de_ventas_marca_las_anuladas(): void
+    public function test_el_excel_de_ventas_marca_las_anuladas(): void
     {
         $admin = User::factory()->create(['rol' => 'administrador']);
         Venta::factory()->create(['cliente_nombre' => 'Cliente Anulado', 'anulada_at' => now(), 'anulada_por' => $admin->id, 'motivo_anulacion' => 'Error de digitación']);
 
-        $contenido = $this->actingAs($admin)
-            ->get(route('reportes.ventas.csv'))
-            ->streamedContent();
+        $filas = $this->filasDeExcel(
+            $this->actingAs($admin)->get(route('reportes.ventas.excel'))->streamedContent()
+        );
 
-        $this->assertStringContainsString('Cliente Anulado', $contenido);
-        $this->assertStringContainsString('Anulada', $contenido);
+        $this->assertSame('Cliente Anulado', $filas[1][1]);
+        $this->assertSame('Anulada', $filas[1][6]);
+    }
+
+    public function test_el_excel_de_stock_incluye_el_almacen_y_respeta_el_filtro(): void
+    {
+        $admin = User::factory()->create(['rol' => 'administrador']);
+        $norte = Almacen::factory()->create(['nombre' => 'Zona Norte']);
+        $sur = Almacen::factory()->create(['nombre' => 'Zona Sur']);
+        $producto = Producto::factory()->create();
+
+        Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $norte->id, 'cantidad' => 7]);
+        Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $sur->id, 'cantidad' => 9]);
+
+        $filas = $this->filasDeExcel(
+            $this->actingAs($admin)->get(route('reportes.stock.excel', ['almacen_id' => $sur->id]))->streamedContent()
+        );
+
+        $this->assertCount(2, $filas);
+        $this->assertSame('Zona Sur', $filas[1][3]);
+        $this->assertEquals(9, $filas[1][6]);
     }
 }

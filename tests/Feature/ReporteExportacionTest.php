@@ -15,13 +15,13 @@ class ReporteExportacionTest extends TestCase
     {
         return [
             ['reportes.stock.pdf'],
-            ['reportes.stock.csv'],
+            ['reportes.stock.excel'],
             ['reportes.movimientos.pdf'],
-            ['reportes.movimientos.csv'],
+            ['reportes.movimientos.excel'],
             ['reportes.compras.pdf'],
-            ['reportes.compras.csv'],
+            ['reportes.compras.excel'],
             ['reportes.ventas.pdf'],
-            ['reportes.ventas.csv'],
+            ['reportes.ventas.excel'],
         ];
     }
 
@@ -54,7 +54,7 @@ class ReporteExportacionTest extends TestCase
 
         $this->actingAs($operador)
             ->get(route('reportes'))
-            ->assertDontSee('Excel (CSV)');
+            ->assertDontSee('Excel');
     }
 
     public function test_el_administrador_si_ve_los_botones_de_exportar(): void
@@ -63,6 +63,6 @@ class ReporteExportacionTest extends TestCase
 
         $this->actingAs($admin)
             ->get(route('reportes'))
-            ->assertSee('Excel (CSV)');
+            ->assertSee('Excel');
     }
 }

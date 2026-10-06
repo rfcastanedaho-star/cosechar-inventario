@@ -30,7 +30,7 @@
                         <td class="px-4 py-3 text-cosechar-muted">{{ $almacen->encargado ?: '—' }}</td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $almacen->lotes_count }}</td>
                         <td class="px-4 py-3">
-                            <span class="rounded-full px-2 py-1 text-xs font-semibold {{ $almacen->activo ? 'bg-cosechar-olive/15 text-cosechar-olive' : 'bg-gray-200 text-gray-600' }}">
+                            <span class="rounded-full px-2 py-1 text-xs font-semibold {{ $almacen->activo ? 'bg-cosechar-olive/15 text-cosechar-olive' : 'bg-cosechar-border text-cosechar-muted' }}">
                                 {{ $almacen->activo ? 'Activo' : 'Desactivado' }}
                             </span>
                         </td>

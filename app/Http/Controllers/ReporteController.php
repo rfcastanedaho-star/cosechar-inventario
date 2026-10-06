@@ -6,6 +6,7 @@ use App\Repositories\CompraRepository;
 use App\Repositories\LoteRepository;
 use App\Repositories\StockMovimientoRepository;
 use App\Repositories\VentaRepository;
+use App\Services\ExcelService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -14,6 +15,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReporteController extends Controller
 {
+    public function __construct(private ExcelService $excel) {}
+
     public function stockPdf(Request $request, LoteRepository $lotes): Response
     {
         $pdf = Pdf::loadView('reportes.stock-pdf', [
@@ -23,29 +26,24 @@ class ReporteController extends Controller
         return $pdf->stream('reporte-stock.pdf');
     }
 
-    public function stockCsv(Request $request, LoteRepository $lotes): StreamedResponse
+    public function stockExcel(Request $request, LoteRepository $lotes): StreamedResponse
     {
-        $filas = $lotes->conStock($request->integer('almacen_id') ?: null);
+        $filas = $lotes->conStock($request->integer('almacen_id') ?: null)->map(fn ($lote) => [
+            $lote->producto->codigo,
+            $lote->producto->nombre,
+            $lote->producto->categoria->nombre,
+            $lote->almacen?->nombre ?? 'Sin almacén',
+            $lote->numero_lote,
+            $lote->fecha_vencimiento?->format('d/m/Y') ?? 'No aplica',
+            $lote->cantidad,
+            $lote->producto->stock_minimo,
+        ]);
 
-        return response()->streamDownload(function () use ($filas) {
-            $out = fopen('php://output', 'w');
-            fputcsv($out, ['Código', 'Producto', 'Categoría', 'Almacén', 'Lote', 'Vencimiento', 'Cantidad', 'Stock mínimo del producto']);
-
-            foreach ($filas as $lote) {
-                fputcsv($out, [
-                    $lote->producto->codigo,
-                    $lote->producto->nombre,
-                    $lote->producto->categoria->nombre,
-                    $lote->almacen?->nombre ?? 'Sin almacén',
-                    $lote->numero_lote,
-                    $lote->fecha_vencimiento?->format('d/m/Y') ?? 'No aplica',
-                    $lote->cantidad,
-                    $lote->producto->stock_minimo,
-                ]);
-            }
-
-            fclose($out);
-        }, 'reporte-stock.csv');
+        return $this->excel->descargar(
+            'reporte-stock.xlsx',
+            ['Código', 'Producto', 'Categoría', 'Almacén', 'Lote', 'Vencimiento', 'Cantidad', 'Stock mínimo del producto'],
+            $filas,
+        );
     }
 
     public function movimientosPdf(Request $request, StockMovimientoRepository $movimientos): Response
@@ -61,31 +59,26 @@ class ReporteController extends Controller
         return $pdf->stream('reporte-movimientos.pdf');
     }
 
-    public function movimientosCsv(Request $request, StockMovimientoRepository $movimientos): StreamedResponse
+    public function movimientosExcel(Request $request, StockMovimientoRepository $movimientos): StreamedResponse
     {
         $filas = $movimientos->porFiltros(
             $request->query('fecha') ?: null,
             $request->integer('producto_id') ?: null,
             $request->query('tipo') ?: null,
+        )->map(fn ($movimiento) => [
+            $movimiento->fecha->format('d/m/Y H:i'),
+            $movimiento->lote->producto->nombre,
+            $movimiento->lote->numero_lote,
+            $movimiento->tipo,
+            $movimiento->cantidad,
+            $movimiento->motivo,
+        ]);
+
+        return $this->excel->descargar(
+            'reporte-movimientos.xlsx',
+            ['Fecha', 'Producto', 'Lote', 'Tipo', 'Cantidad', 'Motivo'],
+            $filas,
         );
-
-        return response()->streamDownload(function () use ($filas) {
-            $out = fopen('php://output', 'w');
-            fputcsv($out, ['Fecha', 'Producto', 'Lote', 'Tipo', 'Cantidad', 'Motivo']);
-
-            foreach ($filas as $movimiento) {
-                fputcsv($out, [
-                    $movimiento->fecha->format('d/m/Y H:i'),
-                    $movimiento->lote->producto->nombre,
-                    $movimiento->lote->numero_lote,
-                    $movimiento->tipo,
-                    $movimiento->cantidad,
-                    $movimiento->motivo,
-                ]);
-            }
-
-            fclose($out);
-        }, 'reporte-movimientos.csv');
     }
 
     public function comprasPdf(Request $request, CompraRepository $compras): Response
@@ -99,27 +92,22 @@ class ReporteController extends Controller
         ])->stream('reporte-compras.pdf');
     }
 
-    public function comprasCsv(Request $request, CompraRepository $compras): StreamedResponse
+    public function comprasExcel(Request $request, CompraRepository $compras): StreamedResponse
     {
-        $filas = $this->comprasFiltradas($request, $compras);
+        $filas = $this->comprasFiltradas($request, $compras)->map(fn ($compra) => [
+            $compra->fecha->format('d/m/Y'),
+            $compra->proveedor->nombre,
+            $compra->almacen->nombre,
+            $compra->numero_comprobante,
+            (float) $compra->total,
+            $compra->anulada_at ? 'Anulada' : 'Vigente',
+        ]);
 
-        return response()->streamDownload(function () use ($filas) {
-            $out = fopen('php://output', 'w');
-            fputcsv($out, ['Fecha', 'Proveedor', 'Almacén', 'Comprobante', 'Total (S/)', 'Estado']);
-
-            foreach ($filas as $compra) {
-                fputcsv($out, [
-                    $compra->fecha->format('d/m/Y'),
-                    $compra->proveedor->nombre,
-                    $compra->almacen->nombre,
-                    $compra->numero_comprobante,
-                    number_format($compra->total, 2, '.', ''),
-                    $compra->anulada_at ? 'Anulada' : 'Vigente',
-                ]);
-            }
-
-            fclose($out);
-        }, 'reporte-compras.csv');
+        return $this->excel->descargar(
+            'reporte-compras.xlsx',
+            ['Fecha', 'Proveedor', 'Almacén', 'Comprobante', 'Total (S/)', 'Estado'],
+            $filas,
+        );
     }
 
     public function ventasPdf(Request $request, VentaRepository $ventas): Response
@@ -133,28 +121,23 @@ class ReporteController extends Controller
         ])->stream('reporte-ventas.pdf');
     }
 
-    public function ventasCsv(Request $request, VentaRepository $ventas): StreamedResponse
+    public function ventasExcel(Request $request, VentaRepository $ventas): StreamedResponse
     {
-        $filas = $this->ventasFiltradas($request, $ventas);
+        $filas = $this->ventasFiltradas($request, $ventas)->map(fn ($venta) => [
+            $venta->fecha->format('d/m/Y'),
+            $venta->cliente_nombre,
+            $venta->cliente_documento,
+            $venta->almacen->nombre,
+            $venta->numero_comprobante,
+            (float) $venta->total,
+            $venta->anulada_at ? 'Anulada' : 'Vigente',
+        ]);
 
-        return response()->streamDownload(function () use ($filas) {
-            $out = fopen('php://output', 'w');
-            fputcsv($out, ['Fecha', 'Cliente', 'Documento', 'Almacén', 'Comprobante', 'Total (S/)', 'Estado']);
-
-            foreach ($filas as $venta) {
-                fputcsv($out, [
-                    $venta->fecha->format('d/m/Y'),
-                    $venta->cliente_nombre,
-                    $venta->cliente_documento,
-                    $venta->almacen->nombre,
-                    $venta->numero_comprobante,
-                    number_format($venta->total, 2, '.', ''),
-                    $venta->anulada_at ? 'Anulada' : 'Vigente',
-                ]);
-            }
-
-            fclose($out);
-        }, 'reporte-ventas.csv');
+        return $this->excel->descargar(
+            'reporte-ventas.xlsx',
+            ['Fecha', 'Cliente', 'Documento', 'Almacén', 'Comprobante', 'Total (S/)', 'Estado'],
+            $filas,
+        );
     }
 
     private function comprasFiltradas(Request $request, CompraRepository $compras): Collection

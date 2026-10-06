@@ -32,7 +32,7 @@
             @can('exportar-reportes')
                 <div class="flex gap-2">
                     <a href="{{ route('reportes.stock.pdf', ['almacen_id' => $almacen_id]) }}" target="_blank" class="{{ $botonExportar }}">PDF</a>
-                    <a href="{{ route('reportes.stock.csv', ['almacen_id' => $almacen_id]) }}" class="{{ $botonExportar }}">Excel (CSV)</a>
+                    <a href="{{ route('reportes.stock.excel', ['almacen_id' => $almacen_id]) }}" class="{{ $botonExportar }}">Excel</a>
                 </div>
             @endcan
         </div>
@@ -94,7 +94,7 @@
             @can('exportar-reportes')
                 <div class="flex gap-2">
                     <a href="{{ route('reportes.movimientos.pdf', ['fecha' => $fecha, 'producto_id' => $producto_id, 'tipo' => $tipo]) }}" target="_blank" class="{{ $botonExportar }}">PDF</a>
-                    <a href="{{ route('reportes.movimientos.csv', ['fecha' => $fecha, 'producto_id' => $producto_id, 'tipo' => $tipo]) }}" class="{{ $botonExportar }}">Excel (CSV)</a>
+                    <a href="{{ route('reportes.movimientos.excel', ['fecha' => $fecha, 'producto_id' => $producto_id, 'tipo' => $tipo]) }}" class="{{ $botonExportar }}">Excel</a>
                 </div>
             @endcan
         </div>
@@ -139,7 +139,7 @@
             $registros = $esCompras ? $this->compras : $this->ventas;
             $total = $esCompras ? $this->totalCompras : $this->totalVentas;
             $rutaPdf = $esCompras ? 'reportes.compras.pdf' : 'reportes.ventas.pdf';
-            $rutaCsv = $esCompras ? 'reportes.compras.csv' : 'reportes.ventas.csv';
+            $rutaExcel = $esCompras ? 'reportes.compras.excel' : 'reportes.ventas.excel';
         @endphp
 
         <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
@@ -173,7 +173,7 @@
             @can('exportar-reportes')
                 <div class="flex gap-2">
                     <a href="{{ route($rutaPdf, $filtrosRango) }}" target="_blank" class="{{ $botonExportar }}">PDF</a>
-                    <a href="{{ route($rutaCsv, $filtrosRango) }}" class="{{ $botonExportar }}">Excel (CSV)</a>
+                    <a href="{{ route($rutaExcel, $filtrosRango) }}" class="{{ $botonExportar }}">Excel</a>
                 </div>
             @endcan
         </div>
