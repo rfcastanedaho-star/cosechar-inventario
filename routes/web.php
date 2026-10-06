@@ -61,5 +61,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/reportes/stock/csv', [ReporteController::class, 'stockCsv'])->name('reportes.stock.csv');
         Route::get('/reportes/movimientos/pdf', [ReporteController::class, 'movimientosPdf'])->name('reportes.movimientos.pdf');
         Route::get('/reportes/movimientos/csv', [ReporteController::class, 'movimientosCsv'])->name('reportes.movimientos.csv');
+        Route::get('/reportes/compras/pdf', [ReporteController::class, 'comprasPdf'])->name('reportes.compras.pdf');
+        Route::get('/reportes/compras/csv', [ReporteController::class, 'comprasCsv'])->name('reportes.compras.csv');
+        Route::get('/reportes/ventas/pdf', [ReporteController::class, 'ventasPdf'])->name('reportes.ventas.pdf');
+        Route::get('/reportes/ventas/csv', [ReporteController::class, 'ventasCsv'])->name('reportes.ventas.csv');
     });
 });

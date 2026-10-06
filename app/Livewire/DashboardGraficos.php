@@ -5,10 +5,14 @@ namespace App\Livewire;
 use App\Models\Lote;
 use App\Models\Producto;
 use App\Models\StockMovimiento;
+use App\Repositories\AlmacenRepository;
+use App\Repositories\CompraRepository;
 use App\Repositories\LoteRepository;
 use App\Repositories\ProductoRepository;
 use App\Repositories\StockMovimientoRepository;
+use App\Repositories\VentaRepository;
 use App\Services\AlertaService;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -38,19 +42,34 @@ class DashboardGraficos extends Component
     /**
      * Tarjetas de resumen del dashboard (RF-08 / vista general).
      *
-     * @return array{totalProductos: int, stockBajo: int, porVencer: int, movimientosHoy: int}
+     * @return array{totalProductos: int, stockBajo: int, porVencer: int, movimientosHoy: int, comprasMes: float, comprasMesCantidad: int, ventasMes: float, ventasMesCantidad: int}
      */
     #[Computed]
     public function resumen(): array
     {
         $alertas = app(AlertaService::class);
+        $compras = (new CompraRepository)->resumenDelMes();
+        $ventas = (new VentaRepository)->resumenDelMes();
 
         return [
             'totalProductos' => (new ProductoRepository)->conStockActual()->count(),
             'stockBajo' => $alertas->productosConStockMinimo()->count(),
             'porVencer' => $alertas->lotesPorVencer()->count(),
             'movimientosHoy' => (new StockMovimientoRepository)->contarHoy(),
+            'comprasMes' => $compras['total'],
+            'comprasMesCantidad' => $compras['cantidad'],
+            'ventasMes' => $ventas['total'],
+            'ventasMesCantidad' => $ventas['cantidad'],
         ];
+    }
+
+    /**
+     * Unidades en stock por almacén.
+     */
+    #[Computed]
+    public function stockPorAlmacen(): EloquentCollection
+    {
+        return (new AlmacenRepository)->conStock();
     }
 
     /**

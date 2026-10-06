@@ -51,6 +51,49 @@
     </div>
 
     <div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div class="flex flex-col gap-4 rounded-2xl border border-cosechar-border bg-white p-5">
+            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F1E6CE] text-[#B4812B]">
+                <x-icon name="compras" class="h-5 w-5" />
+            </span>
+            <div>
+                <p class="mb-1 text-[13px] font-medium text-cosechar-muted">Compras del mes</p>
+                <p class="font-sans text-[27px] font-semibold text-cosechar-ink">S/ {{ number_format($this->resumen['comprasMes'], 2) }}</p>
+                <p class="mt-1 text-xs text-cosechar-muted">{{ $this->resumen['comprasMesCantidad'] }} {{ Str::plural('compra', $this->resumen['comprasMesCantidad']) }} vigentes</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-4 rounded-2xl border border-cosechar-border bg-white p-5">
+            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-cosechar-olive/15 text-cosechar-olive">
+                <x-icon name="ventas" class="h-5 w-5" />
+            </span>
+            <div>
+                <p class="mb-1 text-[13px] font-medium text-cosechar-muted">Ventas del mes</p>
+                <p class="font-sans text-[27px] font-semibold text-cosechar-olive">S/ {{ number_format($this->resumen['ventasMes'], 2) }}</p>
+                <p class="mt-1 text-xs text-cosechar-muted">{{ $this->resumen['ventasMesCantidad'] }} {{ Str::plural('venta', $this->resumen['ventasMesCantidad']) }} vigentes</p>
+            </div>
+        </div>
+
+        <div class="rounded-2xl border border-cosechar-border bg-white p-5">
+            <div class="mb-3 flex items-center gap-3">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EDE7DA] text-cosechar-muted">
+                    <x-icon name="almacenes" class="h-5 w-5" />
+                </span>
+                <p class="text-[13px] font-medium text-cosechar-muted">Stock por almacén</p>
+            </div>
+            <ul class="flex flex-col divide-y divide-cosechar-border text-sm">
+                @forelse ($this->stockPorAlmacen as $almacen)
+                    <li class="flex items-center justify-between py-1.5 {{ $almacen->activo ? '' : 'text-cosechar-muted' }}">
+                        <span class="truncate">{{ $almacen->nombre }}</span>
+                        <span class="font-semibold text-cosechar-ink">{{ (int) $almacen->unidades }} uds.</span>
+                    </li>
+                @empty
+                    <li class="py-2 text-center text-xs text-cosechar-muted">Aún no hay almacenes.</li>
+                @endforelse
+            </ul>
+        </div>
+    </div>
+
+    <div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
 
         @php
             $porcentaje = $this->saludStock['porcentaje'];

@@ -2,9 +2,12 @@
 
 namespace App\Livewire;
 
-use App\Models\Lote;
+use App\Models\Almacen;
 use App\Models\Producto;
+use App\Repositories\CompraRepository;
+use App\Repositories\LoteRepository;
 use App\Repositories\StockMovimientoRepository;
+use App\Repositories\VentaRepository;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -21,10 +24,22 @@ class ReporteFiltro extends Component
 
     public string $tipo = '';
 
+    public string $desde = '';
+
+    public string $hasta = '';
+
+    public ?int $almacen_id = null;
+
     #[Computed]
     public function productos(): Collection
     {
         return Producto::orderBy('nombre')->get();
+    }
+
+    #[Computed]
+    public function almacenes(): Collection
+    {
+        return Almacen::orderBy('nombre')->get();
     }
 
     /**
@@ -33,11 +48,7 @@ class ReporteFiltro extends Component
     #[Computed]
     public function stock(): Collection
     {
-        return Lote::with('producto.categoria')
-            ->where('cantidad', '>', 0)
-            ->get()
-            ->sortBy([['producto.nombre', 'asc'], ['fecha_vencimiento', 'asc']])
-            ->values();
+        return (new LoteRepository)->conStock($this->almacen_id);
     }
 
     #[Computed]
@@ -50,9 +61,34 @@ class ReporteFiltro extends Component
         );
     }
 
+    #[Computed]
+    public function compras(): Collection
+    {
+        return (new CompraRepository)->porFiltros($this->desde ?: null, $this->hasta ?: null, $this->almacen_id);
+    }
+
+    #[Computed]
+    public function ventas(): Collection
+    {
+        return (new VentaRepository)->porFiltros($this->desde ?: null, $this->hasta ?: null, $this->almacen_id);
+    }
+
+    /** Las anuladas se listan pero no suman. */
+    #[Computed]
+    public function totalCompras(): float
+    {
+        return (float) $this->compras->whereNull('anulada_at')->sum('total');
+    }
+
+    #[Computed]
+    public function totalVentas(): float
+    {
+        return (float) $this->ventas->whereNull('anulada_at')->sum('total');
+    }
+
     public function limpiarFiltros(): void
     {
-        $this->reset(['fecha', 'producto_id', 'tipo']);
+        $this->reset(['fecha', 'producto_id', 'tipo', 'desde', 'hasta', 'almacen_id']);
     }
 
     public function render()

@@ -57,6 +57,20 @@ class LoteRepository
             ->get();
     }
 
+    /**
+     * Lotes con stock disponible, desagregados por producto y lote (RF-08),
+     * opcionalmente de un solo almacén.
+     */
+    public function conStock(?int $almacenId = null): Collection
+    {
+        return Lote::with('producto.categoria', 'almacen')
+            ->where('cantidad', '>', 0)
+            ->when($almacenId, fn ($q) => $q->where('almacen_id', $almacenId))
+            ->get()
+            ->sortBy([['producto.nombre', 'asc'], ['fecha_vencimiento', 'asc']])
+            ->values();
+    }
+
     public function contarActivos(): int
     {
         return Lote::where('cantidad', '>', 0)->count();

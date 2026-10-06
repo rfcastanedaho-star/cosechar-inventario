@@ -12,6 +12,11 @@ class AlmacenRepository
         return Almacen::withCount('lotes')->orderBy('nombre')->get();
     }
 
+    public function conStock(): Collection
+    {
+        return Almacen::withSum('lotes as unidades', 'cantidad')->orderBy('nombre')->get();
+    }
+
     public function find(int $id): ?Almacen
     {
         return Almacen::find($id);

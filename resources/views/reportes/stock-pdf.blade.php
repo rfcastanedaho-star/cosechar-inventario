@@ -22,6 +22,7 @@
             <tr>
                 <th>Producto</th>
                 <th>Categoría</th>
+                <th>Almacén</th>
                 <th>Lote</th>
                 <th>Vencimiento</th>
                 <th>Cantidad</th>
@@ -33,6 +34,7 @@
                 <tr>
                     <td>{{ $lote->producto->codigo }} — {{ $lote->producto->nombre }}</td>
                     <td>{{ $lote->producto->categoria->nombre }}</td>
+                    <td>{{ $lote->almacen?->nombre ?? 'Sin almacén' }}</td>
                     <td>{{ $lote->numero_lote }}</td>
                     <td>{{ $lote->fecha_vencimiento?->format('d/m/Y') ?? 'No aplica' }}</td>
                     <td>{{ $lote->cantidad }}</td>

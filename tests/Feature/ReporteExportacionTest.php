@@ -18,6 +18,10 @@ class ReporteExportacionTest extends TestCase
             ['reportes.stock.csv'],
             ['reportes.movimientos.pdf'],
             ['reportes.movimientos.csv'],
+            ['reportes.compras.pdf'],
+            ['reportes.compras.csv'],
+            ['reportes.ventas.pdf'],
+            ['reportes.ventas.csv'],
         ];
     }
 
