@@ -35,8 +35,6 @@ class MovimientoForm extends Component
 
     public bool $creado = false;
 
-    public ?int $ultimoLoteId = null;
-
     public function mount(): void
     {
         $this->fecha_ingreso = now()->toDateString();
@@ -125,7 +123,6 @@ class MovimientoForm extends Component
     public function updated(string $property): void
     {
         $this->creado = false;
-        $this->ultimoLoteId = null;
 
         if ($property === 'tipo') {
             $this->resetErrorBag();
@@ -143,7 +140,6 @@ class MovimientoForm extends Component
     public function guardar(StockMovimientoService $servicio, LoteRepository $lotes): void
     {
         $this->creado = false;
-        $this->ultimoLoteId = null;
 
         $data = $this->validate();
 
@@ -159,7 +155,6 @@ class MovimientoForm extends Component
 
             $servicio->registrarEntrada($lote, $data['cantidad'], auth()->user());
 
-            $this->ultimoLoteId = $lote->id;
             $this->reset(['numero_lote', 'fecha_vencimiento', 'cantidad']);
             $this->fecha_ingreso = now()->toDateString();
         } else {

@@ -26,7 +26,6 @@ class LoteFactory extends Factory
             'fecha_ingreso' => $this->faker->dateTimeBetween('-3 months', 'now')->format('Y-m-d'),
             'fecha_vencimiento' => null,
             'cantidad' => $this->faker->numberBetween(10, 100),
-            'codigo_qr' => null,
         ];
     }
 

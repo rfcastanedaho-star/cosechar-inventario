@@ -15,7 +15,7 @@ class Lote extends Model
 
     protected $fillable = [
         'producto_id', 'almacen_id', 'numero_lote', 'fecha_ingreso',
-        'fecha_vencimiento', 'cantidad', 'codigo_qr',
+        'fecha_vencimiento', 'cantidad',
     ];
 
     protected $casts = [

@@ -31,11 +31,7 @@ class LoteRepository
 
     public function create(array $data): Lote
     {
-        $lote = Lote::create($data);
-
-        $lote->update(['codigo_qr' => route('lotes.consulta', $lote)]);
-
-        return $lote;
+        return Lote::create($data);
     }
 
     public function decrementar(Lote $lote, int $cantidad): void

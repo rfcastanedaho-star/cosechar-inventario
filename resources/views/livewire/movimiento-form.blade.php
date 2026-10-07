@@ -6,17 +6,8 @@
     <h1 class="mb-6 text-lg font-semibold text-cosechar-ink">Registrar movimiento de stock</h1>
 
     @if ($creado)
-        <div class="mb-4 flex items-center justify-between rounded-md bg-green-100 px-4 py-2 text-sm text-green-800">
-            <span>Movimiento registrado correctamente.</span>
-            @if ($ultimoLoteId)
-                <a
-                    href="{{ route('lotes.etiqueta', $ultimoLoteId) }}"
-                    target="_blank"
-                    class="font-medium underline hover:text-green-900"
-                >
-                    Ver etiqueta QR
-                </a>
-            @endif
+        <div class="mb-4 rounded-md bg-green-100 px-4 py-2 text-sm text-green-800">
+            Movimiento registrado correctamente.
         </div>
     @endif
 

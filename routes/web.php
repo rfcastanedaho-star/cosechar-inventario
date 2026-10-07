@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\LoteController;
 use App\Http\Controllers\ProductoImagenController;
 use App\Http\Controllers\ReporteController;
 use App\Livewire\AlmacenForm;
@@ -28,8 +27,6 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', Login::class)->name('login');
 });
 
-Route::get('/lotes/{lote}/consulta', [LoteController::class, 'consulta'])->name('lotes.consulta');
-
 Route::post('/logout', function () {
     Auth::logout();
 
@@ -45,7 +42,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/productos/nuevo', ProductoForm::class)->name('productos.nuevo');
     Route::get('/productos/{producto}/imagen', [ProductoImagenController::class, 'mostrar'])->name('productos.imagen');
     Route::get('/movimientos/nuevo', MovimientoForm::class)->name('movimientos.nuevo');
-    Route::get('/lotes/{lote}/etiqueta', [LoteController::class, 'etiqueta'])->name('lotes.etiqueta');
     Route::get('/almacenes', AlmacenForm::class)->name('almacenes.index');
     Route::get('/almacenes/historial', AlmacenLista::class)->name('almacenes.historial');
     Route::get('/almacenes/{almacen}/editar', AlmacenForm::class)->name('almacenes.editar');
