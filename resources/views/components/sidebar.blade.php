@@ -43,17 +43,7 @@
         Registrar movimiento
     </a>
 
-    <div class="mt-auto flex items-center gap-2.5 border-t border-white/10 pt-4">
-        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cosechar-olive/30 font-sans text-[13px] font-semibold text-cosechar-cream">
-            {{ Str::of(auth()->user()->name)->explode(' ')->map(fn ($p) => mb_substr($p, 0, 1))->take(2)->join('') }}
-        </span>
-        <div class="min-w-0 leading-tight">
-            <p class="truncate text-[13px] font-semibold text-cosechar-cream">{{ auth()->user()->name }}</p>
-            <p class="text-[11px] uppercase tracking-wide text-cosechar-cream/55">{{ str_replace('_', ' ', auth()->user()->rol) }}</p>
-        </div>
-    </div>
-
-    <form method="POST" action="{{ route('logout') }}" class="mt-1">
+    <form method="POST" action="{{ route('logout') }}" class="mt-auto border-t border-white/10 pt-4">
         @csrf
         <button type="submit" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-cosechar-cream/70 hover:bg-white/5">
             <x-icon name="logout" class="h-[18px] w-[18px]" />
