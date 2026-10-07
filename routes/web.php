@@ -52,8 +52,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/proveedores/{proveedor}/editar', ProveedorForm::class)->name('proveedores.editar');
     Route::get('/compras', CompraLista::class)->name('compras.index');
     Route::get('/compras/nueva', CompraForm::class)->name('compras.nueva');
-    Route::get('/ventas', VentaLista::class)->name('ventas.index');
-    Route::get('/ventas/nueva', VentaForm::class)->name('ventas.nueva');
+    Route::get('/ventas', VentaForm::class)->name('ventas.index');
+    Route::get('/ventas/historial', VentaLista::class)->name('ventas.historial');
     Route::get('/reportes', ReporteFiltro::class)->name('reportes');
 
     Route::middleware('can:exportar-reportes')->group(function () {

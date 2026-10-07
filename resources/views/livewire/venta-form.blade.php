@@ -1,10 +1,15 @@
 <div class="mx-auto max-w-4xl p-8">
-    <h1 class="mb-6 text-lg font-semibold text-cosechar-ink">Registrar venta</h1>
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-lg font-semibold text-cosechar-ink">Registrar venta</h1>
+        <a href="{{ route('ventas.historial') }}" class="rounded-md border border-cosechar-border bg-white px-4 py-2 text-sm font-medium text-cosechar-ink hover:bg-cosechar-cream">
+            Ver historial de ventas
+        </a>
+    </div>
 
     @if ($creado)
         <div class="mb-4 flex items-center justify-between rounded-md bg-green-100 px-4 py-2 text-sm text-green-800">
             <span>Venta registrada correctamente. El stock ya fue actualizado.</span>
-            <a href="{{ route('ventas.index') }}" class="font-medium underline hover:text-green-900">Ver ventas</a>
+            <a href="{{ route('ventas.historial') }}" class="font-medium underline hover:text-green-900">Ver historial</a>
         </div>
     @endif
 
