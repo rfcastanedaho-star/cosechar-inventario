@@ -33,16 +33,6 @@
         @endforeach
     </nav>
 
-    <a
-        href="{{ route('movimientos.nuevo') }}"
-        class="mt-5 flex items-center gap-3 rounded-xl border border-dashed border-cosechar-cream/25 px-3 py-3 text-sm font-medium text-cosechar-cream/90 hover:bg-white/5"
-    >
-        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10">
-            <x-icon name="plus" class="h-[18px] w-[18px]" />
-        </span>
-        Registrar movimiento
-    </a>
-
     <form method="POST" action="{{ route('logout') }}" class="mt-auto border-t border-white/10 pt-4">
         @csrf
         <button type="submit" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-cosechar-cream/70 hover:bg-white/5">
