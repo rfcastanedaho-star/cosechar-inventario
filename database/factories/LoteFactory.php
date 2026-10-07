@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Almacen;
 use App\Models\Lote;
 use App\Models\Producto;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -21,7 +20,6 @@ class LoteFactory extends Factory
     {
         return [
             'producto_id' => Producto::factory(),
-            'almacen_id' => Almacen::factory(),
             'numero_lote' => strtoupper($this->faker->unique()->bothify('LOTE-####')),
             'fecha_ingreso' => $this->faker->dateTimeBetween('-3 months', 'now')->format('Y-m-d'),
             'fecha_vencimiento' => null,

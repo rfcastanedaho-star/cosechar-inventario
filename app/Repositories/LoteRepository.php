@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Models\Lote;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
 
 class LoteRepository
 {
@@ -70,23 +69,6 @@ class LoteRepository
             ->get()
             ->sortBy([['producto.nombre', 'asc'], ['fecha_vencimiento', 'asc']])
             ->values();
-    }
-
-    /**
-     * Unidades disponibles de un producto agrupadas por almacén.
-     *
-     * @return Collection<int, Lote> cada elemento trae almacen_id, unidades y la relación almacen
-     */
-    public function stockPorAlmacen(int $productoId): Collection
-    {
-        return Lote::with('almacen')
-            ->select('almacen_id', DB::raw('SUM(cantidad) as unidades'))
-            ->where('producto_id', $productoId)
-            ->where('cantidad', '>', 0)
-            ->whereNotNull('almacen_id')
-            ->groupBy('almacen_id')
-            ->orderBy('almacen_id')
-            ->get();
     }
 
     public function contarActivos(): int

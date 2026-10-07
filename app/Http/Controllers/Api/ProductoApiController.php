@@ -4,16 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductoResource;
-use App\Repositories\LoteRepository;
 use App\Repositories\ProductoRepository;
 use Illuminate\Http\JsonResponse;
 
 class ProductoApiController extends Controller
 {
-    public function __construct(
-        private ProductoRepository $productos,
-        private LoteRepository $lotes,
-    ) {}
+    public function __construct(private ProductoRepository $productos) {}
 
     public function index(): JsonResponse
     {
@@ -36,11 +32,6 @@ class ProductoApiController extends Controller
                 'codigo' => $producto->codigo,
                 'stock_actual' => (int) ($producto->stock_actual ?? 0),
                 'stock_minimo' => $producto->stock_minimo,
-                'por_almacen' => $this->lotes->stockPorAlmacen($producto->id)->map(fn ($grupo) => [
-                    'almacen_id' => $grupo->almacen_id,
-                    'almacen' => $grupo->almacen->nombre,
-                    'stock' => (int) $grupo->unidades,
-                ])->values(),
             ],
         ]);
     }
