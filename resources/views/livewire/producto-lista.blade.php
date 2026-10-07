@@ -6,12 +6,24 @@
         </a>
     </div>
 
-    @if (trim($buscar) !== '')
-        <p class="mb-4 text-sm text-cosechar-muted">
-            {{ $this->productos->count() }} resultado(s) para «{{ $buscar }}» ·
-            <a href="{{ route('productos.index') }}" class="font-medium text-cosechar-olive underline">Quitar búsqueda</a>
-        </p>
-    @endif
+    <div class="mb-4 flex items-center gap-3">
+        <div class="flex w-full max-w-md items-center gap-2 rounded-full border border-cosechar-border bg-white px-4 py-2 shadow-sm focus-within:border-cosechar-olive">
+            <x-icon name="search" class="h-4 w-4 shrink-0 text-cosechar-muted" />
+            <input
+                type="search"
+                wire:model.live.debounce.300ms="buscar"
+                placeholder="Buscar producto por nombre o código..."
+                class="w-full border-0 bg-transparent p-0 text-sm text-cosechar-ink placeholder:text-cosechar-muted focus:ring-0"
+            >
+        </div>
+
+        @if (trim($buscar) !== '')
+            <p class="text-sm text-cosechar-muted">
+                {{ $this->productos->count() }} resultado(s) ·
+                <button type="button" wire:click="$set('buscar', '')" class="font-medium text-cosechar-olive underline">Quitar búsqueda</button>
+            </p>
+        @endif
+    </div>
 
     <div class="overflow-hidden rounded-2xl border border-cosechar-border bg-white">
         <table class="w-full text-sm">
@@ -63,7 +75,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-6 text-center text-cosechar-muted">No hay productos registrados.</td>
+                        <td colspan="6" class="px-4 py-6 text-center text-cosechar-muted">{{ trim($buscar) !== '' ? 'No se encontraron productos con esa búsqueda.' : 'No hay productos registrados.' }}</td>
                     </tr>
                 @endforelse
             </tbody>

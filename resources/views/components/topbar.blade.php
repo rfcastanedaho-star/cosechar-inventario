@@ -1,15 +1,4 @@
-<div class="flex items-center justify-between gap-4 border-b border-cosechar-border bg-white px-8 py-3">
-
-    <form method="GET" action="{{ route('productos.index') }}" class="flex w-full max-w-md items-center gap-2 rounded-full border border-cosechar-border bg-cosechar-cream px-4 py-2">
-        <x-icon name="search" class="h-4 w-4 shrink-0 text-cosechar-muted" />
-        <input
-            type="search"
-            name="buscar"
-            value="{{ request()->query('buscar') }}"
-            placeholder="Buscar producto por nombre o código..."
-            class="w-full border-0 bg-transparent p-0 text-sm text-cosechar-ink placeholder:text-cosechar-muted focus:ring-0"
-        >
-    </form>
+<div class="flex items-center justify-end gap-4 border-b border-cosechar-border bg-white px-8 py-3">
 
     <div class="flex shrink-0 items-center gap-3">
         <livewire:notificaciones-bell />

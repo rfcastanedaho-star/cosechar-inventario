@@ -16,7 +16,7 @@ class ProductoLista extends Component
     /** @var array<int, int> */
     public array $stockMinimoEdit = [];
 
-    #[Url(as: 'buscar', history: true)]
+    #[Url(as: 'buscar')]
     public string $buscar = '';
 
     public function mount(): void
