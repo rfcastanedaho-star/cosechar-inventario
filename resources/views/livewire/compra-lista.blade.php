@@ -1,7 +1,7 @@
 <div class="mx-auto max-w-6xl p-8">
     <div class="mb-6 flex items-center justify-between">
-        <h1 class="text-lg font-semibold text-cosechar-ink">Compras</h1>
-        <a href="{{ route('compras.nueva') }}" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90">
+        <h1 class="text-lg font-semibold text-cosechar-ink">Historial de compras</h1>
+        <a href="{{ route('compras.index') }}" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90">
             Registrar compra
         </a>
     </div>

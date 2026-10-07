@@ -44,14 +44,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/productos/nuevo', ProductoForm::class)->name('productos.nuevo');
     Route::get('/movimientos/nuevo', MovimientoForm::class)->name('movimientos.nuevo');
     Route::get('/lotes/{lote}/etiqueta', [LoteController::class, 'etiqueta'])->name('lotes.etiqueta');
-    Route::get('/almacenes', AlmacenLista::class)->name('almacenes.index');
-    Route::get('/almacenes/nuevo', AlmacenForm::class)->name('almacenes.nuevo');
+    Route::get('/almacenes', AlmacenForm::class)->name('almacenes.index');
+    Route::get('/almacenes/historial', AlmacenLista::class)->name('almacenes.historial');
     Route::get('/almacenes/{almacen}/editar', AlmacenForm::class)->name('almacenes.editar');
     Route::get('/proveedores', ProveedorForm::class)->name('proveedores.index');
     Route::get('/proveedores/historial', ProveedorLista::class)->name('proveedores.historial');
     Route::get('/proveedores/{proveedor}/editar', ProveedorForm::class)->name('proveedores.editar');
-    Route::get('/compras', CompraLista::class)->name('compras.index');
-    Route::get('/compras/nueva', CompraForm::class)->name('compras.nueva');
+    Route::get('/compras', CompraForm::class)->name('compras.index');
+    Route::get('/compras/historial', CompraLista::class)->name('compras.historial');
     Route::get('/ventas', VentaForm::class)->name('ventas.index');
     Route::get('/ventas/historial', VentaLista::class)->name('ventas.historial');
     Route::get('/reportes', ReporteFiltro::class)->name('reportes');

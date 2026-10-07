@@ -1,9 +1,15 @@
 <div class="mx-auto max-w-xl p-8">
-    <h1 class="mb-6 text-lg font-semibold text-cosechar-ink">{{ $this->editando ? 'Editar almacén' : 'Registrar almacén' }}</h1>
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-lg font-semibold text-cosechar-ink">{{ $this->editando ? 'Editar almacén' : 'Registrar almacén' }}</h1>
+        <a href="{{ route('almacenes.historial') }}" class="rounded-md border border-cosechar-border bg-white px-4 py-2 text-sm font-medium text-cosechar-ink hover:bg-cosechar-cream">
+            Ver historial de almacenes
+        </a>
+    </div>
 
     @if ($creado)
-        <div class="mb-4 rounded-md bg-green-100 px-4 py-2 text-sm text-green-800">
-            {{ $this->editando ? 'Cambios guardados correctamente.' : 'Almacén registrado correctamente.' }}
+        <div class="mb-4 flex items-center justify-between rounded-md bg-green-100 px-4 py-2 text-sm text-green-800">
+            <span>{{ $this->editando ? 'Cambios guardados correctamente.' : 'Almacén registrado correctamente.' }}</span>
+            <a href="{{ route('almacenes.historial') }}" class="font-medium underline hover:text-green-900">Ver historial</a>
         </div>
     @endif
 
@@ -51,7 +57,7 @@
             @enderror
         </div>
 
-        <div class="flex items-center gap-3">
+        <div>
             <button
                 type="submit"
                 wire:loading.attr="disabled"
@@ -61,10 +67,6 @@
                 <span wire:loading.remove wire:target="guardar">{{ $this->editando ? 'Guardar cambios' : 'Guardar almacén' }}</span>
                 <span wire:loading wire:target="guardar">Guardando...</span>
             </button>
-
-            @if ($this->editando)
-                <a href="{{ route('almacenes.index') }}" class="text-sm text-cosechar-muted underline hover:text-cosechar-ink">Volver a la lista</a>
-            @endif
         </div>
     </form>
 </div>

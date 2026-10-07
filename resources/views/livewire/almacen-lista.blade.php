@@ -1,7 +1,7 @@
 <div class="mx-auto max-w-5xl p-8">
     <div class="mb-6 flex items-center justify-between">
-        <h1 class="text-lg font-semibold text-cosechar-ink">Almacenes</h1>
-        <a href="{{ route('almacenes.nuevo') }}" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90">
+        <h1 class="text-lg font-semibold text-cosechar-ink">Historial de almacenes</h1>
+        <a href="{{ route('almacenes.index') }}" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90">
             Registrar almacén
         </a>
     </div>
