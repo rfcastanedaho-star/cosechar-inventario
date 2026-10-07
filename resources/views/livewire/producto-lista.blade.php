@@ -1,4 +1,20 @@
-<div class="mx-auto max-w-5xl p-8">
+<div class="mx-auto max-w-5xl p-8" x-data>
+    <input
+        type="file"
+        class="hidden"
+        x-ref="archivoFoto"
+        wire:model="fotoNueva"
+        accept="image/jpeg,image/png,image/webp"
+    >
+
+    @error('fotoNueva')
+        <div class="mb-4 rounded-md bg-red-100 px-4 py-2 text-sm text-red-800">{{ $message }}</div>
+    @enderror
+
+    <div wire:loading wire:target="fotoNueva" class="mb-4 rounded-md bg-cosechar-olive/10 px-4 py-2 text-sm text-cosechar-olive">
+        Subiendo foto...
+    </div>
+
     <div class="mb-6 flex items-center justify-between">
         <h1 class="text-lg font-semibold text-cosechar-ink">Productos</h1>
         <a href="{{ route('productos.nuevo') }}" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90">
@@ -29,6 +45,7 @@
         <table class="w-full text-sm">
             <thead class="bg-cosechar-cream text-left text-xs uppercase text-cosechar-muted">
                 <tr>
+                    <th class="px-4 py-3">Foto</th>
                     <th class="px-4 py-3">Código</th>
                     <th class="px-4 py-3">Producto</th>
                     <th class="px-4 py-3">Categoría</th>
@@ -42,6 +59,29 @@
             <tbody class="divide-y divide-cosechar-border">
                 @forelse ($this->productos as $producto)
                     <tr wire:key="producto-{{ $producto->id }}">
+                        <td class="px-4 py-3">
+                            <div class="flex w-16 flex-col items-center gap-1">
+                                <div class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-cosechar-border bg-cosechar-cream text-cosechar-muted">
+                                    @if ($producto->imagen_version)
+                                        <img
+                                            src="{{ route('productos.imagen', $producto) }}?v={{ strtotime($producto->imagen_version) }}"
+                                            alt="{{ $producto->nombre }}"
+                                            loading="lazy"
+                                            class="h-full w-full object-cover"
+                                        >
+                                    @else
+                                        <x-icon name="productos" class="h-5 w-5" />
+                                    @endif
+                                </div>
+                                <button
+                                    type="button"
+                                    @click="$wire.productoFotoId = {{ $producto->id }}; $refs.archivoFoto.click()"
+                                    class="text-[11px] font-medium text-cosechar-olive underline hover:text-cosechar-forest"
+                                >
+                                    {{ $producto->imagen_version ? 'Cambiar' : 'Agregar' }}
+                                </button>
+                            </div>
+                        </td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $producto->codigo }}</td>
                         <td class="px-4 py-3 font-medium text-cosechar-ink">{{ $producto->nombre }}</td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $producto->categoria->nombre }}</td>
@@ -75,7 +115,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-6 text-center text-cosechar-muted">{{ trim($buscar) !== '' ? 'No se encontraron productos con esa búsqueda.' : 'No hay productos registrados.' }}</td>
+                        <td colspan="7" class="px-4 py-6 text-center text-cosechar-muted">{{ trim($buscar) !== '' ? 'No se encontraron productos con esa búsqueda.' : 'No hay productos registrados.' }}</td>
                     </tr>
                 @endforelse
             </tbody>

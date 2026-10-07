@@ -9,6 +9,33 @@
 
     <form wire:submit="guardar" class="flex flex-col gap-4">
         <div>
+            <label for="imagen" class="mb-1 block text-sm font-medium text-cosechar-ink">Foto del producto <span class="font-normal text-cosechar-muted">(opcional)</span></label>
+            <div class="flex items-center gap-4">
+                <div class="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-cosechar-border bg-white text-cosechar-muted">
+                    @if ($imagen && ! $errors->has('imagen') && $imagen->isPreviewable())
+                        <img src="{{ $imagen->temporaryUrl() }}" alt="Vista previa" class="h-full w-full object-cover">
+                    @else
+                        <x-icon name="productos" class="h-8 w-8" />
+                    @endif
+                </div>
+                <div class="min-w-0">
+                    <input
+                        type="file"
+                        id="imagen"
+                        wire:model="imagen"
+                        accept="image/jpeg,image/png,image/webp"
+                        class="block w-full text-sm text-cosechar-muted file:mr-3 file:rounded-md file:border file:border-cosechar-border file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-cosechar-ink hover:file:bg-cosechar-cream"
+                    >
+                    <p class="mt-1 text-xs text-cosechar-muted">JPG, PNG o WebP, hasta 4 MB. Se ajusta sola para que pese poco.</p>
+                    <p wire:loading wire:target="imagen" class="mt-1 text-xs text-cosechar-olive">Subiendo foto...</p>
+                    @error('imagen')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
+        <div>
             <label for="codigo" class="mb-1 block text-sm font-medium text-cosechar-ink">Código</label>
             <input
                 type="text"

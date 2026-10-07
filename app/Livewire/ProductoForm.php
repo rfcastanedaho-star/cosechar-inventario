@@ -4,15 +4,23 @@ namespace App\Livewire;
 
 use App\Models\Categoria;
 use App\Repositories\ProductoRepository;
+use App\Services\ImagenProductoService;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
 class ProductoForm extends Component
 {
+    use WithFileUploads;
+
+    /** @var TemporaryUploadedFile|null */
+    public $imagen = null;
+
     public string $codigo = '';
 
     public string $nombre = '';
@@ -51,6 +59,7 @@ class ProductoForm extends Component
             'stock_minimo' => ['required', 'integer', 'min:0'],
             'precio' => ['required', 'numeric', 'min:0'],
             'maneja_vencimiento' => ['boolean'],
+            'imagen' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ];
     }
 
@@ -66,6 +75,9 @@ class ProductoForm extends Component
             'stock_minimo.required' => 'El stock mínimo es obligatorio.',
             'precio.required' => 'El precio es obligatorio.',
             'precio.numeric' => 'El precio debe ser un número válido.',
+            'imagen.image' => 'El archivo debe ser una imagen.',
+            'imagen.mimes' => 'La foto debe ser JPG, PNG o WebP.',
+            'imagen.max' => 'La foto no puede pesar más de 4 MB.',
         ];
     }
 
@@ -83,13 +95,18 @@ class ProductoForm extends Component
         $this->validateOnly($property);
     }
 
-    public function guardar(ProductoRepository $productos): void
+    public function guardar(ProductoRepository $productos, ImagenProductoService $imagenes): void
     {
         $data = $this->validate();
+        unset($data['imagen']);
 
-        $productos->create($data);
+        $producto = $productos->create($data);
 
-        $this->reset(['codigo', 'nombre', 'categoria_id', 'unidad_medida', 'stock_minimo', 'precio', 'maneja_vencimiento']);
+        if ($this->imagen) {
+            $imagenes->guardar($producto, $this->imagen);
+        }
+
+        $this->reset(['codigo', 'nombre', 'categoria_id', 'unidad_medida', 'stock_minimo', 'precio', 'maneja_vencimiento', 'imagen']);
         $this->creado = true;
     }
 

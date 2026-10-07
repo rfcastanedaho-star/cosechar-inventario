@@ -36,7 +36,10 @@ class ProductoRepository
 
     public function conStockActual(): Collection
     {
-        return Producto::with('categoria')->withSum('lotes as stock_actual', 'cantidad')->get();
+        return Producto::with('categoria')
+            ->withSum('lotes as stock_actual', 'cantidad')
+            ->withMax('imagen as imagen_version', 'updated_at')
+            ->get();
     }
 
     public function conStockActualPorId(int $id): ?Producto

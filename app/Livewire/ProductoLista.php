@@ -4,15 +4,25 @@ namespace App\Livewire;
 
 use App\Models\Producto;
 use App\Repositories\ProductoRepository;
+use App\Services\ImagenProductoService;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
 class ProductoLista extends Component
 {
+    use WithFileUploads;
+
+    /** @var TemporaryUploadedFile|null */
+    public $fotoNueva = null;
+
+    public ?int $productoFotoId = null;
+
     /** @var array<int, int> */
     public array $stockMinimoEdit = [];
 
@@ -36,6 +46,28 @@ class ProductoLista extends Component
             ))
             ->sortBy('nombre')
             ->values();
+    }
+
+    /** Se ejecuta apenas termina de subirse el archivo elegido desde la fila de un producto. */
+    public function updatedFotoNueva(ImagenProductoService $imagenes): void
+    {
+        if ($this->productoFotoId === null || $this->fotoNueva === null) {
+            return;
+        }
+
+        $this->validate(
+            ['fotoNueva' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096']],
+            [
+                'fotoNueva.image' => 'El archivo debe ser una imagen.',
+                'fotoNueva.mimes' => 'La foto debe ser JPG, PNG o WebP.',
+                'fotoNueva.max' => 'La foto no puede pesar más de 4 MB.',
+            ],
+        );
+
+        $imagenes->guardar(Producto::findOrFail($this->productoFotoId), $this->fotoNueva);
+
+        $this->reset(['fotoNueva', 'productoFotoId']);
+        unset($this->productos);
     }
 
     public function guardarStockMinimo(int $productoId): void

@@ -15,8 +15,9 @@ RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist --opti
 
 FROM php:8.3-cli-alpine
 RUN apk add --no-cache \
-        libzip-dev libpng-dev oniguruma-dev icu-dev \
-    && docker-php-ext-install pdo_mysql zip gd bcmath intl
+        libzip-dev libpng-dev libjpeg-turbo-dev libwebp-dev freetype-dev oniguruma-dev icu-dev \
+    && docker-php-ext-configure gd --with-jpeg --with-webp --with-freetype \
+    && docker-php-ext-install pdo_mysql zip gd bcmath intl exif
 
 WORKDIR /var/www/html
 COPY . .
