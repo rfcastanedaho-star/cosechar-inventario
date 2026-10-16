@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class CompraDetalle extends Model
 {
     protected $table = 'compra_detalles';
 
-    protected $fillable = ['compra_id', 'producto_id', 'lote_id', 'cantidad', 'costo_unitario'];
+    protected $fillable = ['compra_id', 'lote_id', 'cantidad', 'costo_unitario'];
 
     protected $casts = [
         'costo_unitario' => 'decimal:2',
@@ -20,9 +21,9 @@ class CompraDetalle extends Model
         return $this->belongsTo(Compra::class);
     }
 
-    public function producto(): BelongsTo
+    public function producto(): HasOneThrough
     {
-        return $this->belongsTo(Producto::class);
+        return $this->hasOneThrough(Producto::class, Lote::class, 'id', 'id', 'lote_id', 'producto_id');
     }
 
     public function lote(): BelongsTo

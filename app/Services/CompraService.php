@@ -49,7 +49,6 @@ class CompraService
                 $this->movimientos->registrarEntrada($lote, (int) $linea['cantidad'], $responsable);
 
                 $compra->detalles()->create([
-                    'producto_id' => $linea['producto_id'],
                     'lote_id' => $lote->id,
                     'cantidad' => $linea['cantidad'],
                     'costo_unitario' => $linea['costo_unitario'],
