@@ -60,6 +60,7 @@ class SinCodigosQrTest extends TestCase
             ->set('almacen_id', $almacen->id)
             ->set('numero_lote', 'L-SIN-QR')
             ->set('cantidad', 5)
+            ->set('motivo', 'saldo_inicial')
             ->call('guardar')
             ->assertHasNoErrors()
             ->assertDontSee('etiqueta QR');

@@ -28,6 +28,7 @@ class MovimientoFormAlmacenTest extends TestCase
             ->set('almacen_id', $almacen->id)
             ->set('numero_lote', 'L-ENT-1')
             ->set('cantidad', 25)
+            ->set('motivo', 'saldo_inicial')
             ->call('guardar')
             ->assertHasNoErrors();
 

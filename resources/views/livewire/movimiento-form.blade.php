@@ -26,6 +26,13 @@
         >
             Salida
         </button>
+        <button
+            type="button"
+            wire:click="$set('tipo', 'transferencia')"
+            class="flex-1 rounded-lg py-2 {{ $tipo === 'transferencia' ? 'bg-white text-cosechar-ink shadow-sm' : 'text-cosechar-muted' }}"
+        >
+            Transferencia
+        </button>
     </div>
 
     <form wire:submit="guardar" class="flex flex-col gap-4">
@@ -63,7 +70,37 @@
             @endif
         </div>
 
-        @if ($tipo === 'entrada')
+        @if ($tipo === 'transferencia')
+            <div>
+                <label for="almacen_destino_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Almacén de destino</label>
+                <select id="almacen_destino_id" wire:model.live="almacen_destino_id" class="{{ $campo }}">
+                    <option value="">Seleccione un almacén</option>
+                    @foreach ($this->almacenes as $almacen)
+                        @if ($almacen->id !== $almacen_id)
+                            <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
+                        @endif
+                    @endforeach
+                </select>
+                @error('almacen_destino_id')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+                <p class="mt-1 text-sm text-cosechar-muted">
+                    Sale del almacén de origen (por vencimiento más próximo) y entra al de destino con el mismo lote.
+                </p>
+            </div>
+        @elseif ($tipo === 'entrada')
+            <div>
+                <label for="motivo" class="mb-1 block text-sm font-medium text-cosechar-ink">Motivo de la entrada</label>
+                <select id="motivo" wire:model.blur="motivo" class="{{ $campo }}">
+                    <option value="">Seleccione un motivo</option>
+                    <option value="saldo_inicial">Saldo inicial</option>
+                    <option value="ajuste_inventario">Ajuste por conteo (sobrante)</option>
+                </select>
+                @error('motivo')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
             <div>
                 <label for="numero_lote" class="mb-1 block text-sm font-medium text-cosechar-ink">Número de lote</label>
                 <input type="text" id="numero_lote" wire:model.live="numero_lote" class="{{ $campo }}">
@@ -105,11 +142,9 @@
                 <label for="motivo" class="mb-1 block text-sm font-medium text-cosechar-ink">Motivo de la salida</label>
                 <select id="motivo" wire:model.blur="motivo" class="{{ $campo }}">
                     <option value="">Seleccione un motivo</option>
-                    <option value="venta">Venta</option>
                     <option value="merma">Merma</option>
                     <option value="producto_danado">Producto dañado</option>
-                    <option value="ajuste_inventario">Ajuste de inventario</option>
-                    <option value="transferencia">Transferencia</option>
+                    <option value="ajuste_inventario">Ajuste por conteo (faltante)</option>
                 </select>
                 @error('motivo')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

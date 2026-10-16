@@ -20,6 +20,14 @@ class LoteRepository
             ->first();
     }
 
+    public function buscarEnAlmacen(int $productoId, int $almacenId, string $numeroLote): ?Lote
+    {
+        return Lote::where('producto_id', $productoId)
+            ->where('almacen_id', $almacenId)
+            ->where('numero_lote', $numeroLote)
+            ->first();
+    }
+
     public function ordenadosParaSalida(int $productoId, bool $manejaVencimiento): Collection
     {
         $query = Lote::where('producto_id', $productoId)->where('cantidad', '>', 0);
