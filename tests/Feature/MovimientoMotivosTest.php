@@ -89,7 +89,48 @@ class MovimientoMotivosTest extends TestCase
             ->assertDontSee('value="transferencia"', false);
     }
 
-    public function test_la_entrada_exige_un_motivo(): void
+    public function test_la_entrada_suma_al_lote_existente_con_motivo_ajuste_por_conteo(): void
+    {
+        $almacen = Almacen::factory()->create();
+        $producto = Producto::factory()->create(['maneja_vencimiento' => false]);
+        $lote = Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $almacen->id, 'cantidad' => 10]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(MovimientoForm::class)
+            ->set('tipo', 'entrada')
+            ->set('producto_id', $producto->id)
+            ->set('almacen_id', $almacen->id)
+            ->set('lote_id', $lote->id)
+            ->set('cantidad', 4)
+            ->call('guardar')
+            ->assertHasNoErrors()
+            ->assertSet('creado', true);
+
+        $this->assertSame(14, $lote->fresh()->cantidad);
+        $this->assertDatabaseHas('stock_movimientos', [
+            'lote_id' => $lote->id, 'tipo' => 'entrada', 'cantidad' => 4, 'motivo' => 'ajuste_inventario',
+        ]);
+    }
+
+    public function test_la_entrada_manual_no_crea_lotes_nuevos(): void
+    {
+        $almacen = Almacen::factory()->create();
+        $producto = Producto::factory()->create(['maneja_vencimiento' => false]);
+        $lote = Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $almacen->id, 'cantidad' => 10]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(MovimientoForm::class)
+            ->set('tipo', 'entrada')
+            ->set('producto_id', $producto->id)
+            ->set('almacen_id', $almacen->id)
+            ->set('lote_id', $lote->id)
+            ->set('cantidad', 4)
+            ->call('guardar');
+
+        $this->assertSame(1, Lote::count());
+    }
+
+    public function test_la_entrada_exige_elegir_un_lote(): void
     {
         $almacen = Almacen::factory()->create();
         $producto = Producto::factory()->create(['maneja_vencimiento' => false]);
@@ -99,91 +140,73 @@ class MovimientoMotivosTest extends TestCase
             ->set('tipo', 'entrada')
             ->set('producto_id', $producto->id)
             ->set('almacen_id', $almacen->id)
-            ->set('numero_lote', 'L-1')
-            ->set('cantidad', 5)
+            ->set('cantidad', 4)
             ->call('guardar')
-            ->assertHasErrors(['motivo' => 'required']);
+            ->assertHasErrors(['lote_id' => 'required']);
 
-        $this->assertDatabaseCount('lotes', 0);
+        $this->assertDatabaseCount('stock_movimientos', 0);
     }
 
-    #[DataProvider('motivosDeEntradaValidos')]
-    public function test_la_entrada_acepta_saldo_inicial_y_ajuste_por_conteo(string $motivo): void
-    {
-        $almacen = Almacen::factory()->create();
-        $producto = Producto::factory()->create(['maneja_vencimiento' => false]);
-
-        Livewire::actingAs(User::factory()->create())
-            ->test(MovimientoForm::class)
-            ->set('tipo', 'entrada')
-            ->set('producto_id', $producto->id)
-            ->set('almacen_id', $almacen->id)
-            ->set('numero_lote', 'L-2')
-            ->set('cantidad', 5)
-            ->set('motivo', $motivo)
-            ->call('guardar')
-            ->assertHasNoErrors();
-
-        $this->assertDatabaseHas('stock_movimientos', ['tipo' => 'entrada', 'motivo' => $motivo, 'cantidad' => 5]);
-    }
-
-    /** @return array<string, array{string}> */
-    public static function motivosDeEntradaValidos(): array
-    {
-        return [
-            'saldo inicial' => ['saldo_inicial'],
-            'ajuste por conteo' => ['ajuste_inventario'],
-        ];
-    }
-
-    #[DataProvider('motivosDeEntradaInvalidos')]
-    public function test_la_entrada_rechaza_otros_motivos(string $motivo): void
-    {
-        $almacen = Almacen::factory()->create();
-        $producto = Producto::factory()->create(['maneja_vencimiento' => false]);
-
-        Livewire::actingAs(User::factory()->create())
-            ->test(MovimientoForm::class)
-            ->set('tipo', 'entrada')
-            ->set('producto_id', $producto->id)
-            ->set('almacen_id', $almacen->id)
-            ->set('numero_lote', 'L-3')
-            ->set('cantidad', 5)
-            ->set('motivo', $motivo)
-            ->call('guardar')
-            ->assertHasErrors(['motivo']);
-    }
-
-    /** @return array<string, array{string}> */
-    public static function motivosDeEntradaInvalidos(): array
-    {
-        return [
-            'donacion' => ['donacion'],
-            'devolucion' => ['devolucion'],
-            'merma' => ['merma'],
-        ];
-    }
-
-    public function test_la_entrada_permite_el_mismo_numero_de_lote_en_otro_almacen_pero_no_en_el_mismo(): void
+    public function test_la_entrada_rechaza_un_lote_de_otro_producto_o_de_otro_almacen(): void
     {
         $norte = Almacen::factory()->create();
         $sur = Almacen::factory()->create();
         $producto = Producto::factory()->create(['maneja_vencimiento' => false]);
-        Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $norte->id, 'numero_lote' => 'L-MISMO']);
+        $otroProducto = Producto::factory()->create(['maneja_vencimiento' => false]);
+        $loteEnSur = Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $sur->id, 'cantidad' => 10]);
+        $loteAjeno = Lote::factory()->for($otroProducto, 'producto')->create(['almacen_id' => $norte->id, 'cantidad' => 10]);
 
         $componente = Livewire::actingAs(User::factory()->create())
             ->test(MovimientoForm::class)
             ->set('tipo', 'entrada')
             ->set('producto_id', $producto->id)
-            ->set('numero_lote', 'L-MISMO')
-            ->set('cantidad', 5)
-            ->set('motivo', 'saldo_inicial');
+            ->set('almacen_id', $norte->id)
+            ->set('cantidad', 4);
 
-        $componente->set('almacen_id', $norte->id)->call('guardar')->assertHasErrors(['numero_lote' => 'unique']);
+        $componente->set('lote_id', $loteEnSur->id)->call('guardar')->assertHasErrors(['lote_id']);
+        $componente->set('lote_id', $loteAjeno->id)->call('guardar')->assertHasErrors(['lote_id']);
 
-        $componente->set('almacen_id', $sur->id)->call('guardar')->assertHasNoErrors();
+        $this->assertSame(10, $loteEnSur->fresh()->cantidad);
+        $this->assertSame(10, $loteAjeno->fresh()->cantidad);
+    }
 
-        $this->assertSame(2, Lote::where('numero_lote', 'L-MISMO')->count());
+    public function test_al_cambiar_de_producto_o_almacen_se_limpia_el_lote_elegido(): void
+    {
+        $almacen = Almacen::factory()->create();
+        $producto = Producto::factory()->create(['maneja_vencimiento' => false]);
+        $otro = Producto::factory()->create(['maneja_vencimiento' => false]);
+        $lote = Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $almacen->id, 'cantidad' => 10]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(MovimientoForm::class)
+            ->set('tipo', 'entrada')
+            ->set('producto_id', $producto->id)
+            ->set('almacen_id', $almacen->id)
+            ->set('lote_id', $lote->id)
+            ->set('producto_id', $otro->id)
+            ->assertSet('lote_id', null);
+    }
+
+    public function test_la_pantalla_de_entrada_lista_los_lotes_y_avisa_si_no_hay(): void
+    {
+        $almacen = Almacen::factory()->create();
+        $conLotes = Producto::factory()->create(['maneja_vencimiento' => false]);
+        $sinLotes = Producto::factory()->create(['maneja_vencimiento' => false]);
+        Lote::factory()->for($conLotes, 'producto')->create(['almacen_id' => $almacen->id, 'numero_lote' => 'L-VISIBLE', 'cantidad' => 7]);
+
+        $componente = Livewire::actingAs(User::factory()->create())
+            ->test(MovimientoForm::class)
+            ->set('tipo', 'entrada')
+            ->set('almacen_id', $almacen->id)
+            ->set('producto_id', $conLotes->id)
+            ->assertSee('L-VISIBLE')
+            ->assertSee('Ajuste por conteo')
+            ->assertDontSee('Saldo inicial')
+            ->assertDontSee('Fecha de vencimiento');
+
+        $componente->set('producto_id', $sinLotes->id)
+            ->assertSee('no tiene lotes en este almacén')
+            ->assertSee('Compras');
     }
 
     public function test_la_pestana_transferencia_mueve_stock_entre_almacenes(): void

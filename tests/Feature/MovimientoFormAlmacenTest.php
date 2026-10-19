@@ -15,29 +15,27 @@ class MovimientoFormAlmacenTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_la_entrada_crea_el_lote_en_el_almacen_elegido(): void
+    public function test_la_entrada_suma_solo_al_lote_del_almacen_elegido(): void
     {
         $usuario = User::factory()->create();
-        $almacen = Almacen::factory()->create();
+        $norte = Almacen::factory()->create();
+        $sur = Almacen::factory()->create();
         $producto = Producto::factory()->create(['maneja_vencimiento' => false]);
+        $loteNorte = Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $norte->id, 'cantidad' => 30]);
+        $loteSur = Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $sur->id, 'cantidad' => 30]);
 
         Livewire::actingAs($usuario)
             ->test(MovimientoForm::class)
             ->set('tipo', 'entrada')
             ->set('producto_id', $producto->id)
-            ->set('almacen_id', $almacen->id)
-            ->set('numero_lote', 'L-ENT-1')
+            ->set('almacen_id', $sur->id)
+            ->set('lote_id', $loteSur->id)
             ->set('cantidad', 25)
-            ->set('motivo', 'saldo_inicial')
             ->call('guardar')
             ->assertHasNoErrors();
 
-        $this->assertDatabaseHas('lotes', [
-            'producto_id' => $producto->id,
-            'almacen_id' => $almacen->id,
-            'numero_lote' => 'L-ENT-1',
-            'cantidad' => 25,
-        ]);
+        $this->assertSame(30, $loteNorte->fresh()->cantidad);
+        $this->assertSame(55, $loteSur->fresh()->cantidad);
     }
 
     public function test_la_salida_descuenta_solo_del_almacen_elegido(): void
@@ -112,7 +110,6 @@ class MovimientoFormAlmacenTest extends TestCase
             ->set('tipo', 'entrada')
             ->set('producto_id', $producto->id)
             ->set('almacen_id', $cerrado->id)
-            ->set('numero_lote', 'L-X')
             ->set('cantidad', 5)
             ->call('guardar')
             ->assertHasErrors(['almacen_id']);

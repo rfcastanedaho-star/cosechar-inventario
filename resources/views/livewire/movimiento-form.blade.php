@@ -90,52 +90,38 @@
             </div>
         @elseif ($tipo === 'entrada')
             <div>
-                <label for="motivo" class="mb-1 block text-sm font-medium text-cosechar-ink">Motivo de la entrada</label>
-                <select id="motivo" wire:model.blur="motivo" class="{{ $campo }}">
-                    <option value="">Seleccione un motivo</option>
-                    <option value="saldo_inicial">Saldo inicial</option>
-                    <option value="ajuste_inventario">Ajuste por conteo (sobrante)</option>
+                <label for="lote_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Lote</label>
+                <select id="lote_id" wire:model.live="lote_id" class="{{ $campo }}" @disabled($this->lotesDisponibles->isEmpty())>
+                    <option value="">Seleccione un lote</option>
+                    @foreach ($this->lotesDisponibles as $lote)
+                        <option value="{{ $lote->id }}">
+                            {{ $lote->numero_lote }}
+                            · {{ $lote->fecha_vencimiento ? 'vence '.$lote->fecha_vencimiento->format('d/m/Y') : 'sin vencimiento' }}
+                            · stock {{ $lote->cantidad }}
+                        </option>
+                    @endforeach
                 </select>
-                @error('motivo')
+                @error('lote_id')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
+
+                @if (! $producto_id || ! $almacen_id)
+                    <p class="mt-1 text-sm text-cosechar-muted">Elija el producto y el almacén para ver sus lotes.</p>
+                @elseif ($this->lotesDisponibles->isEmpty())
+                    <p class="mt-1 text-sm text-amber-700">
+                        Este producto no tiene lotes en este almacén. Regístrelo primero en Compras.
+                    </p>
+                @endif
             </div>
 
             <div>
-                <label for="numero_lote" class="mb-1 block text-sm font-medium text-cosechar-ink">Número de lote</label>
-                <input type="text" id="numero_lote" wire:model.live="numero_lote" class="{{ $campo }}">
-                @error('numero_lote')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label for="fecha_ingreso" class="mb-1 block text-sm font-medium text-cosechar-ink">Fecha de ingreso</label>
-                    <input type="date" id="fecha_ingreso" wire:model.blur="fecha_ingreso" class="{{ $campo }}">
-                    @error('fecha_ingreso')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <label for="fecha_vencimiento" class="mb-1 block text-sm font-medium text-cosechar-ink">
-                        Fecha de vencimiento
-                        @if ($this->productoSeleccionado && ! $this->productoSeleccionado->maneja_vencimiento)
-                            <span class="font-normal text-cosechar-muted">(no aplica)</span>
-                        @endif
-                    </label>
-                    <input
-                        type="date"
-                        id="fecha_vencimiento"
-                        wire:model.blur="fecha_vencimiento"
-                        @disabled($this->productoSeleccionado && ! $this->productoSeleccionado->maneja_vencimiento)
-                        class="{{ $campo }} disabled:bg-cosechar-cream"
-                    >
-                    @error('fecha_vencimiento')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
+                <span class="mb-1 block text-sm font-medium text-cosechar-ink">Motivo de la entrada</span>
+                <p class="rounded-md border border-cosechar-border bg-cosechar-cream px-3 py-2 text-sm text-cosechar-ink">
+                    Ajuste por conteo (sobrante)
+                </p>
+                <p class="mt-1 text-sm text-cosechar-muted">
+                    Solo suma al lote lo que el conteo físico encontró de más. La mercadería nueva se registra en Compras.
+                </p>
             </div>
         @else
             <div>

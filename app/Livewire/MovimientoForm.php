@@ -6,7 +6,6 @@ use App\Exceptions\StockInsuficienteException;
 use App\Models\Almacen;
 use App\Models\Lote;
 use App\Models\Producto;
-use App\Repositories\LoteRepository;
 use App\Services\StockMovimientoService;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
@@ -17,8 +16,12 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class MovimientoForm extends Component
 {
-    /** Motivos de una entrada manual (las compras generan sus entradas solas). */
-    public const MOTIVOS_ENTRADA = ['saldo_inicial', 'ajuste_inventario'];
+    /**
+     * Motivo de toda entrada manual: sumar al lote lo que el conteo físico
+     * encontró de más. Los lotes nuevos nacen en Compras (con proveedor y
+     * costo) o en una transferencia, nunca aquí.
+     */
+    public const MOTIVO_ENTRADA = 'ajuste_inventario';
 
     /** Motivos de una salida manual (las ventas y la transferencia tienen su propio flujo). */
     public const MOTIVOS_SALIDA = ['merma', 'producto_danado', 'ajuste_inventario'];
@@ -31,22 +34,13 @@ class MovimientoForm extends Component
 
     public ?int $almacen_destino_id = null;
 
-    public string $numero_lote = '';
-
-    public string $fecha_ingreso = '';
-
-    public string $fecha_vencimiento = '';
+    public ?int $lote_id = null;
 
     public int $cantidad = 0;
 
     public string $motivo = '';
 
     public bool $creado = false;
-
-    public function mount(): void
-    {
-        $this->fecha_ingreso = now()->toDateString();
-    }
 
     #[Computed]
     public function productos(): Collection
@@ -60,10 +54,18 @@ class MovimientoForm extends Component
         return Almacen::where('activo', true)->orderBy('nombre')->get();
     }
 
+    /** Lotes del producto en el almacén elegido, entre los que se puede ajustar el conteo. */
     #[Computed]
-    public function productoSeleccionado(): ?Producto
+    public function lotesDisponibles(): Collection
     {
-        return $this->producto_id ? Producto::find($this->producto_id) : null;
+        if (! $this->producto_id || ! $this->almacen_id) {
+            return new Collection;
+        }
+
+        return Lote::where('producto_id', $this->producto_id)
+            ->where('almacen_id', $this->almacen_id)
+            ->orderBy('numero_lote')
+            ->get();
     }
 
     /** Stock del producto; si hay un almacén elegido, solo el de ese almacén. */
@@ -98,22 +100,11 @@ class MovimientoForm extends Component
             return [
                 'producto_id' => ['required', 'exists:productos,id'],
                 'almacen_id' => $almacen,
-                'motivo' => ['required', Rule::in(self::MOTIVOS_ENTRADA)],
-                'numero_lote' => [
+                'lote_id' => [
                     'required',
-                    'string',
-                    'max:50',
-                    Rule::unique('lotes', 'numero_lote')->where(
-                        fn ($query) => $query
-                            ->where('producto_id', $this->producto_id)
-                            ->where('almacen_id', $this->almacen_id)
-                    ),
-                ],
-                'fecha_ingreso' => ['required', 'date'],
-                'fecha_vencimiento' => [
-                    $this->productoSeleccionado?->maneja_vencimiento ? 'required' : 'nullable',
-                    'date',
-                    'after_or_equal:fecha_ingreso',
+                    Rule::exists('lotes', 'id')
+                        ->where('producto_id', $this->producto_id)
+                        ->where('almacen_id', $this->almacen_id),
                 ],
                 'cantidad' => ['required', 'integer', 'min:1'],
             ];
@@ -133,16 +124,11 @@ class MovimientoForm extends Component
             'producto_id.required' => 'Debe seleccionar un producto.',
             'almacen_id.required' => 'Debe seleccionar el almacén.',
             'almacen_id.exists' => 'Seleccione un almacén activo.',
-            'numero_lote.required' => 'El número de lote es obligatorio.',
-            'numero_lote.unique' => 'Ya existe un lote con este número para el producto seleccionado.',
-            'fecha_ingreso.required' => 'La fecha de ingreso es obligatoria.',
-            'fecha_vencimiento.required' => 'Este producto maneja vencimiento: la fecha es obligatoria.',
-            'fecha_vencimiento.after_or_equal' => 'La fecha de vencimiento no puede ser anterior al ingreso.',
+            'lote_id.required' => 'Debe seleccionar el lote.',
+            'lote_id.exists' => 'El lote no corresponde al producto y almacén elegidos.',
             'cantidad.required' => 'La cantidad es obligatoria.',
             'cantidad.min' => 'La cantidad debe ser mayor a cero.',
-            'motivo.required' => $this->tipo === 'entrada'
-                ? 'Debe seleccionar un motivo de entrada.'
-                : 'Debe seleccionar un motivo de salida.',
+            'motivo.required' => 'Debe seleccionar un motivo de salida.',
             'motivo.in' => 'El motivo seleccionado no es válido.',
             'almacen_destino_id.required' => 'Debe seleccionar el almacén de destino.',
             'almacen_destino_id.different' => 'El almacén de destino debe ser distinto del de origen.',
@@ -156,42 +142,38 @@ class MovimientoForm extends Component
 
         if ($property === 'tipo') {
             $this->resetErrorBag();
-            $this->reset(['motivo', 'almacen_destino_id']);
+            $this->reset(['motivo', 'almacen_destino_id', 'lote_id']);
 
             return;
         }
 
-        $this->validateOnly($property);
-
-        if (in_array($property, ['producto_id', 'almacen_id'], true) && $this->tipo === 'entrada' && $this->numero_lote !== '') {
-            $this->validateOnly('numero_lote');
+        if (in_array($property, ['producto_id', 'almacen_id'], true)) {
+            $this->lote_id = null;
+            $this->resetErrorBag('lote_id');
         }
+
+        $this->validateOnly($property);
 
         if ($property === 'almacen_id' && $this->tipo === 'transferencia' && $this->almacen_destino_id) {
             $this->validateOnly('almacen_destino_id');
         }
     }
 
-    public function guardar(StockMovimientoService $servicio, LoteRepository $lotes): void
+    public function guardar(StockMovimientoService $servicio): void
     {
         $this->creado = false;
 
         $data = $this->validate();
 
         if ($this->tipo === 'entrada') {
-            $lote = $lotes->create([
-                'producto_id' => $data['producto_id'],
-                'almacen_id' => $data['almacen_id'],
-                'numero_lote' => $data['numero_lote'],
-                'fecha_ingreso' => $data['fecha_ingreso'],
-                'fecha_vencimiento' => $data['fecha_vencimiento'] ?: null,
-                'cantidad' => 0,
-            ]);
+            $servicio->registrarEntrada(
+                Lote::findOrFail($data['lote_id']),
+                $data['cantidad'],
+                auth()->user(),
+                self::MOTIVO_ENTRADA,
+            );
 
-            $servicio->registrarEntrada($lote, $data['cantidad'], auth()->user(), $data['motivo']);
-
-            $this->reset(['numero_lote', 'fecha_vencimiento', 'cantidad', 'motivo']);
-            $this->fecha_ingreso = now()->toDateString();
+            $this->reset(['cantidad', 'lote_id']);
         } elseif ($this->tipo === 'transferencia') {
             try {
                 $servicio->transferir(

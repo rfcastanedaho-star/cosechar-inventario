@@ -52,15 +52,15 @@ class SinCodigosQrTest extends TestCase
         $usuario = User::factory()->create();
         $almacen = Almacen::factory()->create();
         $producto = Producto::factory()->create(['maneja_vencimiento' => false]);
+        $lote = Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $almacen->id, 'cantidad' => 10]);
 
         Livewire::actingAs($usuario)
             ->test(MovimientoForm::class)
             ->set('tipo', 'entrada')
             ->set('producto_id', $producto->id)
             ->set('almacen_id', $almacen->id)
-            ->set('numero_lote', 'L-SIN-QR')
+            ->set('lote_id', $lote->id)
             ->set('cantidad', 5)
-            ->set('motivo', 'saldo_inicial')
             ->call('guardar')
             ->assertHasNoErrors()
             ->assertDontSee('etiqueta QR');
