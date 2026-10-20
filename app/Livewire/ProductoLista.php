@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Producto;
 use App\Repositories\ProductoRepository;
+use App\Services\AuditoriaService;
 use App\Services\ImagenProductoService;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -29,6 +30,10 @@ class ProductoLista extends Component
     #[Url(as: 'buscar')]
     public string $buscar = '';
 
+    public bool $mostrarInactivos = false;
+
+    public ?string $errorEstado = null;
+
     public function mount(): void
     {
         $this->stockMinimoEdit = Producto::pluck('stock_minimo', 'id')->all();
@@ -40,6 +45,9 @@ class ProductoLista extends Component
         $buscar = trim($this->buscar);
 
         return (new ProductoRepository)->conStockActual()
+            ->when(! $this->mostrarInactivos, fn (Collection $productos) => $productos->filter(
+                fn (Producto $producto) => $producto->activo
+            ))
             ->when($buscar !== '', fn (Collection $productos) => $productos->filter(
                 fn (Producto $producto) => str_contains(mb_strtolower($producto->nombre), mb_strtolower($buscar))
                     || str_contains(mb_strtolower($producto->codigo), mb_strtolower($buscar))
@@ -67,6 +75,24 @@ class ProductoLista extends Component
         $imagenes->guardar(Producto::findOrFail($this->productoFotoId), $this->fotoNueva);
 
         $this->reset(['fotoNueva', 'productoFotoId']);
+        unset($this->productos);
+    }
+
+    /** Desactiva o reactiva un producto. Con stock no se desactiva, igual que los almacenes. */
+    public function cambiarEstado(int $productoId, AuditoriaService $auditoria): void
+    {
+        $this->authorize('anular-registros');
+        $this->errorEstado = null;
+
+        $producto = Producto::findOrFail($productoId);
+
+        if ($producto->activo && $producto->lotes()->where('cantidad', '>', 0)->exists()) {
+            $this->errorEstado = 'No se puede desactivar: el producto todavía tiene stock.';
+
+            return;
+        }
+
+        $auditoria->actualizar($producto, ['activo' => ! $producto->activo], auth()->user());
         unset($this->productos);
     }
 

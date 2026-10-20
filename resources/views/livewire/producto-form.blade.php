@@ -1,9 +1,9 @@
 <div class="mx-auto max-w-xl p-8">
-    <h1 class="mb-6 text-lg font-semibold text-cosechar-ink">Registrar producto</h1>
+    <h1 class="mb-6 text-lg font-semibold text-cosechar-ink">{{ $this->editando ? 'Editar producto' : 'Registrar producto' }}</h1>
 
     @if ($creado)
         <div class="mb-4 rounded-md bg-green-100 px-4 py-2 text-sm text-green-800">
-            Producto registrado correctamente.
+            {{ $this->editando ? 'Producto actualizado correctamente.' : 'Producto registrado correctamente.' }}
         </div>
     @endif
 
@@ -40,7 +40,7 @@
             <input
                 type="text"
                 id="codigo"
-                wire:model.live="codigo"
+                wire:model.live="codigo" @disabled(! $this->puedeEditarSensibles)
                 class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
             >
             @error('codigo')
@@ -65,7 +65,7 @@
             <label for="categoria_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Categoría</label>
             <select
                 id="categoria_id"
-                wire:model.blur="categoria_id"
+                wire:model.blur="categoria_id" @disabled(! $this->puedeEditarSensibles)
                 class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
             >
                 <option value="">Seleccione una categoría</option>
@@ -90,7 +90,7 @@
             <label for="unidad_medida" class="mb-1 block text-sm font-medium text-cosechar-ink">Unidad de medida</label>
             <select
                 id="unidad_medida"
-                wire:model.blur="unidad_medida"
+                wire:model.blur="unidad_medida" @disabled(! $this->puedeEditarSensibles)
                 class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
             >
                 <option value="">Seleccione una unidad</option>
@@ -111,7 +111,7 @@
                 <input
                     type="number"
                     id="stock_minimo"
-                    wire:model.blur="stock_minimo"
+                    wire:model.blur="stock_minimo" @disabled(! $this->puedeEditarSensibles)
                     class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
                 >
                 @error('stock_minimo')
@@ -126,7 +126,7 @@
                     step="0.01"
                     min="0"
                     id="precio"
-                    wire:model.blur="precio"
+                    wire:model.blur="precio" @disabled(! $this->puedeEditarSensibles)
                     class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
                 >
                 @error('precio')
@@ -136,9 +136,16 @@
         </div>
 
         <label class="flex items-center gap-2 text-sm text-cosechar-ink">
-            <input type="checkbox" wire:model="maneja_vencimiento" class="rounded border border-cosechar-border">
+            <input type="checkbox" wire:model="maneja_vencimiento" @disabled(! $this->puedeEditarSensibles || $this->venceBloqueado) class="rounded border border-cosechar-border">
             Maneja fecha de vencimiento
+            @if ($this->venceBloqueado)
+                <span class="text-xs text-cosechar-muted">(no se puede cambiar: el producto ya tiene lotes)</span>
+            @endif
         </label>
+
+        @if ($this->editando && ! $this->puedeEditarSensibles)
+            <p class="text-xs text-cosechar-muted">Solo el administrador puede cambiar el código, la categoría, la unidad, el stock mínimo, el precio y el vencimiento.</p>
+        @endif
 
         <button
             type="submit"
@@ -146,7 +153,7 @@
             wire:target="guardar"
             class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
-            <span wire:loading.remove wire:target="guardar">Guardar producto</span>
+            <span wire:loading.remove wire:target="guardar">{{ $this->editando ? 'Guardar cambios' : 'Guardar producto' }}</span>
             <span wire:loading wire:target="guardar">Guardando...</span>
         </button>
     </form>

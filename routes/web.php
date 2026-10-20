@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardGraficos::class)->name('dashboard');
     Route::get('/productos', ProductoLista::class)->name('productos.index');
     Route::get('/productos/nuevo', ProductoForm::class)->name('productos.nuevo');
+    Route::get('/productos/{producto}/editar', ProductoForm::class)->name('productos.editar');
     Route::get('/productos/{producto}/imagen', [ProductoImagenController::class, 'mostrar'])->name('productos.imagen');
     Route::get('/movimientos/nuevo', MovimientoForm::class)->name('movimientos.nuevo');
     Route::get('/almacenes', AlmacenForm::class)->name('almacenes.index');

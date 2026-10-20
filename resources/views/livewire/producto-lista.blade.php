@@ -15,6 +15,10 @@
         Subiendo foto...
     </div>
 
+    @if ($errorEstado)
+        <div class="mb-4 rounded-md bg-red-100 px-4 py-2 text-sm text-red-800">{{ $errorEstado }}</div>
+    @endif
+
     <div class="mb-6 flex items-center justify-between">
         <h1 class="text-lg font-semibold text-cosechar-ink">Productos</h1>
         <a href="{{ route('productos.nuevo') }}" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90">
@@ -33,6 +37,11 @@
             >
         </div>
 
+        <label class="flex shrink-0 items-center gap-2 text-sm text-cosechar-muted">
+            <input type="checkbox" wire:model.live="mostrarInactivos" class="rounded border border-cosechar-border">
+            Mostrar inactivos
+        </label>
+
         @if (trim($buscar) !== '')
             <p class="text-sm text-cosechar-muted">
                 {{ $this->productos->count() }} resultado(s) ·
@@ -41,7 +50,7 @@
         @endif
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-cosechar-border bg-white">
+    <div class="overflow-x-auto rounded-2xl border border-cosechar-border bg-white">
         <table class="w-full text-sm">
             <thead class="bg-cosechar-cream text-left text-xs uppercase text-cosechar-muted">
                 <tr>
@@ -54,11 +63,12 @@
                     @can('editar-stock-minimo')
                         <th class="px-4 py-3"></th>
                     @endcan
+                    <th class="px-4 py-3"></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-cosechar-border">
                 @forelse ($this->productos as $producto)
-                    <tr wire:key="producto-{{ $producto->id }}">
+                    <tr wire:key="producto-{{ $producto->id }}" class="{{ $producto->activo ? '' : 'bg-cosechar-cream/60 text-cosechar-muted' }}">
                         <td class="px-4 py-3">
                             <div class="flex w-16 flex-col items-center gap-1">
                                 <div class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-cosechar-border bg-cosechar-cream text-cosechar-muted">
@@ -83,7 +93,12 @@
                             </div>
                         </td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $producto->codigo }}</td>
-                        <td class="px-4 py-3 font-medium text-cosechar-ink">{{ $producto->nombre }}</td>
+                        <td class="px-4 py-3 font-medium text-cosechar-ink">
+                            {{ $producto->nombre }}
+                            @unless ($producto->activo)
+                                <span class="ml-2 rounded-full bg-cosechar-border px-2 py-0.5 text-[11px] font-normal text-cosechar-muted">Inactivo</span>
+                            @endunless
+                        </td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $producto->categoria->nombre }}</td>
                         <td class="px-4 py-3 {{ ($producto->stock_actual ?? 0) < $producto->stock_minimo ? 'font-semibold text-cosechar-danger' : 'text-cosechar-ink' }}">
                             {{ $producto->stock_actual ?? 0 }}
@@ -112,10 +127,22 @@
                         @else
                             <td class="px-4 py-3 text-cosechar-muted">{{ $producto->stock_minimo }}</td>
                         @endcan
+                        <td class="whitespace-nowrap px-4 py-3 text-right">
+                            <a href="{{ route('productos.editar', $producto) }}" class="text-xs font-medium text-cosechar-olive underline hover:text-cosechar-forest">Editar</a>
+                            @can('anular-registros')
+                                <button
+                                    type="button"
+                                    wire:click="cambiarEstado({{ $producto->id }})"
+                                    class="ml-3 text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink"
+                                >
+                                    {{ $producto->activo ? 'Desactivar' : 'Reactivar' }}
+                                </button>
+                            @endcan
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-6 text-center text-cosechar-muted">{{ trim($buscar) !== '' ? 'No se encontraron productos con esa búsqueda.' : 'No hay productos registrados.' }}</td>
+                        <td colspan="9" class="px-4 py-6 text-center text-cosechar-muted">{{ trim($buscar) !== '' ? 'No se encontraron productos con esa búsqueda.' : 'No hay productos registrados.' }}</td>
                     </tr>
                 @endforelse
             </tbody>

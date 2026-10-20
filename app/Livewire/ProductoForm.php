@@ -3,9 +3,12 @@
 namespace App\Livewire;
 
 use App\Models\Categoria;
+use App\Models\Producto;
 use App\Repositories\ProductoRepository;
+use App\Services\AuditoriaService;
 use App\Services\ImagenProductoService;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -17,6 +20,11 @@ use Livewire\WithFileUploads;
 class ProductoForm extends Component
 {
     use WithFileUploads;
+
+    /** Campos que identifican o valorizan al producto: al editar, solo el administrador los cambia. */
+    private const CAMPOS_SENSIBLES = ['codigo', 'categoria_id', 'unidad_medida', 'stock_minimo', 'precio', 'maneja_vencimiento'];
+
+    public ?int $productoId = null;
 
     /** @var TemporaryUploadedFile|null */
     public $imagen = null;
@@ -37,11 +45,53 @@ class ProductoForm extends Component
 
     public bool $creado = false;
 
+    public function mount(?Producto $producto = null): void
+    {
+        if ($producto?->exists) {
+            $this->productoId = $producto->id;
+            $this->codigo = $producto->codigo;
+            $this->nombre = $producto->nombre;
+            $this->categoria_id = $producto->categoria_id;
+            $this->unidad_medida = $producto->unidad_medida;
+            $this->stock_minimo = $producto->stock_minimo;
+            $this->precio = (string) $producto->precio;
+            $this->maneja_vencimiento = $producto->maneja_vencimiento;
+        }
+    }
+
+    #[Computed]
+    public function editando(): bool
+    {
+        return $this->productoId !== null;
+    }
+
+    /** Al registrar se llenan todos los campos; al editar, solo el administrador toca los sensibles. */
+    #[Computed]
+    public function puedeEditarSensibles(): bool
+    {
+        return ! $this->editando || Gate::allows('editar-datos-sensibles');
+    }
+
+    /** Con lotes registrados, cambiar entre FEFO y FIFO dejaría lotes sin fecha: se bloquea. */
+    #[Computed]
+    public function venceBloqueado(): bool
+    {
+        return $this->editando && Producto::findOrFail($this->productoId)->lotes()->exists();
+    }
+
     protected function rules(): array
     {
-        return [
-            'codigo' => ['required', 'string', 'max:50', 'unique:productos,codigo'],
+        $reglas = [
             'nombre' => ['required', 'string', 'max:150'],
+            'imagen' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        ];
+
+        if (! $this->puedeEditarSensibles) {
+            return $reglas;
+        }
+
+        return $reglas + [
+            'codigo' => ['required', 'string', 'max:50', Rule::unique('productos', 'codigo')->ignore($this->productoId)],
             'categoria_id' => [
                 'required',
                 // Solo se permiten categorías "hoja": una categoría con subcategorías
@@ -59,7 +109,6 @@ class ProductoForm extends Component
             'stock_minimo' => ['required', 'integer', 'min:0'],
             'precio' => ['required', 'numeric', 'min:0'],
             'maneja_vencimiento' => ['boolean'],
-            'imagen' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ];
     }
 
@@ -92,13 +141,37 @@ class ProductoForm extends Component
 
     public function updated(string $property): void
     {
+        if (! $this->puedeEditarSensibles && in_array($property, self::CAMPOS_SENSIBLES, true)) {
+            return;
+        }
+
         $this->validateOnly($property);
     }
 
-    public function guardar(ProductoRepository $productos, ImagenProductoService $imagenes): void
+    public function guardar(ProductoRepository $productos, ImagenProductoService $imagenes, AuditoriaService $auditoria): void
     {
         $data = $this->validate();
         unset($data['imagen']);
+
+        if ($this->editando) {
+            $producto = Producto::findOrFail($this->productoId);
+
+            if ($this->venceBloqueado) {
+                unset($data['maneja_vencimiento']);
+            }
+
+            $auditoria->actualizar($producto, $data, auth()->user());
+
+            if ($this->imagen) {
+                $imagenes->guardar($producto, $this->imagen);
+                $this->reset('imagen');
+            }
+
+            $this->maneja_vencimiento = $producto->fresh()->maneja_vencimiento;
+            $this->creado = true;
+
+            return;
+        }
 
         $producto = $productos->create($data);
 

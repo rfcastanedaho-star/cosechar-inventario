@@ -67,7 +67,7 @@ class MovimientoForm extends Component
 
     public function elegirProducto(int $id): void
     {
-        if (! Producto::whereKey($id)->exists()) {
+        if (! Producto::whereKey($id)->where('activo', true)->exists()) {
             return;
         }
 

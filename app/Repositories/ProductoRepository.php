@@ -63,6 +63,7 @@ class ProductoRepository
         $empieza = $literal.'%';
 
         return Producto::query()
+            ->where('activo', true)
             ->where(fn ($q) => $q
                 ->whereRaw("nombre LIKE ? ESCAPE '!'", [$contiene])
                 ->orWhereRaw("codigo LIKE ? ESCAPE '!'", [$contiene]))

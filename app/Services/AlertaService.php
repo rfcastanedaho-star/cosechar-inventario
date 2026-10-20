@@ -24,6 +24,7 @@ class AlertaService
     public function productosConStockMinimo(): Collection
     {
         return $this->productos->conStockActual()
+            ->filter(fn (Producto $producto) => $producto->activo)
             ->filter(fn (Producto $producto) => ($producto->stock_actual ?? 0) < $producto->stock_minimo)
             ->values();
     }

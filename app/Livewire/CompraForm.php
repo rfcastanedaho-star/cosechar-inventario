@@ -73,7 +73,7 @@ class CompraForm extends Component
     #[Computed]
     public function productos(): Collection
     {
-        return Producto::orderBy('nombre')->get();
+        return Producto::where('activo', true)->orderBy('nombre')->get();
     }
 
     #[Computed]
