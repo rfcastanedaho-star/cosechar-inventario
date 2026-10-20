@@ -116,6 +116,7 @@ class CompraServiceTest extends TestCase
             'lote_id' => $lote->id,
             'tipo' => 'entrada',
             'cantidad' => 30,
+            'motivo' => 'compra',
         ]);
     }
 }

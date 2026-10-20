@@ -50,7 +50,7 @@ class AnulacionService
                     'cantidad' => $detalle->cantidad,
                     'fecha' => now(),
                     'responsable_id' => $usuario->id,
-                    'motivo' => 'ajuste_inventario',
+                    'motivo' => 'anulacion',
                 ]);
             }
 
@@ -87,7 +87,7 @@ class AnulacionService
                     'cantidad' => $salida->cantidad,
                     'fecha' => now(),
                     'responsable_id' => $usuario->id,
-                    'motivo' => null,
+                    'motivo' => 'anulacion',
                 ]);
             }
 

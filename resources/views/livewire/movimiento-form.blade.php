@@ -3,7 +3,12 @@
 @endphp
 
 <div class="mx-auto max-w-xl p-8">
-    <h1 class="mb-6 text-lg font-semibold text-cosechar-ink">Registrar movimiento de stock</h1>
+    <div class="mb-6 flex items-center justify-between gap-3">
+        <h1 class="text-lg font-semibold text-cosechar-ink">Registrar movimiento de stock</h1>
+        <a href="{{ route('movimientos.historial') }}" class="rounded-md border border-cosechar-border bg-white px-4 py-2 text-sm font-medium text-cosechar-ink hover:bg-cosechar-cream">
+            Ver historial de movimientos
+        </a>
+    </div>
 
     @if ($creado)
         <div class="mb-4 rounded-md bg-green-100 px-4 py-2 text-sm text-green-800">

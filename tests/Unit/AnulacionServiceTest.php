@@ -68,7 +68,7 @@ class AnulacionServiceTest extends TestCase
         $this->assertNotNull($compra->anulada_at);
         $this->assertSame($admin->id, $compra->anulada_por);
         $this->assertSame('Se registró con el proveedor equivocado', $compra->motivo_anulacion);
-        $this->assertDatabaseHas('stock_movimientos', ['lote_id' => $lote->id, 'tipo' => 'salida', 'motivo' => 'ajuste_inventario', 'cantidad' => 20]);
+        $this->assertDatabaseHas('stock_movimientos', ['lote_id' => $lote->id, 'tipo' => 'salida', 'motivo' => 'anulacion', 'cantidad' => 20]);
     }
 
     public function test_no_se_puede_anular_una_compra_si_parte_del_stock_ya_salio(): void
@@ -121,6 +121,7 @@ class AnulacionServiceTest extends TestCase
         $this->anulaciones->anularVenta($venta, $admin, 'El cliente canceló el pedido');
 
         $this->assertSame(40, $lote->fresh()->cantidad);
+        $this->assertDatabaseHas('stock_movimientos', ['lote_id' => $lote->id, 'tipo' => 'entrada', 'motivo' => 'anulacion', 'cantidad' => 12]);
         $venta = $venta->fresh();
         $this->assertNotNull($venta->anulada_at);
         $this->assertSame('El cliente canceló el pedido', $venta->motivo_anulacion);

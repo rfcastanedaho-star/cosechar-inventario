@@ -9,6 +9,7 @@ use App\Livewire\CompraForm;
 use App\Livewire\CompraLista;
 use App\Livewire\DashboardGraficos;
 use App\Livewire\MovimientoForm;
+use App\Livewire\MovimientoLista;
 use App\Livewire\ProductoForm;
 use App\Livewire\ProductoLista;
 use App\Livewire\ProveedorForm;
@@ -43,6 +44,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/productos/{producto}/editar', ProductoForm::class)->name('productos.editar');
     Route::get('/productos/{producto}/imagen', [ProductoImagenController::class, 'mostrar'])->name('productos.imagen');
     Route::get('/movimientos/nuevo', MovimientoForm::class)->name('movimientos.nuevo');
+    Route::get('/movimientos/historial', MovimientoLista::class)->name('movimientos.historial');
     Route::get('/almacenes', AlmacenForm::class)->name('almacenes.index');
     Route::get('/almacenes/historial', AlmacenLista::class)->name('almacenes.historial');
     Route::get('/almacenes/{almacen}/editar', AlmacenForm::class)->name('almacenes.editar');
