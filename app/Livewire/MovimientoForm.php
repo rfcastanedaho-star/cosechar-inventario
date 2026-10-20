@@ -6,6 +6,7 @@ use App\Exceptions\StockInsuficienteException;
 use App\Models\Almacen;
 use App\Models\Lote;
 use App\Models\Producto;
+use App\Repositories\ProductoRepository;
 use App\Services\StockMovimientoService;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
@@ -30,6 +31,9 @@ class MovimientoForm extends Component
 
     public ?int $producto_id = null;
 
+    /** Texto del buscador de productos (nombre o código). */
+    public string $buscarProducto = '';
+
     public ?int $almacen_id = null;
 
     public ?int $almacen_destino_id = null;
@@ -43,9 +47,49 @@ class MovimientoForm extends Component
     public bool $creado = false;
 
     #[Computed]
-    public function productos(): Collection
+    public function productoSeleccionado(): ?Producto
     {
-        return Producto::orderBy('nombre')->get();
+        return $this->producto_id ? Producto::find($this->producto_id) : null;
+    }
+
+    /** Sugerencias del buscador mientras no haya un producto elegido. */
+    #[Computed]
+    public function productosSugeridos(): Collection
+    {
+        return $this->producto_id
+            ? new Collection
+            : app(ProductoRepository::class)->buscar($this->buscarProducto);
+    }
+
+    public function elegirProducto(int $id): void
+    {
+        if (! Producto::whereKey($id)->exists()) {
+            return;
+        }
+
+        $this->producto_id = $id;
+        $this->buscarProducto = '';
+        $this->lote_id = null;
+        $this->creado = false;
+        $this->resetErrorBag(['producto_id', 'lote_id']);
+    }
+
+    /** Enter en el buscador: elige la primera sugerencia. */
+    public function elegirPrimero(): void
+    {
+        $primero = $this->productosSugeridos->first();
+
+        if ($primero) {
+            $this->elegirProducto($primero->id);
+        }
+    }
+
+    public function limpiarProducto(): void
+    {
+        $this->producto_id = null;
+        $this->buscarProducto = '';
+        $this->lote_id = null;
+        $this->creado = false;
     }
 
     #[Computed]
@@ -139,6 +183,10 @@ class MovimientoForm extends Component
     public function updated(string $property): void
     {
         $this->creado = false;
+
+        if ($property === 'buscarProducto') {
+            return;
+        }
 
         if ($property === 'tipo') {
             $this->resetErrorBag();

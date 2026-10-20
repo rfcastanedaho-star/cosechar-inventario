@@ -37,13 +37,44 @@
 
     <form wire:submit="guardar" class="flex flex-col gap-4">
         <div>
-            <label for="producto_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Producto</label>
-            <select id="producto_id" wire:model.live="producto_id" class="{{ $campo }}">
-                <option value="">Seleccione un producto</option>
-                @foreach ($this->productos as $producto)
-                    <option value="{{ $producto->id }}">{{ $producto->codigo }} — {{ $producto->nombre }}</option>
-                @endforeach
-            </select>
+            <label for="buscar_producto" class="mb-1 block text-sm font-medium text-cosechar-ink">Producto</label>
+
+            @if ($this->productoSeleccionado)
+                <div class="flex items-center justify-between gap-3 rounded-md border border-cosechar-border bg-white px-3 py-2 text-sm shadow-sm">
+                    <span class="text-cosechar-ink">{{ $this->productoSeleccionado->codigo }} — {{ $this->productoSeleccionado->nombre }}</span>
+                    <button type="button" wire:click="limpiarProducto" class="text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">
+                        Cambiar
+                    </button>
+                </div>
+            @else
+                <input
+                    type="text"
+                    id="buscar_producto"
+                    wire:model.live.debounce.250ms="buscarProducto"
+                    wire:keydown.enter.prevent="elegirPrimero"
+                    placeholder="Escriba el nombre o el código del producto"
+                    autocomplete="off"
+                    class="{{ $campo }}"
+                >
+
+                @if (trim($buscarProducto) !== '')
+                    <ul class="mt-1 max-h-64 overflow-auto rounded-md border border-cosechar-border bg-white shadow-sm">
+                        @forelse ($this->productosSugeridos as $sugerido)
+                            <li>
+                                <button
+                                    type="button"
+                                    wire:click="elegirProducto({{ $sugerido->id }})"
+                                    class="block w-full px-3 py-2 text-left text-sm text-cosechar-ink hover:bg-cosechar-cream"
+                                >
+                                    {{ $sugerido->codigo }} — {{ $sugerido->nombre }}
+                                </button>
+                            </li>
+                        @empty
+                            <li class="px-3 py-2 text-sm text-cosechar-muted">No se encontró ningún producto con ese nombre o código.</li>
+                        @endforelse
+                    </ul>
+                @endif
+            @endif
             @error('producto_id')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror

@@ -42,6 +42,36 @@ class ProductoRepository
             ->get();
     }
 
+    /**
+     * Productos cuyo nombre o código contienen el texto escrito, para el
+     * buscador por iniciales: primero los que empiezan igual, luego el resto.
+     * Los comodines de LIKE (% y _) se buscan como texto literal.
+     */
+    public function buscar(string $termino, int $limite = 8): Collection
+    {
+        $termino = trim($termino);
+
+        if ($termino === '') {
+            return new Collection;
+        }
+
+        $literal = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $termino);
+        $contiene = '%'.$literal.'%';
+        $empieza = $literal.'%';
+
+        return Producto::query()
+            ->where(fn ($q) => $q
+                ->whereRaw("nombre LIKE ? ESCAPE '!'", [$contiene])
+                ->orWhereRaw("codigo LIKE ? ESCAPE '!'", [$contiene]))
+            ->orderByRaw(
+                "CASE WHEN nombre LIKE ? ESCAPE '!' THEN 0 WHEN codigo LIKE ? ESCAPE '!' THEN 1 ELSE 2 END",
+                [$empieza, $empieza],
+            )
+            ->orderBy('nombre')
+            ->limit($limite)
+            ->get();
+    }
+
     public function conStockActualPorId(int $id): ?Producto
     {
         return Producto::withSum('lotes as stock_actual', 'cantidad')->find($id);
