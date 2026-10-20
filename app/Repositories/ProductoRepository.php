@@ -50,7 +50,7 @@ class ProductoRepository
      * buscador por iniciales: primero los que empiezan igual, luego el resto.
      * Los comodines de LIKE (% y _) se buscan como texto literal.
      */
-    public function buscar(string $termino, int $limite = 8): Collection
+    public function buscar(string $termino, int $limite = 8, bool $soloActivos = true): Collection
     {
         $termino = trim($termino);
 
@@ -63,7 +63,7 @@ class ProductoRepository
         $empieza = $literal.'%';
 
         return Producto::query()
-            ->where('activo', true)
+            ->when($soloActivos, fn ($q) => $q->where('activo', true))
             ->where(fn ($q) => $q
                 ->whereRaw("nombre LIKE ? ESCAPE '!'", [$contiene])
                 ->orWhereRaw("codigo LIKE ? ESCAPE '!'", [$contiene]))

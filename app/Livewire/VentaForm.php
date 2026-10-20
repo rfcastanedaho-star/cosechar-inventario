@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Exceptions\StockInsuficienteException;
+use App\Livewire\Concerns\BuscaProductoPorLinea;
 use App\Models\Almacen;
 use App\Models\Producto;
 use App\Services\VentaService;
@@ -14,6 +15,8 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class VentaForm extends Component
 {
+    use BuscaProductoPorLinea;
+
     public string $cliente_nombre = '';
 
     public string $cliente_documento = '';
@@ -58,6 +61,15 @@ class VentaForm extends Component
 
         unset($this->lineas[$indice]);
         $this->lineas = array_values($this->lineas);
+        $this->quitarBusquedaDeLinea($indice);
+    }
+
+    /** Al elegir el producto se propone su precio de venta, sin pisar uno ya escrito. */
+    protected function alElegirProducto(int $indice, Producto $producto): void
+    {
+        if (($this->lineas[$indice]['precio_unitario'] ?? '') === '') {
+            $this->lineas[$indice]['precio_unitario'] = (string) $producto->precio;
+        }
     }
 
     #[Computed]
@@ -137,6 +149,7 @@ class VentaForm extends Component
 
         $this->reset(['cliente_nombre', 'cliente_documento', 'almacen_id', 'numero_comprobante']);
         $this->lineas = [$this->lineaVacia()];
+        $this->busquedaProducto = [];
         $this->fecha = now()->toDateString();
         $this->ventaId = $venta->id;
         $this->creado = true;

@@ -138,6 +138,7 @@ class ProductoActivacionTest extends TestCase
         foreach ([CompraForm::class, VentaForm::class] as $componente) {
             Livewire::actingAs($this->admin())
                 ->test($componente)
+                ->set('busquedaProducto.0', 'Producto')
                 ->assertSee('Producto Vigente')
                 ->assertDontSee('Producto Retirado');
         }

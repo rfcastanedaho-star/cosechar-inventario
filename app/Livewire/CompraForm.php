@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\BuscaProductoPorLinea;
 use App\Models\Almacen;
 use App\Models\Producto;
 use App\Models\Proveedor;
@@ -14,6 +15,8 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class CompraForm extends Component
 {
+    use BuscaProductoPorLinea;
+
     public ?int $proveedor_id = null;
 
     public ?int $almacen_id = null;
@@ -56,6 +59,7 @@ class CompraForm extends Component
 
         unset($this->lineas[$indice]);
         $this->lineas = array_values($this->lineas);
+        $this->quitarBusquedaDeLinea($indice);
     }
 
     #[Computed]
@@ -142,6 +146,7 @@ class CompraForm extends Component
 
         $this->reset(['proveedor_id', 'almacen_id', 'numero_comprobante']);
         $this->lineas = [$this->lineaVacia()];
+        $this->busquedaProducto = [];
         $this->fecha = now()->toDateString();
         $this->compraId = $compra->id;
         $this->creado = true;

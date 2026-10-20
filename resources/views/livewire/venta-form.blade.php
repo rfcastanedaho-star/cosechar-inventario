@@ -68,12 +68,39 @@
                 <div wire:key="linea-{{ $indice }}" class="grid grid-cols-1 gap-3 rounded-xl border border-cosechar-border p-4 sm:grid-cols-12 sm:items-start">
                     <div class="sm:col-span-6">
                         <label class="mb-1 block text-xs font-medium text-cosechar-muted">Producto</label>
-                        <select wire:model.blur="lineas.{{ $indice }}.producto_id" class="w-full rounded-md border border-cosechar-border px-2 py-1.5 text-sm">
-                            <option value="">Seleccione</option>
-                            @foreach ($this->productos as $producto)
-                                <option value="{{ $producto->id }}">{{ $producto->codigo }} — {{ $producto->nombre }}</option>
-                            @endforeach
-                        </select>
+                        @if ($productoLinea = $this->productoDeLinea($indice))
+                            <div class="flex items-center justify-between gap-2 rounded-md border border-cosechar-border bg-white px-2 py-1.5 text-sm">
+                                <span class="min-w-0 truncate text-cosechar-ink" title="{{ $productoLinea->codigo }} — {{ $productoLinea->nombre }}">{{ $productoLinea->codigo }} — {{ $productoLinea->nombre }}</span>
+                                <button type="button" wire:click="limpiarProductoLinea({{ $indice }})" class="shrink-0 text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">Cambiar</button>
+                            </div>
+                        @else
+                            <input
+                                type="text"
+                                wire:model.live.debounce.250ms="busquedaProducto.{{ $indice }}"
+                                wire:keydown.enter.prevent="elegirPrimeroLinea({{ $indice }})"
+                                placeholder="Escriba el nombre o el código"
+                                autocomplete="off"
+                                class="w-full rounded-md border border-cosechar-border px-2 py-1.5 text-sm"
+                            >
+
+                            @if (trim($busquedaProducto[$indice] ?? '') !== '')
+                                <ul class="mt-1 max-h-56 overflow-auto rounded-md border border-cosechar-border bg-white shadow-sm">
+                                    @forelse ($this->productosSugeridos($indice) as $sugerido)
+                                        <li>
+                                            <button
+                                                type="button"
+                                                wire:click="elegirProductoLinea({{ $indice }}, {{ $sugerido->id }})"
+                                                class="block w-full px-2 py-1.5 text-left text-sm text-cosechar-ink hover:bg-cosechar-cream"
+                                            >
+                                                {{ $sugerido->codigo }} — {{ $sugerido->nombre }}
+                                            </button>
+                                        </li>
+                                    @empty
+                                        <li class="px-2 py-1.5 text-sm text-cosechar-muted">No se encontró ningún producto con ese nombre o código.</li>
+                                    @endforelse
+                                </ul>
+                            @endif
+                        @endif
                         @error("lineas.{$indice}.producto_id")
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror

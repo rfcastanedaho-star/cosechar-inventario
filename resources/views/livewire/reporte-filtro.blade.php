@@ -73,12 +73,40 @@
         <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
             <input type="date" wire:model.live="fecha" class="{{ $campo }}">
 
-            <select wire:model.live="producto_id" class="{{ $campo }}">
-                <option value="">Todos los productos</option>
-                @foreach ($this->productos as $producto)
-                    <option value="{{ $producto->id }}">{{ $producto->nombre }}</option>
-                @endforeach
-            </select>
+            <div>
+                @if ($this->productoSeleccionado)
+                    <div class="{{ $campo }} flex items-center justify-between gap-2">
+                        <span class="min-w-0 truncate text-cosechar-ink">{{ $this->productoSeleccionado->codigo }} — {{ $this->productoSeleccionado->nombre }}</span>
+                        <button type="button" wire:click="limpiarProducto" class="shrink-0 text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">Cambiar</button>
+                    </div>
+                @else
+                    <input
+                        type="search"
+                        wire:model.live.debounce.250ms="buscarProducto"
+                        placeholder="Todos los productos (escriba para buscar)"
+                        autocomplete="off"
+                        class="{{ $campo }}"
+                    >
+
+                    @if (trim($buscarProducto) !== '')
+                        <ul class="mt-1 max-h-56 overflow-auto rounded-md border border-cosechar-border bg-white shadow-sm">
+                            @forelse ($this->productosSugeridos as $sugerido)
+                                <li>
+                                    <button
+                                        type="button"
+                                        wire:click="elegirProducto({{ $sugerido->id }})"
+                                        class="block w-full px-3 py-2 text-left text-sm text-cosechar-ink hover:bg-cosechar-cream"
+                                    >
+                                        {{ $sugerido->codigo }} — {{ $sugerido->nombre }}
+                                    </button>
+                                </li>
+                            @empty
+                                <li class="px-3 py-2 text-sm text-cosechar-muted">No se encontró ningún producto con ese nombre o código.</li>
+                            @endforelse
+                        </ul>
+                    @endif
+                @endif
+            </div>
 
             <select wire:model.live="tipo" class="{{ $campo }}">
                 <option value="">Todos los tipos</option>

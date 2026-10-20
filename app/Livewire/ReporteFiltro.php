@@ -6,6 +6,7 @@ use App\Models\Almacen;
 use App\Models\Producto;
 use App\Repositories\CompraRepository;
 use App\Repositories\LoteRepository;
+use App\Repositories\ProductoRepository;
 use App\Repositories\StockMovimientoRepository;
 use App\Repositories\VentaRepository;
 use Illuminate\Support\Collection;
@@ -22,6 +23,9 @@ class ReporteFiltro extends Component
 
     public ?int $producto_id = null;
 
+    /** Texto del buscador de producto (nombre o código). */
+    public string $buscarProducto = '';
+
     public string $tipo = '';
 
     public string $desde = '';
@@ -31,9 +35,33 @@ class ReporteFiltro extends Component
     public ?int $almacen_id = null;
 
     #[Computed]
-    public function productos(): Collection
+    public function productoSeleccionado(): ?Producto
     {
-        return Producto::orderBy('nombre')->get();
+        return $this->producto_id ? Producto::find($this->producto_id) : null;
+    }
+
+    /** En reportes también se buscan los productos inactivos: tienen historial. */
+    #[Computed]
+    public function productosSugeridos(): Collection
+    {
+        return $this->producto_id
+            ? new Collection
+            : app(ProductoRepository::class)->buscar($this->buscarProducto, soloActivos: false);
+    }
+
+    public function elegirProducto(int $id): void
+    {
+        if (! Producto::whereKey($id)->exists()) {
+            return;
+        }
+
+        $this->producto_id = $id;
+        $this->buscarProducto = '';
+    }
+
+    public function limpiarProducto(): void
+    {
+        $this->reset(['producto_id', 'buscarProducto']);
     }
 
     #[Computed]
@@ -88,7 +116,7 @@ class ReporteFiltro extends Component
 
     public function limpiarFiltros(): void
     {
-        $this->reset(['fecha', 'producto_id', 'tipo', 'desde', 'hasta', 'almacen_id']);
+        $this->reset(['fecha', 'producto_id', 'buscarProducto', 'tipo', 'desde', 'hasta', 'almacen_id']);
     }
 
     public function render()
