@@ -9,6 +9,10 @@
         ['route' => 'ventas.index', 'pattern' => 'ventas.*', 'icon' => 'ventas', 'label' => 'Ventas'],
         ['route' => 'reportes', 'pattern' => 'reportes', 'icon' => 'reportes', 'label' => 'Reportes'],
     ];
+
+    if (auth()->user()->can('gestionar-usuarios')) {
+        $navActivos[] = ['route' => 'usuarios.index', 'pattern' => 'usuarios.*', 'icon' => 'usuarios', 'label' => 'Usuarios'];
+    }
 @endphp
 
 <aside class="flex w-64 shrink-0 flex-col gap-1 bg-cosechar-forest px-4 py-6">
@@ -33,7 +37,16 @@
         @endforeach
     </nav>
 
-    <form method="POST" action="{{ route('logout') }}" class="mt-auto border-t border-white/10 pt-4">
+    <div class="mt-auto border-t border-white/10 pt-4">
+        <a
+            href="{{ route('password.cambiar') }}"
+            class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('password.cambiar') ? 'bg-cosechar-cream text-cosechar-forest' : 'text-cosechar-cream/70 hover:bg-white/5' }}"
+        >
+            Mi contraseña
+        </a>
+    </div>
+
+    <form method="POST" action="{{ route('logout') }}" class="pt-1">
         @csrf
         <button type="submit" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-cosechar-cream/70 hover:bg-white/5">
             <x-icon name="logout" class="h-[18px] w-[18px]" />

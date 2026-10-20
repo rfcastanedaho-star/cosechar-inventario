@@ -36,6 +36,10 @@
             <svg viewBox="0 0 24 24" {!! $base !!}><path d="M3 4h2l1.6 10.2A1.6 1.6 0 0 0 8.2 15.6h8.4a1.6 1.6 0 0 0 1.6-1.3L19.5 8H6"/><circle cx="9" cy="19" r="1.3"/><circle cx="16" cy="19" r="1.3"/></svg>
             @break
 
+        @case('usuarios')
+            <svg viewBox="0 0 24 24" {!! $base !!}><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c.4-3.3 3-5.2 6-5.2s5.6 1.9 6 5.2"/><path d="M16 5.6a3 3 0 0 1 0 5.8"/><path d="M17.5 14.6c2 .5 3.2 2.2 3.5 4.9"/></svg>
+            @break
+
         @case('search')
             <svg viewBox="0 0 24 24" {!! $base !!}><circle cx="10.5" cy="10.5" r="6.5"/><path d="M19.5 19.5 15.2 15.2"/></svg>
             @break

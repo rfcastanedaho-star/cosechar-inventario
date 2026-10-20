@@ -5,6 +5,7 @@ use App\Http\Controllers\ReporteController;
 use App\Livewire\AlmacenForm;
 use App\Livewire\AlmacenLista;
 use App\Livewire\Auth\Login;
+use App\Livewire\CambiarPassword;
 use App\Livewire\CompraForm;
 use App\Livewire\CompraLista;
 use App\Livewire\DashboardGraficos;
@@ -15,6 +16,8 @@ use App\Livewire\ProductoLista;
 use App\Livewire\ProveedorForm;
 use App\Livewire\ProveedorLista;
 use App\Livewire\ReporteFiltro;
+use App\Livewire\UsuarioForm;
+use App\Livewire\UsuarioLista;
 use App\Livewire\VentaForm;
 use App\Livewire\VentaLista;
 use Illuminate\Support\Facades\Auth;
@@ -37,7 +40,7 @@ Route::post('/logout', function () {
     return redirect('/login');
 })->middleware('auth')->name('logout');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'activo'])->group(function () {
     Route::get('/dashboard', DashboardGraficos::class)->name('dashboard');
     Route::get('/productos', ProductoLista::class)->name('productos.index');
     Route::get('/productos/nuevo', ProductoForm::class)->name('productos.nuevo');
@@ -56,6 +59,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/ventas', VentaForm::class)->name('ventas.index');
     Route::get('/ventas/historial', VentaLista::class)->name('ventas.historial');
     Route::get('/reportes', ReporteFiltro::class)->name('reportes');
+    Route::get('/cuenta/contrasena', CambiarPassword::class)->name('password.cambiar');
+
+    Route::middleware('can:gestionar-usuarios')->group(function () {
+        Route::get('/usuarios', UsuarioLista::class)->name('usuarios.index');
+        Route::get('/usuarios/nuevo', UsuarioForm::class)->name('usuarios.nuevo');
+        Route::get('/usuarios/{usuario}/editar', UsuarioForm::class)->name('usuarios.editar');
+    });
 
     Route::middleware('can:exportar-reportes')->group(function () {
         Route::get('/reportes/stock/pdf', [ReporteController::class, 'stockPdf'])->name('reportes.stock.pdf');

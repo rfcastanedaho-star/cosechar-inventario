@@ -26,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('editar-stock-minimo', fn (User $user) => $user->rol === 'administrador');
         Gate::define('anular-registros', fn (User $user) => $user->rol === 'administrador');
         Gate::define('editar-datos-sensibles', fn (User $user) => $user->rol === 'administrador');
+        Gate::define('gestionar-usuarios', fn (User $user) => $user->rol === 'administrador');
 
         // Render (y la mayoría de PaaS) terminan el HTTPS antes del contenedor,
         // por lo que las peticiones internas llegan como http. Sin esto, Laravel

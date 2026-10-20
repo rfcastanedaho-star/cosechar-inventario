@@ -2,7 +2,9 @@
 
 namespace App\Livewire\Auth;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -39,15 +41,27 @@ class Login extends Component
 
         $credentials = $this->validate();
 
-        if (! Auth::attempt($credentials, $this->remember)) {
-            $this->addError('email', 'Las credenciales no coinciden con nuestros registros.');
+        if (! Auth::attempt($credentials + ['activo' => true], $this->remember)) {
+            $this->addError('email', $this->usuarioDesactivado($credentials)
+                ? 'Tu usuario está desactivado. Consulta con el administrador.'
+                : 'Las credenciales no coinciden con nuestros registros.');
 
             return;
         }
 
-        request()->session()->regenerate();
+        if (request()->hasSession()) {
+            request()->session()->regenerate();
+        }
 
         return redirect()->intended(route('dashboard'));
+    }
+
+    /** Solo se avisa que está desactivado si la contraseña era correcta, para no revelar quién existe. */
+    private function usuarioDesactivado(array $credentials): bool
+    {
+        $usuario = User::where('email', $credentials['email'])->first();
+
+        return $usuario !== null && ! $usuario->activo && Hash::check($credentials['password'], $usuario->password);
     }
 
     public function render()
