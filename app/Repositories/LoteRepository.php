@@ -3,11 +3,14 @@
 namespace App\Repositories;
 
 use App\Models\Lote;
+use App\Repositories\Concerns\EscapaComodinesLike;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class LoteRepository
 {
+    use EscapaComodinesLike;
+
     public function porProducto(int $productoId): Collection
     {
         return Lote::where('producto_id', $productoId)->get();
@@ -18,6 +21,29 @@ class LoteRepository
         return Lote::where('producto_id', $productoId)
             ->where('fecha_vencimiento', $fechaVencimiento)
             ->first();
+    }
+
+    /**
+     * Lotes de un producto en un almacén cuyo número contiene el texto
+     * escrito (primero los que empiezan igual). Para el buscador de lotes.
+     */
+    public function buscarPorNumero(int $productoId, int $almacenId, string $termino, int $limite = 8): Collection
+    {
+        $termino = trim($termino);
+
+        if ($termino === '') {
+            return new Collection;
+        }
+
+        $literal = $this->textoLiteral($termino);
+
+        return Lote::where('producto_id', $productoId)
+            ->where('almacen_id', $almacenId)
+            ->whereRaw("numero_lote LIKE ? ESCAPE '!'", ['%'.$literal.'%'])
+            ->orderByRaw("CASE WHEN numero_lote LIKE ? ESCAPE '!' THEN 0 ELSE 1 END", [$literal.'%'])
+            ->orderBy('numero_lote')
+            ->limit($limite)
+            ->get();
     }
 
     public function buscarEnAlmacen(int $productoId, int $almacenId, string $numeroLote): ?Lote

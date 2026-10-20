@@ -199,6 +199,7 @@ class MovimientoMotivosTest extends TestCase
             ->set('tipo', 'entrada')
             ->set('almacen_id', $almacen->id)
             ->set('producto_id', $conLotes->id)
+            ->set('buscarLote', 'L-VIS')
             ->assertSee('L-VISIBLE')
             ->assertSee('Ajuste por conteo')
             ->assertDontSee('Saldo inicial')

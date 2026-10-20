@@ -6,6 +6,7 @@ use App\Exceptions\StockInsuficienteException;
 use App\Models\Almacen;
 use App\Models\Lote;
 use App\Models\Producto;
+use App\Repositories\LoteRepository;
 use App\Repositories\ProductoRepository;
 use App\Services\StockMovimientoService;
 use Illuminate\Support\Collection;
@@ -40,6 +41,9 @@ class MovimientoForm extends Component
 
     public ?int $lote_id = null;
 
+    /** Texto del buscador de lotes (número de lote). */
+    public string $buscarLote = '';
+
     public int $cantidad = 0;
 
     public string $motivo = '';
@@ -70,6 +74,7 @@ class MovimientoForm extends Component
         $this->producto_id = $id;
         $this->buscarProducto = '';
         $this->lote_id = null;
+        $this->buscarLote = '';
         $this->creado = false;
         $this->resetErrorBag(['producto_id', 'lote_id']);
     }
@@ -89,6 +94,7 @@ class MovimientoForm extends Component
         $this->producto_id = null;
         $this->buscarProducto = '';
         $this->lote_id = null;
+        $this->buscarLote = '';
         $this->creado = false;
     }
 
@@ -98,18 +104,64 @@ class MovimientoForm extends Component
         return Almacen::where('activo', true)->orderBy('nombre')->get();
     }
 
-    /** Lotes del producto en el almacén elegido, entre los que se puede ajustar el conteo. */
+    /** ¿El producto tiene algún lote en el almacén elegido? Si no, hay que registrarlo en Compras. */
     #[Computed]
-    public function lotesDisponibles(): Collection
+    public function hayLotes(): bool
     {
-        if (! $this->producto_id || ! $this->almacen_id) {
+        return $this->producto_id && $this->almacen_id
+            && Lote::where('producto_id', $this->producto_id)->where('almacen_id', $this->almacen_id)->exists();
+    }
+
+    #[Computed]
+    public function loteSeleccionado(): ?Lote
+    {
+        return $this->lote_id ? Lote::find($this->lote_id) : null;
+    }
+
+    /** Sugerencias del buscador de lotes del producto y almacén elegidos. */
+    #[Computed]
+    public function lotesSugeridos(): Collection
+    {
+        if (! $this->producto_id || ! $this->almacen_id || $this->lote_id) {
             return new Collection;
         }
 
-        return Lote::where('producto_id', $this->producto_id)
-            ->where('almacen_id', $this->almacen_id)
-            ->orderBy('numero_lote')
-            ->get();
+        return app(LoteRepository::class)->buscarPorNumero($this->producto_id, $this->almacen_id, $this->buscarLote);
+    }
+
+    public function elegirLote(int $id): void
+    {
+        $perteneceAlProductoYAlmacen = $this->producto_id && $this->almacen_id
+            && Lote::whereKey($id)
+                ->where('producto_id', $this->producto_id)
+                ->where('almacen_id', $this->almacen_id)
+                ->exists();
+
+        if (! $perteneceAlProductoYAlmacen) {
+            return;
+        }
+
+        $this->lote_id = $id;
+        $this->buscarLote = '';
+        $this->creado = false;
+        $this->resetErrorBag('lote_id');
+    }
+
+    /** Enter en el buscador de lotes: elige la primera sugerencia. */
+    public function elegirPrimerLote(): void
+    {
+        $primero = $this->lotesSugeridos->first();
+
+        if ($primero) {
+            $this->elegirLote($primero->id);
+        }
+    }
+
+    public function limpiarLote(): void
+    {
+        $this->lote_id = null;
+        $this->buscarLote = '';
+        $this->creado = false;
     }
 
     /** Stock del producto; si hay un almacén elegido, solo el de ese almacén. */
@@ -184,19 +236,20 @@ class MovimientoForm extends Component
     {
         $this->creado = false;
 
-        if ($property === 'buscarProducto') {
+        if (in_array($property, ['buscarProducto', 'buscarLote'], true)) {
             return;
         }
 
         if ($property === 'tipo') {
             $this->resetErrorBag();
-            $this->reset(['motivo', 'almacen_destino_id', 'lote_id']);
+            $this->reset(['motivo', 'almacen_destino_id', 'lote_id', 'buscarLote']);
 
             return;
         }
 
         if (in_array($property, ['producto_id', 'almacen_id'], true)) {
             $this->lote_id = null;
+            $this->buscarLote = '';
             $this->resetErrorBag('lote_id');
         }
 

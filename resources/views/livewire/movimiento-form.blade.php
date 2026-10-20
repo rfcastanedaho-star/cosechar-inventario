@@ -121,24 +121,58 @@
             </div>
         @elseif ($tipo === 'entrada')
             <div>
-                <label for="lote_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Lote</label>
-                <select id="lote_id" wire:model.live="lote_id" class="{{ $campo }}" @disabled($this->lotesDisponibles->isEmpty())>
-                    <option value="">Seleccione un lote</option>
-                    @foreach ($this->lotesDisponibles as $lote)
-                        <option value="{{ $lote->id }}">
-                            {{ $lote->numero_lote }}
-                            · {{ $lote->fecha_vencimiento ? 'vence '.$lote->fecha_vencimiento->format('d/m/Y') : 'sin vencimiento' }}
-                            · stock {{ $lote->cantidad }}
-                        </option>
-                    @endforeach
-                </select>
+                <label for="buscar_lote" class="mb-1 block text-sm font-medium text-cosechar-ink">Lote</label>
+
+                @if ($this->loteSeleccionado)
+                    <div class="flex items-center justify-between gap-3 rounded-md border border-cosechar-border bg-white px-3 py-2 text-sm shadow-sm">
+                        <span class="text-cosechar-ink">
+                            {{ $this->loteSeleccionado->numero_lote }}
+                            · {{ $this->loteSeleccionado->fecha_vencimiento ? 'vence '.$this->loteSeleccionado->fecha_vencimiento->format('d/m/Y') : 'sin vencimiento' }}
+                            · stock {{ $this->loteSeleccionado->cantidad }}
+                        </span>
+                        <button type="button" wire:click="limpiarLote" class="text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">
+                            Cambiar
+                        </button>
+                    </div>
+                @else
+                    <input
+                        type="text"
+                        id="buscar_lote"
+                        wire:model.live.debounce.250ms="buscarLote"
+                        wire:keydown.enter.prevent="elegirPrimerLote"
+                        placeholder="Escriba el número de lote"
+                        autocomplete="off"
+                        @disabled(! $this->hayLotes)
+                        class="{{ $campo }} disabled:bg-cosechar-cream"
+                    >
+
+                    @if (trim($buscarLote) !== '')
+                        <ul class="mt-1 max-h-64 overflow-auto rounded-md border border-cosechar-border bg-white shadow-sm">
+                            @forelse ($this->lotesSugeridos as $sugerido)
+                                <li>
+                                    <button
+                                        type="button"
+                                        wire:click="elegirLote({{ $sugerido->id }})"
+                                        class="block w-full px-3 py-2 text-left text-sm text-cosechar-ink hover:bg-cosechar-cream"
+                                    >
+                                        {{ $sugerido->numero_lote }}
+                                        · {{ $sugerido->fecha_vencimiento ? 'vence '.$sugerido->fecha_vencimiento->format('d/m/Y') : 'sin vencimiento' }}
+                                        · stock {{ $sugerido->cantidad }}
+                                    </button>
+                                </li>
+                            @empty
+                                <li class="px-3 py-2 text-sm text-cosechar-muted">No se encontró ningún lote con ese número.</li>
+                            @endforelse
+                        </ul>
+                    @endif
+                @endif
                 @error('lote_id')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
 
                 @if (! $producto_id || ! $almacen_id)
-                    <p class="mt-1 text-sm text-cosechar-muted">Elija el producto y el almacén para ver sus lotes.</p>
-                @elseif ($this->lotesDisponibles->isEmpty())
+                    <p class="mt-1 text-sm text-cosechar-muted">Elija el producto y el almacén para buscar sus lotes.</p>
+                @elseif (! $this->hayLotes)
                     <p class="mt-1 text-sm text-amber-700">
                         Este producto no tiene lotes en este almacén. Regístrelo primero en Compras.
                     </p>

@@ -3,10 +3,13 @@
 namespace App\Repositories;
 
 use App\Models\Producto;
+use App\Repositories\Concerns\EscapaComodinesLike;
 use Illuminate\Database\Eloquent\Collection;
 
 class ProductoRepository
 {
+    use EscapaComodinesLike;
+
     public function all(): Collection
     {
         return Producto::with('categoria')->get();
@@ -55,7 +58,7 @@ class ProductoRepository
             return new Collection;
         }
 
-        $literal = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $termino);
+        $literal = $this->textoLiteral($termino);
         $contiene = '%'.$literal.'%';
         $empieza = $literal.'%';
 
