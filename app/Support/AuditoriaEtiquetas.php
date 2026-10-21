@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Almacen;
+use App\Models\Cliente;
 use App\Models\Producto;
 use App\Models\Proveedor;
 use App\Models\User;
@@ -21,6 +22,7 @@ class AuditoriaEtiquetas
         'almacen' => Almacen::class,
         'proveedor' => Proveedor::class,
         'usuario' => User::class,
+        'cliente' => Cliente::class,
     ];
 
     private const NOMBRES_ENTIDAD = [
@@ -28,10 +30,12 @@ class AuditoriaEtiquetas
         Almacen::class => 'Almacén',
         Proveedor::class => 'Proveedor',
         User::class => 'Usuario',
+        Cliente::class => 'Cliente',
     ];
 
     private const CAMPOS = [
         'codigo' => 'Código',
+        'documento' => 'Documento',
         'nombre' => 'Nombre',
         'name' => 'Nombre',
         'email' => 'Correo',

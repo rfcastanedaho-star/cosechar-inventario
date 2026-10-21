@@ -23,6 +23,54 @@
     @enderror
 
     <form wire:submit="guardar" class="flex flex-col gap-6">
+        <div class="rounded-xl border border-cosechar-border bg-white p-4">
+            <div class="mb-1 flex items-center justify-between">
+                <label for="buscar_cliente" class="block text-sm font-medium text-cosechar-ink">Buscar cliente registrado <span class="font-normal text-cosechar-muted">(opcional)</span></label>
+                <a href="{{ route('clientes.nuevo') }}" target="_blank" class="text-xs font-medium text-cosechar-olive underline hover:text-cosechar-forest">Registrar cliente nuevo</a>
+            </div>
+
+            @if ($cliente_id)
+                <div class="flex items-center justify-between gap-2 rounded-md border border-cosechar-border bg-cosechar-cream px-3 py-2 text-sm">
+                    <span class="min-w-0 truncate text-cosechar-ink">
+                        <span class="mr-2 rounded-full bg-cosechar-olive/15 px-2 py-0.5 text-[11px] font-semibold text-cosechar-olive">Cliente registrado</span>
+                        {{ $cliente_nombre }}@if ($cliente_documento) · {{ $cliente_documento }}@endif
+                    </span>
+                    <button type="button" wire:click="limpiarCliente" class="shrink-0 text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">Cambiar</button>
+                </div>
+            @else
+                <input
+                    type="text"
+                    id="buscar_cliente"
+                    wire:model.live.debounce.250ms="buscarCliente"
+                    wire:keydown.enter.prevent="elegirPrimerCliente"
+                    placeholder="Escriba el nombre, el DNI/RUC o el teléfono. Si no está registrado, llene los datos de abajo."
+                    autocomplete="off"
+                    class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
+                >
+
+                @if (trim($buscarCliente) !== '')
+                    <ul class="mt-1 max-h-60 overflow-auto rounded-md border border-cosechar-border bg-white shadow-sm">
+                        @forelse ($this->clientesSugeridos as $sugerido)
+                            <li>
+                                <button
+                                    type="button"
+                                    wire:click="elegirCliente({{ $sugerido->id }})"
+                                    class="block w-full px-3 py-2 text-left text-sm text-cosechar-ink hover:bg-cosechar-cream"
+                                >
+                                    {{ $sugerido->nombre }}
+                                    @if ($sugerido->documento)
+                                        <span class="text-xs text-cosechar-muted">· {{ $sugerido->documento }}</span>
+                                    @endif
+                                </button>
+                            </li>
+                        @empty
+                            <li class="px-3 py-2 text-sm text-cosechar-muted">No se encontró ningún cliente registrado. Puede escribir sus datos abajo.</li>
+                        @endforelse
+                    </ul>
+                @endif
+            @endif
+        </div>
+
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
                 <label for="cliente_nombre" class="mb-1 block text-sm font-medium text-cosechar-ink">Cliente</label>

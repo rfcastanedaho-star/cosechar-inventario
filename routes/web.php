@@ -8,6 +8,8 @@ use App\Livewire\AlmacenLista;
 use App\Livewire\AuditoriaLista;
 use App\Livewire\Auth\Login;
 use App\Livewire\CambiarPassword;
+use App\Livewire\ClienteForm;
+use App\Livewire\ClienteLista;
 use App\Livewire\CompraForm;
 use App\Livewire\CompraLista;
 use App\Livewire\DashboardGraficos;
@@ -56,6 +58,9 @@ Route::middleware(['auth', 'activo'])->group(function () {
     Route::get('/proveedores', ProveedorForm::class)->name('proveedores.index');
     Route::get('/proveedores/historial', ProveedorLista::class)->name('proveedores.historial');
     Route::get('/proveedores/{proveedor}/editar', ProveedorForm::class)->name('proveedores.editar');
+    Route::get('/clientes', ClienteLista::class)->name('clientes.index');
+    Route::get('/clientes/nuevo', ClienteForm::class)->name('clientes.nuevo');
+    Route::get('/clientes/{cliente}/editar', ClienteForm::class)->name('clientes.editar');
     Route::get('/compras', CompraForm::class)->name('compras.index');
     Route::get('/compras/historial', CompraLista::class)->name('compras.historial');
     Route::get('/compras/{compra}/comprobante', [ComprobanteController::class, 'compra'])->name('compras.comprobante');

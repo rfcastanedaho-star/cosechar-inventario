@@ -5,7 +5,9 @@ namespace App\Livewire;
 use App\Exceptions\StockInsuficienteException;
 use App\Livewire\Concerns\BuscaProductoPorLinea;
 use App\Models\Almacen;
+use App\Models\Cliente;
 use App\Models\Producto;
+use App\Repositories\ClienteRepository;
 use App\Services\VentaService;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -16,6 +18,12 @@ use Livewire\Component;
 class VentaForm extends Component
 {
     use BuscaProductoPorLinea;
+
+    /** Cliente registrado elegido; null si se vende a alguien no registrado. */
+    public ?int $cliente_id = null;
+
+    /** Texto del buscador de clientes registrados (nombre, documento o teléfono). */
+    public string $buscarCliente = '';
 
     public string $cliente_nombre = '';
 
@@ -64,6 +72,56 @@ class VentaForm extends Component
         $this->quitarBusquedaDeLinea($indice);
     }
 
+    /** Sugerencias del buscador mientras no haya un cliente registrado elegido. */
+    #[Computed]
+    public function clientesSugeridos(): Collection
+    {
+        return $this->cliente_id
+            ? new Collection
+            : app(ClienteRepository::class)->buscar($this->buscarCliente);
+    }
+
+    public function elegirCliente(int $id): void
+    {
+        $cliente = Cliente::where('activo', true)->find($id);
+
+        if (! $cliente) {
+            return;
+        }
+
+        $this->cliente_id = $cliente->id;
+        $this->cliente_nombre = $cliente->nombre;
+        $this->cliente_documento = $cliente->documento ?? '';
+        $this->buscarCliente = '';
+        $this->resetErrorBag('cliente_nombre');
+    }
+
+    /** Enter en el buscador: elige el primer cliente sugerido. */
+    public function elegirPrimerCliente(): void
+    {
+        $primero = $this->clientesSugeridos->first();
+
+        if ($primero) {
+            $this->elegirCliente($primero->id);
+        }
+    }
+
+    public function limpiarCliente(): void
+    {
+        $this->reset(['cliente_id', 'cliente_nombre', 'cliente_documento', 'buscarCliente']);
+    }
+
+    /** Si se cambia a mano el nombre o el documento, ya no es el cliente registrado. */
+    public function updatedClienteNombre(): void
+    {
+        $this->cliente_id = null;
+    }
+
+    public function updatedClienteDocumento(): void
+    {
+        $this->cliente_id = null;
+    }
+
     /** Al elegir el producto se propone su precio de venta, sin pisar uno ya escrito. */
     protected function alElegirProducto(int $indice, Producto $producto): void
     {
@@ -101,6 +159,7 @@ class VentaForm extends Component
             'fecha' => ['required', 'date'],
             'numero_comprobante' => ['nullable', 'string', 'max:50'],
             'lineas' => ['required', 'array', 'min:1'],
+            'cliente_id' => ['nullable', 'exists:clientes,id'],
         ];
 
         foreach ($this->lineas as $indice => $linea) {
@@ -132,6 +191,7 @@ class VentaForm extends Component
         try {
             $venta = $servicio->registrar(
                 [
+                    'cliente_id' => $data['cliente_id'] ?? null,
                     'cliente_nombre' => $data['cliente_nombre'],
                     'cliente_documento' => $data['cliente_documento'] ?: null,
                     'almacen_id' => $data['almacen_id'],
@@ -147,7 +207,7 @@ class VentaForm extends Component
             return;
         }
 
-        $this->reset(['cliente_nombre', 'cliente_documento', 'almacen_id', 'numero_comprobante']);
+        $this->reset(['cliente_id', 'buscarCliente', 'cliente_nombre', 'cliente_documento', 'almacen_id', 'numero_comprobante']);
         $this->lineas = [$this->lineaVacia()];
         $this->busquedaProducto = [];
         $this->fecha = now()->toDateString();

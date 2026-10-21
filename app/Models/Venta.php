@@ -16,7 +16,7 @@ class Venta extends Model
     protected $table = 'ventas';
 
     protected $fillable = [
-        'cliente_nombre', 'cliente_documento', 'almacen_id', 'responsable_id', 'fecha', 'numero_comprobante', 'total',
+        'cliente_id', 'cliente_nombre', 'cliente_documento', 'almacen_id', 'responsable_id', 'fecha', 'numero_comprobante', 'total',
         'anulada_at', 'anulada_por', 'motivo_anulacion',
     ];
 
@@ -29,6 +29,12 @@ class Venta extends Model
     public function anuladaPor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'anulada_por');
+    }
+
+    /** Cliente registrado al que se vendió; null si se vendió a alguien no registrado. */
+    public function cliente(): BelongsTo
+    {
+        return $this->belongsTo(Cliente::class);
     }
 
     public function almacen(): BelongsTo

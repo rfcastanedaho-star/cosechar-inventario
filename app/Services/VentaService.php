@@ -18,13 +18,14 @@ class VentaService
      * origen (FEFO/FIFO, igual que Movimientos > Salida) y deja la
      * cabecera con el total cobrado al cliente.
      *
-     * @param  array{cliente_nombre: string, cliente_documento: ?string, almacen_id: int, fecha: string, numero_comprobante: ?string}  $cabecera
+     * @param  array{cliente_id?: ?int, cliente_nombre: string, cliente_documento: ?string, almacen_id: int, fecha: string, numero_comprobante: ?string}  $cabecera
      * @param  array<int, array{producto_id: int, cantidad: int, precio_unitario: float|string}>  $lineas
      */
     public function registrar(array $cabecera, array $lineas, User $responsable): Venta
     {
         return DB::transaction(function () use ($cabecera, $lineas, $responsable) {
             $venta = Venta::create([
+                'cliente_id' => $cabecera['cliente_id'] ?? null,
                 'cliente_nombre' => $cabecera['cliente_nombre'],
                 'cliente_documento' => $cabecera['cliente_documento'] ?: null,
                 'almacen_id' => $cabecera['almacen_id'],
