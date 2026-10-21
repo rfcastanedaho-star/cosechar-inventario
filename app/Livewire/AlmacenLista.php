@@ -2,10 +2,11 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\FiltraHistorial;
 use App\Models\Almacen;
 use App\Repositories\AlmacenRepository;
 use App\Services\AuditoriaService;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -13,12 +14,19 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class AlmacenLista extends Component
 {
+    use FiltraHistorial;
+
     public ?string $errorEstado = null;
 
-    #[Computed]
-    public function almacenes(): Collection
+    protected function estadosPermitidos(): array
     {
-        return (new AlmacenRepository)->all();
+        return ['activo', 'inactivo'];
+    }
+
+    #[Computed]
+    public function almacenes(): LengthAwarePaginator
+    {
+        return app(AlmacenRepository::class)->historial($this->filtros());
     }
 
     public function cambiarEstado(int $almacenId, AuditoriaService $auditoria): void

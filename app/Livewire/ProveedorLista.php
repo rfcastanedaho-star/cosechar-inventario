@@ -2,10 +2,11 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\FiltraHistorial;
 use App\Models\Proveedor;
 use App\Repositories\ProveedorRepository;
 use App\Services\AuditoriaService;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -13,10 +14,17 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class ProveedorLista extends Component
 {
-    #[Computed]
-    public function proveedores(): Collection
+    use FiltraHistorial;
+
+    protected function estadosPermitidos(): array
     {
-        return (new ProveedorRepository)->all();
+        return ['activo', 'inactivo'];
+    }
+
+    #[Computed]
+    public function proveedores(): LengthAwarePaginator
+    {
+        return app(ProveedorRepository::class)->historial($this->filtros());
     }
 
     public function cambiarEstado(int $proveedorId, AuditoriaService $auditoria): void

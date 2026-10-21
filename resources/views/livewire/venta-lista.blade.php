@@ -10,7 +10,14 @@
         <div class="mb-4 rounded-md bg-red-100 px-4 py-2 text-sm text-red-800">{{ $errorAnulacion }}</div>
     @endif
 
-    <div class="overflow-hidden rounded-2xl border border-cosechar-border bg-white">
+    @include('livewire.partials.filtros-historial', [
+        'placeholder' => 'Cliente, documento, comprobante o producto...',
+        'estados' => ['vigente' => 'Vigente', 'anulada' => 'Anulada'],
+        'conAlmacen' => true, 'conFechas' => true, 'almacenes' => $this->almacenesFiltro,
+        'total' => $this->ventas->total(),
+    ])
+
+    <div class="overflow-x-auto rounded-2xl border border-cosechar-border bg-white">
         <table class="w-full text-sm">
             <thead class="bg-cosechar-cream text-left text-xs uppercase text-cosechar-muted">
                 <tr>
@@ -65,10 +72,12 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-6 text-center text-cosechar-muted">No hay ventas registradas.</td>
+                        <td colspan="7" class="px-4 py-6 text-center text-cosechar-muted">{{ $this->hayFiltros() ? 'No se encontraron ventas con esos filtros.' : 'No hay ventas registradas.' }}</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
+
+    @include('livewire.partials.paginacion', ['paginador' => $this->ventas])
 </div>

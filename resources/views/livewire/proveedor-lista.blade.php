@@ -6,7 +6,13 @@
         </a>
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-cosechar-border bg-white">
+    @include('livewire.partials.filtros-historial', [
+        'placeholder' => 'Nombre o RUC...',
+        'estados' => ['activo' => 'Activo', 'inactivo' => 'Desactivado'],
+        'total' => $this->proveedores->total(),
+    ])
+
+    <div class="overflow-x-auto rounded-2xl border border-cosechar-border bg-white">
         <table class="w-full text-sm">
             <thead class="bg-cosechar-cream text-left text-xs uppercase text-cosechar-muted">
                 <tr>
@@ -45,10 +51,12 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-6 text-center text-cosechar-muted">No hay proveedores registrados.</td>
+                        <td colspan="6" class="px-4 py-6 text-center text-cosechar-muted">{{ $this->hayFiltros() ? 'No se encontraron proveedores con esos filtros.' : 'No hay proveedores registrados.' }}</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
+
+    @include('livewire.partials.paginacion', ['paginador' => $this->proveedores])
 </div>
