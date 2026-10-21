@@ -68,6 +68,7 @@
                                     <button type="button" wire:click="iniciarAnulacion({{ $venta->id }})" class="ml-2 text-xs font-medium text-cosechar-danger underline">Anular</button>
                                 @endcan
                             @endif
+                            <a href="{{ route('ventas.comprobante', $venta) }}" target="_blank" class="mt-1 block text-xs font-medium text-cosechar-olive underline hover:text-cosechar-forest">Comprobante PDF</a>
                         </td>
                     </tr>
                 @empty

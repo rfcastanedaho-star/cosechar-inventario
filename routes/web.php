@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ComprobanteController;
 use App\Http\Controllers\ProductoImagenController;
 use App\Http\Controllers\ReporteController;
 use App\Livewire\AlmacenForm;
@@ -57,8 +58,10 @@ Route::middleware(['auth', 'activo'])->group(function () {
     Route::get('/proveedores/{proveedor}/editar', ProveedorForm::class)->name('proveedores.editar');
     Route::get('/compras', CompraForm::class)->name('compras.index');
     Route::get('/compras/historial', CompraLista::class)->name('compras.historial');
+    Route::get('/compras/{compra}/comprobante', [ComprobanteController::class, 'compra'])->name('compras.comprobante');
     Route::get('/ventas', VentaForm::class)->name('ventas.index');
     Route::get('/ventas/historial', VentaLista::class)->name('ventas.historial');
+    Route::get('/ventas/{venta}/comprobante', [ComprobanteController::class, 'venta'])->name('ventas.comprobante');
     Route::get('/reportes', ReporteFiltro::class)->name('reportes');
     Route::get('/cuenta/contrasena', CambiarPassword::class)->name('password.cambiar');
 

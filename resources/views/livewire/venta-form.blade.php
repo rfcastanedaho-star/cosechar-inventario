@@ -9,7 +9,12 @@
     @if ($creado)
         <div class="mb-4 flex items-center justify-between rounded-md bg-green-100 px-4 py-2 text-sm text-green-800">
             <span>Venta registrada correctamente. El stock ya fue actualizado.</span>
-            <a href="{{ route('ventas.historial') }}" class="font-medium underline hover:text-green-900">Ver historial</a>
+            <span class="flex gap-4">
+                @if ($ventaId)
+                    <a href="{{ route('ventas.comprobante', $ventaId) }}" target="_blank" class="font-medium underline hover:text-green-900">Imprimir comprobante</a>
+                @endif
+                <a href="{{ route('ventas.historial') }}" class="font-medium underline hover:text-green-900">Ver historial</a>
+            </span>
         </div>
     @endif
 
