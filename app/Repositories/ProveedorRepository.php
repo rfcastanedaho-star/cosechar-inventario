@@ -36,6 +36,37 @@ class ProveedorRepository
             ->paginate($porPagina);
     }
 
+    /**
+     * Proveedores cuyo nombre o RUC contienen el texto escrito, para el buscador
+     * por iniciales: primero los que empiezan igual, luego el resto. Los
+     * comodines de LIKE (% y _) se buscan como texto literal.
+     */
+    public function buscar(string $termino, int $limite = 8, bool $soloActivos = true): Collection
+    {
+        $termino = trim($termino);
+
+        if ($termino === '') {
+            return new Collection;
+        }
+
+        $literal = $this->textoLiteral($termino);
+        $contiene = '%'.$literal.'%';
+        $empieza = $literal.'%';
+
+        return Proveedor::query()
+            ->when($soloActivos, fn ($q) => $q->where('activo', true))
+            ->where(fn ($q) => $q
+                ->whereRaw("nombre LIKE ? ESCAPE '!'", [$contiene])
+                ->orWhereRaw("ruc LIKE ? ESCAPE '!'", [$contiene]))
+            ->orderByRaw(
+                "CASE WHEN nombre LIKE ? ESCAPE '!' THEN 0 WHEN ruc LIKE ? ESCAPE '!' THEN 1 ELSE 2 END",
+                [$empieza, $empieza],
+            )
+            ->orderBy('nombre')
+            ->limit($limite)
+            ->get();
+    }
+
     public function find(int $id): ?Proveedor
     {
         return Proveedor::find($id);

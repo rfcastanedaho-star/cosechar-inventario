@@ -16,13 +16,45 @@
     <form wire:submit="guardar" class="flex flex-col gap-6">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
-                <label for="proveedor_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Proveedor</label>
-                <select id="proveedor_id" wire:model.blur="proveedor_id" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
-                    <option value="">Seleccione un proveedor</option>
-                    @foreach ($this->proveedores as $proveedor)
-                        <option value="{{ $proveedor->id }}">{{ $proveedor->nombre }}</option>
-                    @endforeach
-                </select>
+                <label for="buscar_proveedor" class="mb-1 block text-sm font-medium text-cosechar-ink">Proveedor</label>
+
+                @if ($this->proveedorSeleccionado)
+                    <div class="flex items-center justify-between gap-2 rounded-md border border-cosechar-border bg-white px-3 py-2 text-sm shadow-sm">
+                        <span class="min-w-0 truncate text-cosechar-ink" title="{{ $this->proveedorSeleccionado->nombre }}">{{ $this->proveedorSeleccionado->nombre }}</span>
+                        <button type="button" wire:click="limpiarProveedor" class="shrink-0 text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">Cambiar</button>
+                    </div>
+                @else
+                    <input
+                        type="text"
+                        id="buscar_proveedor"
+                        wire:model.live.debounce.250ms="buscarProveedor"
+                        wire:keydown.enter.prevent="elegirPrimerProveedor"
+                        placeholder="Escriba el nombre o el RUC del proveedor"
+                        autocomplete="off"
+                        class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
+                    >
+
+                    @if (trim($buscarProveedor) !== '')
+                        <ul class="mt-1 max-h-60 overflow-auto rounded-md border border-cosechar-border bg-white shadow-sm">
+                            @forelse ($this->proveedoresSugeridos as $sugerido)
+                                <li>
+                                    <button
+                                        type="button"
+                                        wire:click="elegirProveedor({{ $sugerido->id }})"
+                                        class="block w-full px-3 py-2 text-left text-sm text-cosechar-ink hover:bg-cosechar-cream"
+                                    >
+                                        {{ $sugerido->nombre }}
+                                        @if ($sugerido->ruc)
+                                            <span class="text-xs text-cosechar-muted">· RUC {{ $sugerido->ruc }}</span>
+                                        @endif
+                                    </button>
+                                </li>
+                            @empty
+                                <li class="px-3 py-2 text-sm text-cosechar-muted">No se encontró ningún proveedor con ese nombre o RUC.</li>
+                            @endforelse
+                        </ul>
+                    @endif
+                @endif
                 @error('proveedor_id')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror

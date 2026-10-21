@@ -6,6 +6,7 @@ use App\Livewire\Concerns\BuscaProductoPorLinea;
 use App\Models\Almacen;
 use App\Models\Producto;
 use App\Models\Proveedor;
+use App\Repositories\ProveedorRepository;
 use App\Services\CompraService;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -18,6 +19,9 @@ class CompraForm extends Component
     use BuscaProductoPorLinea;
 
     public ?int $proveedor_id = null;
+
+    /** Texto del buscador de proveedor (nombre o RUC). */
+    public string $buscarProveedor = '';
 
     public ?int $almacen_id = null;
 
@@ -63,9 +67,45 @@ class CompraForm extends Component
     }
 
     #[Computed]
-    public function proveedores(): Collection
+    public function proveedorSeleccionado(): ?Proveedor
     {
-        return Proveedor::where('activo', true)->orderBy('nombre')->get();
+        return $this->proveedor_id ? Proveedor::find($this->proveedor_id) : null;
+    }
+
+    /** Sugerencias del buscador mientras no haya un proveedor elegido. */
+    #[Computed]
+    public function proveedoresSugeridos(): Collection
+    {
+        return $this->proveedor_id
+            ? new Collection
+            : app(ProveedorRepository::class)->buscar($this->buscarProveedor);
+    }
+
+    public function elegirProveedor(int $id): void
+    {
+        if (! Proveedor::whereKey($id)->where('activo', true)->exists()) {
+            return;
+        }
+
+        $this->proveedor_id = $id;
+        $this->buscarProveedor = '';
+        $this->resetErrorBag('proveedor_id');
+    }
+
+    /** Enter en el buscador: elige la primera sugerencia. */
+    public function elegirPrimerProveedor(): void
+    {
+        $primero = $this->proveedoresSugeridos->first();
+
+        if ($primero) {
+            $this->elegirProveedor($primero->id);
+        }
+    }
+
+    public function limpiarProveedor(): void
+    {
+        $this->proveedor_id = null;
+        $this->buscarProveedor = '';
     }
 
     #[Computed]
@@ -144,7 +184,7 @@ class CompraForm extends Component
             auth()->user(),
         );
 
-        $this->reset(['proveedor_id', 'almacen_id', 'numero_comprobante']);
+        $this->reset(['proveedor_id', 'buscarProveedor', 'almacen_id', 'numero_comprobante']);
         $this->lineas = [$this->lineaVacia()];
         $this->busquedaProducto = [];
         $this->fecha = now()->toDateString();
