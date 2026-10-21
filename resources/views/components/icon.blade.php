@@ -40,6 +40,10 @@
             <svg viewBox="0 0 24 24" {!! $base !!}><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c.4-3.3 3-5.2 6-5.2s5.6 1.9 6 5.2"/><path d="M16 5.6a3 3 0 0 1 0 5.8"/><path d="M17.5 14.6c2 .5 3.2 2.2 3.5 4.9"/></svg>
             @break
 
+        @case('auditoria')
+            <svg viewBox="0 0 24 24" {!! $base !!}><path d="M12 3.5 5 6v5.5c0 4.2 2.8 7.3 7 9 4.2-1.7 7-4.8 7-9V6z"/><path d="M9 12.2l2.2 2.2L15.5 10"/></svg>
+            @break
+
         @case('search')
             <svg viewBox="0 0 24 24" {!! $base !!}><circle cx="10.5" cy="10.5" r="6.5"/><path d="M19.5 19.5 15.2 15.2"/></svg>
             @break

@@ -4,6 +4,7 @@ use App\Http\Controllers\ProductoImagenController;
 use App\Http\Controllers\ReporteController;
 use App\Livewire\AlmacenForm;
 use App\Livewire\AlmacenLista;
+use App\Livewire\AuditoriaLista;
 use App\Livewire\Auth\Login;
 use App\Livewire\CambiarPassword;
 use App\Livewire\CompraForm;
@@ -60,6 +61,8 @@ Route::middleware(['auth', 'activo'])->group(function () {
     Route::get('/ventas/historial', VentaLista::class)->name('ventas.historial');
     Route::get('/reportes', ReporteFiltro::class)->name('reportes');
     Route::get('/cuenta/contrasena', CambiarPassword::class)->name('password.cambiar');
+
+    Route::get('/auditoria', AuditoriaLista::class)->middleware('can:ver-auditoria')->name('auditoria.index');
 
     Route::middleware('can:gestionar-usuarios')->group(function () {
         Route::get('/usuarios', UsuarioLista::class)->name('usuarios.index');

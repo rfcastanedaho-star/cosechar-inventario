@@ -13,6 +13,10 @@
     if (auth()->user()->can('gestionar-usuarios')) {
         $navActivos[] = ['route' => 'usuarios.index', 'pattern' => 'usuarios.*', 'icon' => 'usuarios', 'label' => 'Usuarios'];
     }
+
+    if (auth()->user()->can('ver-auditoria')) {
+        $navActivos[] = ['route' => 'auditoria.index', 'pattern' => 'auditoria.*', 'icon' => 'auditoria', 'label' => 'Auditoría'];
+    }
 @endphp
 
 <aside class="flex w-64 shrink-0 flex-col gap-1 bg-cosechar-forest px-4 py-6">
