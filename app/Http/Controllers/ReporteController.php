@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Almacen;
 use App\Repositories\CompraRepository;
 use App\Repositories\LoteRepository;
 use App\Repositories\StockMovimientoRepository;
 use App\Repositories\VentaRepository;
 use App\Services\ExcelService;
+use App\Services\ValorizacionService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -136,6 +138,43 @@ class ReporteController extends Controller
         return $this->excel->descargar(
             'reporte-ventas.xlsx',
             ['Fecha', 'Cliente', 'Documento', 'Almacén', 'Comprobante', 'Total (S/)', 'Estado'],
+            $filas,
+        );
+    }
+
+    public function valorizacionPdf(Request $request, ValorizacionService $valorizacion): Response
+    {
+        $almacenId = $request->integer('almacen_id') ?: null;
+
+        return Pdf::loadView('reportes.valorizacion-pdf', $valorizacion->calcular($almacenId) + [
+            'filtro' => $almacenId ? (Almacen::find($almacenId)?->nombre ?? 'almacén desconocido') : 'todos los almacenes',
+        ])->setPaper('a4', 'landscape')->stream('reporte-valorizacion.pdf');
+    }
+
+    public function valorizacionExcel(Request $request, ValorizacionService $valorizacion): StreamedResponse
+    {
+        $resultado = $valorizacion->calcular($request->integer('almacen_id') ?: null);
+        $totales = $resultado['totales'];
+
+        $filas = $resultado['filas']->map(fn ($fila) => [
+            $fila->producto->codigo,
+            $fila->producto->nombre,
+            $fila->producto->categoria->nombre,
+            $fila->almacen?->nombre ?? 'Sin almacén',
+            $fila->unidades,
+            $fila->costoPromedio,
+            $fila->valorCosto,
+            $fila->valorVenta,
+            $fila->utilidad,
+            $fila->unidadesSinCosto,
+        ])->push([
+            'TOTAL', '', '', '',
+            $totales['unidades'], null, $totales['valorCosto'], $totales['valorVenta'], $totales['utilidad'], $totales['unidadesSinCosto'],
+        ]);
+
+        return $this->excel->descargar(
+            'reporte-valorizacion.xlsx',
+            ['Código', 'Producto', 'Categoría', 'Almacén', 'Unidades', 'Costo promedio (S/)', 'Valor a costo (S/)', 'Valor a precio de venta (S/)', 'Utilidad potencial (S/)', 'Unidades sin costo'],
             $filas,
         );
     }

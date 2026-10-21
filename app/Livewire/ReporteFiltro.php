@@ -9,6 +9,7 @@ use App\Repositories\LoteRepository;
 use App\Repositories\ProductoRepository;
 use App\Repositories\StockMovimientoRepository;
 use App\Repositories\VentaRepository;
+use App\Services\ValorizacionService;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -77,6 +78,19 @@ class ReporteFiltro extends Component
     public function stock(): Collection
     {
         return (new LoteRepository)->conStock($this->almacen_id);
+    }
+
+    /**
+     * Valorización del stock. Muestra costos y márgenes, así que solo la ve el administrador.
+     *
+     * @return array{filas: Collection, totales: array<string, mixed>}
+     */
+    #[Computed]
+    public function valorizacion(): array
+    {
+        $this->authorize('ver-valorizacion');
+
+        return app(ValorizacionService::class)->calcular($this->almacen_id);
     }
 
     #[Computed]

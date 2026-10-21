@@ -103,6 +103,26 @@ class LoteRepository
     }
 
     /**
+     * Stock agrupado por producto y almacén, con las unidades, las que no tienen
+     * costo y el valor a costo (cantidad × costo de cada lote). Para valorizar.
+     *
+     * @return Collection<int, Lote> cada elemento trae producto_id, almacen_id, unidades,
+     *                               unidades_sin_costo, valor_costo y las relaciones producto y almacen
+     */
+    public function resumenParaValorizacion(?int $almacenId = null): Collection
+    {
+        return Lote::query()
+            ->selectRaw('producto_id, almacen_id, SUM(cantidad) as unidades')
+            ->selectRaw('SUM(CASE WHEN costo_unitario IS NULL THEN cantidad ELSE 0 END) as unidades_sin_costo')
+            ->selectRaw('SUM(CASE WHEN costo_unitario IS NULL THEN 0 ELSE cantidad * costo_unitario END) as valor_costo')
+            ->where('cantidad', '>', 0)
+            ->when($almacenId, fn ($q) => $q->where('almacen_id', $almacenId))
+            ->groupBy('producto_id', 'almacen_id')
+            ->with(['producto.categoria', 'almacen'])
+            ->get();
+    }
+
+    /**
      * Unidades disponibles de un producto agrupadas por almacén.
      *
      * @return Collection<int, Lote> cada elemento trae almacen_id, unidades y la relación almacen

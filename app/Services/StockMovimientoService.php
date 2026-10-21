@@ -119,6 +119,31 @@ class StockMovimientoService
         });
     }
 
+    /**
+     * Costo del lote de destino tras recibir $cantidad` unidades del lote de
+     * origen: promedio ponderado por cantidad; si uno de los dos no tiene costo,
+     * se conserva el que sí lo tiene.
+     */
+    private function costoPromedio(Lote $destino, Lote $origen, int $cantidad): ?string
+    {
+        if ($origen->costo_unitario === null) {
+            return $destino->costo_unitario;
+        }
+
+        if ($destino->costo_unitario === null) {
+            return $origen->costo_unitario;
+        }
+
+        $unidades = $destino->cantidad + $cantidad;
+
+        return number_format(
+            ($destino->cantidad * (float) $destino->costo_unitario + $cantidad * (float) $origen->costo_unitario) / $unidades,
+            2,
+            '.',
+            '',
+        );
+    }
+
     public function registrarEntrada(Lote $lote, int $cantidad, User $responsable, ?string $motivo = null): StockMovimiento
     {
         if ($cantidad <= 0) {
@@ -186,15 +211,23 @@ class StockMovimientoService
                     'motivo' => 'transferencia',
                 ]));
 
-                $loteDestino = $this->lotes->buscarEnAlmacen($producto->id, $almacenDestinoId, $loteOrigen->numero_lote)
-                    ?? $this->lotes->create([
+                $loteDestino = $this->lotes->buscarEnAlmacen($producto->id, $almacenDestinoId, $loteOrigen->numero_lote);
+
+                if ($loteDestino === null) {
+                    $loteDestino = $this->lotes->create([
                         'producto_id' => $producto->id,
                         'almacen_id' => $almacenDestinoId,
                         'numero_lote' => $loteOrigen->numero_lote,
                         'fecha_ingreso' => $loteOrigen->fecha_ingreso,
                         'fecha_vencimiento' => $loteOrigen->fecha_vencimiento,
                         'cantidad' => 0,
+                        'costo_unitario' => $loteOrigen->costo_unitario,
                     ]);
+                } else {
+                    $loteDestino->update([
+                        'costo_unitario' => $this->costoPromedio($loteDestino, $loteOrigen, $aMover),
+                    ]);
+                }
 
                 $this->lotes->incrementar($loteDestino, $aMover);
 

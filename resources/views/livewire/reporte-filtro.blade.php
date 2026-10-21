@@ -3,6 +3,10 @@
     $botonExportar = 'rounded-md border border-cosechar-border bg-white px-3 py-1.5 text-sm text-cosechar-ink hover:bg-cosechar-cream';
     $filtrosRango = ['desde' => $desde, 'hasta' => $hasta, 'almacen_id' => $almacen_id];
     $pestanas = ['stock' => 'Stock actual', 'movimientos' => 'Movimientos', 'compras' => 'Compras', 'ventas' => 'Ventas'];
+
+    if (auth()->user()->can('ver-valorizacion')) {
+        $pestanas['valorizacion'] = 'Valorización';
+    }
 @endphp
 
 <div class="mx-auto max-w-6xl p-8">
@@ -64,6 +68,92 @@
                     @empty
                         <tr>
                             <td colspan="7" class="px-4 py-6 text-center text-cosechar-muted">No hay lotes con stock disponible.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    @elseif ($tab === 'valorizacion')
+        @php
+            $valorizacion = $this->valorizacion;
+        @endphp
+
+        <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
+            <select wire:model.live="almacen_id" class="{{ $campo }}">
+                <option value="">Todos los almacenes</option>
+                @foreach ($this->almacenes as $almacen)
+                    <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
+                @endforeach
+            </select>
+            <button type="button" wire:click="limpiarFiltros" class="rounded-md border border-cosechar-border px-3 py-2 text-sm text-cosechar-muted hover:bg-cosechar-cream">Limpiar filtros</button>
+        </div>
+
+        <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
+            <div class="rounded-2xl border border-cosechar-border bg-white p-4">
+                <p class="text-xs uppercase text-cosechar-muted">Valor a costo</p>
+                <p class="mt-1 text-xl font-semibold text-cosechar-ink">S/ {{ number_format($valorizacion['totales']['valorCosto'], 2) }}</p>
+            </div>
+            <div class="rounded-2xl border border-cosechar-border bg-white p-4">
+                <p class="text-xs uppercase text-cosechar-muted">Valor a precio de venta</p>
+                <p class="mt-1 text-xl font-semibold text-cosechar-ink">S/ {{ number_format($valorizacion['totales']['valorVenta'], 2) }}</p>
+            </div>
+            <div class="rounded-2xl border border-cosechar-border bg-white p-4">
+                <p class="text-xs uppercase text-cosechar-muted">Utilidad potencial</p>
+                <p class="mt-1 text-xl font-semibold text-cosechar-olive">S/ {{ number_format($valorizacion['totales']['utilidad'], 2) }}</p>
+            </div>
+            <div class="rounded-2xl border border-cosechar-border bg-white p-4">
+                <p class="text-xs uppercase text-cosechar-muted">Stock valorizado</p>
+                <p class="mt-1 text-xl font-semibold text-cosechar-ink">{{ $valorizacion['totales']['unidades'] }} unidades</p>
+                <p class="text-xs text-cosechar-muted">{{ $valorizacion['totales']['productos'] }} producto(s)</p>
+            </div>
+        </div>
+
+        @unless ($valorizacion['totales']['completo'])
+            <div class="mb-4 rounded-md bg-amber-100 px-4 py-2 text-sm text-amber-900">
+                Hay {{ $valorizacion['totales']['unidadesSinCosto'] }} unidades sin costo registrado: no suman al valor a costo, así que el total es incompleto.
+            </div>
+        @endunless
+
+        <div class="mb-4 flex items-center justify-between">
+            <p class="text-sm text-cosechar-muted">{{ $valorizacion['filas']->count() }} línea(s) de producto y almacén</p>
+            <div class="flex gap-2">
+                <a href="{{ route('reportes.valorizacion.pdf', ['almacen_id' => $almacen_id]) }}" target="_blank" class="{{ $botonExportar }}">PDF</a>
+                <a href="{{ route('reportes.valorizacion.excel', ['almacen_id' => $almacen_id]) }}" class="{{ $botonExportar }}">Excel</a>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl border border-cosechar-border bg-white">
+            <table class="w-full text-sm">
+                <thead class="bg-cosechar-cream text-left text-xs uppercase text-cosechar-muted">
+                    <tr>
+                        <th class="px-4 py-3">Producto</th>
+                        <th class="px-4 py-3">Almacén</th>
+                        <th class="px-4 py-3 text-right">Unidades</th>
+                        <th class="px-4 py-3 text-right">Costo promedio</th>
+                        <th class="px-4 py-3 text-right">Valor a costo</th>
+                        <th class="px-4 py-3 text-right">Valor a precio de venta</th>
+                        <th class="px-4 py-3 text-right">Utilidad potencial</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-cosechar-border">
+                    @forelse ($valorizacion['filas'] as $fila)
+                        <tr>
+                            <td class="px-4 py-3">
+                                <span class="font-medium text-cosechar-ink">{{ $fila->producto->nombre }}</span>
+                                <span class="block text-xs text-cosechar-muted">{{ $fila->producto->codigo }}</span>
+                            </td>
+                            <td class="px-4 py-3 text-cosechar-muted">{{ $fila->almacen?->nombre ?? 'Sin almacén' }}</td>
+                            <td class="px-4 py-3 text-right">{{ $fila->unidades }}</td>
+                            <td class="px-4 py-3 text-right text-cosechar-muted">
+                                {{ $fila->costoPromedio !== null ? 'S/ '.number_format($fila->costoPromedio, 2) : 'sin costo' }}
+                            </td>
+                            <td class="px-4 py-3 text-right">S/ {{ number_format($fila->valorCosto, 2) }}</td>
+                            <td class="px-4 py-3 text-right">S/ {{ number_format($fila->valorVenta, 2) }}</td>
+                            <td class="px-4 py-3 text-right font-medium text-cosechar-olive">S/ {{ number_format($fila->utilidad, 2) }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-4 py-6 text-center text-cosechar-muted">No hay stock para valorizar.</td>
                         </tr>
                     @endforelse
                 </tbody>

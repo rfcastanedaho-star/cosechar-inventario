@@ -44,6 +44,7 @@ class CompraService
                     'fecha_ingreso' => $cabecera['fecha'],
                     'fecha_vencimiento' => $linea['fecha_vencimiento'] ?: null,
                     'cantidad' => 0,
+                    'costo_unitario' => $linea['costo_unitario'],
                 ]);
 
                 $this->movimientos->registrarEntrada($lote, (int) $linea['cantidad'], $responsable, 'compra');

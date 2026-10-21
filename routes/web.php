@@ -62,6 +62,11 @@ Route::middleware(['auth', 'activo'])->group(function () {
     Route::get('/reportes', ReporteFiltro::class)->name('reportes');
     Route::get('/cuenta/contrasena', CambiarPassword::class)->name('password.cambiar');
 
+    Route::middleware('can:ver-valorizacion')->group(function () {
+        Route::get('/reportes/valorizacion/pdf', [ReporteController::class, 'valorizacionPdf'])->name('reportes.valorizacion.pdf');
+        Route::get('/reportes/valorizacion/excel', [ReporteController::class, 'valorizacionExcel'])->name('reportes.valorizacion.excel');
+    });
+
     Route::get('/auditoria', AuditoriaLista::class)->middleware('can:ver-auditoria')->name('auditoria.index');
 
     Route::middleware('can:gestionar-usuarios')->group(function () {
