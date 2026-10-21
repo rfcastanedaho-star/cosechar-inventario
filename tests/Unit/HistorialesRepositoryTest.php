@@ -209,6 +209,8 @@ class HistorialesRepositoryTest extends TestCase
         $almacen = Almacen::factory()->create();
         Lote::factory()->count(2)->create(['almacen_id' => $almacen->id]);
 
-        $this->assertSame(2, (new AlmacenRepository)->historial([])->items()[0]->lotes_count);
+        $fila = collect((new AlmacenRepository)->historial([])->items())->firstWhere('id', $almacen->id);
+
+        $this->assertSame(2, $fila->lotes_count);
     }
 }
