@@ -8,6 +8,8 @@ use App\Livewire\AlmacenLista;
 use App\Livewire\AuditoriaLista;
 use App\Livewire\Auth\Login;
 use App\Livewire\CambiarPassword;
+use App\Livewire\CategoriaForm;
+use App\Livewire\CategoriaLista;
 use App\Livewire\ClienteForm;
 use App\Livewire\ClienteLista;
 use App\Livewire\CompraForm;
@@ -76,6 +78,12 @@ Route::middleware(['auth', 'activo'])->group(function () {
     });
 
     Route::get('/auditoria', AuditoriaLista::class)->middleware('can:ver-auditoria')->name('auditoria.index');
+
+    Route::middleware('can:gestionar-categorias')->group(function () {
+        Route::get('/categorias', CategoriaLista::class)->name('categorias.index');
+        Route::get('/categorias/nueva', CategoriaForm::class)->name('categorias.nueva');
+        Route::get('/categorias/{categoria}/editar', CategoriaForm::class)->name('categorias.editar');
+    });
 
     Route::middleware('can:gestionar-usuarios')->group(function () {
         Route::get('/usuarios', UsuarioLista::class)->name('usuarios.index');

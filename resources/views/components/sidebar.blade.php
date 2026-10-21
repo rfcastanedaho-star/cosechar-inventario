@@ -11,6 +11,10 @@
         ['route' => 'reportes', 'pattern' => 'reportes', 'icon' => 'reportes', 'label' => 'Reportes'],
     ];
 
+    if (auth()->user()->can('gestionar-categorias')) {
+        $navActivos[] = ['route' => 'categorias.index', 'pattern' => 'categorias.*', 'icon' => 'categorias', 'label' => 'Categorías'];
+    }
+
     if (auth()->user()->can('gestionar-usuarios')) {
         $navActivos[] = ['route' => 'usuarios.index', 'pattern' => 'usuarios.*', 'icon' => 'usuarios', 'label' => 'Usuarios'];
     }

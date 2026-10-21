@@ -48,6 +48,10 @@
             <svg viewBox="0 0 24 24" {!! $base !!}><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16c.5-1.7 1.8-2.6 3.2-2.6s2.7.9 3.2 2.6"/><path d="M14.5 10h4M14.5 13h3"/></svg>
             @break
 
+        @case('categorias')
+            <svg viewBox="0 0 24 24" {!! $base !!}><path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7a1 1 0 0 1 .7.3l7.3 7.3a1 1 0 0 1 0 1.4l-7.4 7.4a1 1 0 0 1-1.4 0l-7.3-7.3a1 1 0 0 1-.3-.7z"/><circle cx="8.3" cy="8.3" r="1.4"/></svg>
+            @break
+
         @case('search')
             <svg viewBox="0 0 24 24" {!! $base !!}><circle cx="10.5" cy="10.5" r="6.5"/><path d="M19.5 19.5 15.2 15.2"/></svg>
             @break
