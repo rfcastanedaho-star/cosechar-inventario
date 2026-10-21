@@ -5,12 +5,20 @@ namespace App\Livewire\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
 class Login extends Component
 {
+    /** Intentos fallidos permitidos por correo y dirección IP antes de bloquear. */
+    private const MAX_INTENTOS = 5;
+
+    /** Segundos que dura el bloqueo y la cuenta de intentos. */
+    private const SEGUNDOS_BLOQUEO = 60;
+
     public string $email = '';
 
     public string $password = '';
@@ -40,20 +48,41 @@ class Login extends Component
         $this->password = trim($this->password);
 
         $credentials = $this->validate();
+        $clave = $this->claveDeLimite();
 
-        if (! Auth::attempt($credentials + ['activo' => true], $this->remember)) {
-            $this->addError('email', $this->usuarioDesactivado($credentials)
-                ? 'Tu usuario está desactivado. Consulta con el administrador.'
-                : 'Las credenciales no coinciden con nuestros registros.');
+        if (RateLimiter::tooManyAttempts($clave, self::MAX_INTENTOS)) {
+            $segundos = RateLimiter::availableIn($clave);
+            $this->addError('email', 'Demasiados intentos. Intenta de nuevo en '.$segundos.($segundos === 1 ? ' segundo.' : ' segundos.'));
 
             return;
         }
+
+        if (! Auth::attempt($credentials + ['activo' => true], $this->remember)) {
+            if ($this->usuarioDesactivado($credentials)) {
+                $this->addError('email', 'Tu usuario está desactivado. Consulta con el administrador.');
+
+                return;
+            }
+
+            RateLimiter::hit($clave, self::SEGUNDOS_BLOQUEO);
+            $this->addError('email', 'Las credenciales no coinciden con nuestros registros.');
+
+            return;
+        }
+
+        RateLimiter::clear($clave);
 
         if (request()->hasSession()) {
             request()->session()->regenerate();
         }
 
         return redirect()->intended(route('dashboard'));
+    }
+
+    /** El correo se normaliza para que mayúsculas o espacios no permitan esquivar el límite. */
+    private function claveDeLimite(): string
+    {
+        return 'login:'.Str::lower(trim($this->email)).'|'.request()->ip();
     }
 
     /** Solo se avisa que está desactivado si la contraseña era correcta, para no revelar quién existe. */
