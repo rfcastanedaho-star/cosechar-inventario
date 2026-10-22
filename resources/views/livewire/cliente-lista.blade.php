@@ -1,9 +1,7 @@
 <div class="mx-auto max-w-5xl p-8">
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-6">
         <h1 class="text-lg font-semibold text-cosechar-ink">Clientes</h1>
-        <a href="{{ route('clientes.nuevo') }}" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90">
-            Registrar cliente
-        </a>
+        <p class="mt-1 text-sm text-cosechar-muted">Los clientes se registran solos al registrar una venta con su documento. Aquí puede consultarlos y corregir sus datos.</p>
     </div>
 
     @include('livewire.partials.filtros-historial', [

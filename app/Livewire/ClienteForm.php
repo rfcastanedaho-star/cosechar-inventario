@@ -3,7 +3,6 @@
 namespace App\Livewire;
 
 use App\Models\Cliente;
-use App\Repositories\ClienteRepository;
 use App\Services\AuditoriaService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -24,15 +23,14 @@ class ClienteForm extends Component
 
     public string $direccion = '';
 
-    public function mount(?Cliente $cliente = null): void
+    /** Los clientes se registran solos al vender; esta pantalla solo corrige sus datos. */
+    public function mount(Cliente $cliente): void
     {
-        if ($cliente?->exists) {
-            $this->clienteId = $cliente->id;
-            $this->nombre = $cliente->nombre;
-            $this->documento = $cliente->documento ?? '';
-            $this->telefono = $cliente->telefono ?? '';
-            $this->direccion = $cliente->direccion ?? '';
-        }
+        $this->clienteId = $cliente->id;
+        $this->nombre = $cliente->nombre;
+        $this->documento = $cliente->documento ?? '';
+        $this->telefono = $cliente->telefono ?? '';
+        $this->direccion = $cliente->direccion ?? '';
     }
 
     #[Computed]
@@ -85,7 +83,7 @@ class ClienteForm extends Component
         $this->validateOnly($property);
     }
 
-    public function guardar(ClienteRepository $clientes, AuditoriaService $auditoria)
+    public function guardar(AuditoriaService $auditoria)
     {
         $data = $this->validate();
 
@@ -99,11 +97,7 @@ class ClienteForm extends Component
             $datos['documento'] = $data['documento'] ?: null;
         }
 
-        if ($this->editando) {
-            $auditoria->actualizar(Cliente::findOrFail($this->clienteId), $datos, auth()->user());
-        } else {
-            $clientes->create($datos);
-        }
+        $auditoria->actualizar(Cliente::findOrFail($this->clienteId), $datos, auth()->user());
 
         return redirect()->route('clientes.index');
     }

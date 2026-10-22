@@ -63,6 +63,18 @@ class ClienteRepository
             ->paginate($porPagina);
     }
 
+    /**
+     * Cliente con ese documento: el que ya existe (aunque esté desactivado) o uno
+     * nuevo con el nombre dado. No pisa los datos de uno existente.
+     */
+    public function registrarOReutilizar(string $nombre, string $documento): Cliente
+    {
+        return Cliente::firstOrCreate(
+            ['documento' => $documento],
+            ['nombre' => $nombre, 'activo' => true],
+        );
+    }
+
     public function create(array $data): Cliente
     {
         return Cliente::create($data);

@@ -154,7 +154,7 @@ class VentaForm extends Component
     {
         $reglas = [
             'cliente_nombre' => ['required', 'string', 'max:150'],
-            'cliente_documento' => ['nullable', 'string', 'max:20'],
+            'cliente_documento' => ['nullable', 'string', 'max:20', 'regex:/^[A-Za-z0-9\-]+$/'],
             'almacen_id' => ['required', 'exists:almacenes,id'],
             'fecha' => ['required', 'date'],
             'numero_comprobante' => ['nullable', 'string', 'max:50'],
@@ -186,6 +186,9 @@ class VentaForm extends Component
 
     public function guardar(VentaService $servicio): void
     {
+        $this->cliente_nombre = trim($this->cliente_nombre);
+        $this->cliente_documento = trim($this->cliente_documento);
+
         $data = $this->validate();
 
         try {

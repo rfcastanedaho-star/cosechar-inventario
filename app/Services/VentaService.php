@@ -5,12 +5,14 @@ namespace App\Services;
 use App\Models\Producto;
 use App\Models\User;
 use App\Models\Venta;
+use App\Repositories\ClienteRepository;
 use Illuminate\Support\Facades\DB;
 
 class VentaService
 {
     public function __construct(
         private StockMovimientoService $movimientos,
+        private ClienteRepository $clientes = new ClienteRepository,
     ) {}
 
     /**
@@ -24,10 +26,18 @@ class VentaService
     public function registrar(array $cabecera, array $lineas, User $responsable): Venta
     {
         return DB::transaction(function () use ($cabecera, $lineas, $responsable) {
+            $documento = trim((string) ($cabecera['cliente_documento'] ?? ''));
+            $clienteId = $cabecera['cliente_id'] ?? null;
+
+            // Quien se vende con documento queda registrado como cliente (o se reutiliza el que ya existe).
+            if ($clienteId === null && $documento !== '') {
+                $clienteId = $this->clientes->registrarOReutilizar($cabecera['cliente_nombre'], $documento)->id;
+            }
+
             $venta = Venta::create([
-                'cliente_id' => $cabecera['cliente_id'] ?? null,
+                'cliente_id' => $clienteId,
                 'cliente_nombre' => $cabecera['cliente_nombre'],
-                'cliente_documento' => $cabecera['cliente_documento'] ?: null,
+                'cliente_documento' => $documento ?: null,
                 'almacen_id' => $cabecera['almacen_id'],
                 'responsable_id' => $responsable->id,
                 'fecha' => $cabecera['fecha'],

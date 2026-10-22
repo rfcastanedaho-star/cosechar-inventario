@@ -24,10 +24,7 @@
 
     <form wire:submit="guardar" class="flex flex-col gap-6">
         <div class="rounded-xl border border-cosechar-border bg-white p-4">
-            <div class="mb-1 flex items-center justify-between">
-                <label for="buscar_cliente" class="block text-sm font-medium text-cosechar-ink">Buscar cliente registrado <span class="font-normal text-cosechar-muted">(opcional)</span></label>
-                <a href="{{ route('clientes.nuevo') }}" target="_blank" class="text-xs font-medium text-cosechar-olive underline hover:text-cosechar-forest">Registrar cliente nuevo</a>
-            </div>
+            <label for="buscar_cliente" class="mb-1 block text-sm font-medium text-cosechar-ink">Buscar cliente registrado <span class="font-normal text-cosechar-muted">(opcional)</span></label>
 
             @if ($cliente_id)
                 <div class="flex items-center justify-between gap-2 rounded-md border border-cosechar-border bg-cosechar-cream px-3 py-2 text-sm">
@@ -43,7 +40,7 @@
                     id="buscar_cliente"
                     wire:model.live.debounce.250ms="buscarCliente"
                     wire:keydown.enter.prevent="elegirPrimerCliente"
-                    placeholder="Escriba el nombre, el DNI/RUC o el teléfono. Si no está registrado, llene los datos de abajo."
+                    placeholder="Escriba el nombre, el DNI/RUC o el teléfono"
                     autocomplete="off"
                     class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
                 >
@@ -83,6 +80,12 @@
             <div>
                 <label for="cliente_documento" class="mb-1 block text-sm font-medium text-cosechar-ink">Documento (opcional)</label>
                 <input type="text" id="cliente_documento" wire:model.blur="cliente_documento" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
+                @error('cliente_documento')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+                @unless ($cliente_id)
+                    <p class="mt-1 text-xs text-cosechar-muted">Si escribe el documento, el cliente se registra solo al guardar la venta.</p>
+                @endunless
             </div>
 
             <div>

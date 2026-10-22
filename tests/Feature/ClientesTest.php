@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\Venta;
 use App\Support\AuditoriaEtiquetas;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -88,49 +89,51 @@ class ClientesTest extends TestCase
         $lista->assertSee('Mostrando 1–15 de 20');
     }
 
-    // ---------- Formulario ----------
+    // ---------- Formulario (solo edición: los clientes se registran al vender) ----------
 
     private function formulario(?User $usuario = null, array $parametros = []): Testable
     {
         return Livewire::actingAs($usuario ?? $this->operador())->test(ClienteForm::class, $parametros);
     }
 
-    public function test_cualquier_usuario_registra_un_cliente(): void
+    public function test_ya_no_existe_una_pantalla_para_registrar_clientes_a_mano(): void
     {
-        $this->formulario()
-            ->set('nombre', 'Ana Pérez')
-            ->set('documento', '12345678')
-            ->set('telefono', '987654321')
-            ->set('direccion', 'Av. Perú 100')
-            ->call('guardar')
-            ->assertHasNoErrors()
-            ->assertRedirect(route('clientes.index'));
+        $this->assertFalse(Route::has('clientes.nuevo'));
 
-        $this->assertDatabaseHas('clientes', ['nombre' => 'Ana Pérez', 'documento' => '12345678', 'activo' => true]);
+        $this->actingAs($this->admin())->get('/clientes/nuevo')->assertNotFound();
     }
 
-    public function test_solo_el_nombre_es_obligatorio(): void
+    public function test_la_lista_no_ofrece_registrar_clientes_pero_si_editarlos(): void
     {
-        $this->formulario()->set('nombre', 'Cliente de mostrador')->call('guardar')->assertHasNoErrors();
+        $cliente = Cliente::factory()->create();
 
-        $this->assertDatabaseHas('clientes', ['nombre' => 'Cliente de mostrador', 'documento' => null]);
+        Livewire::actingAs($this->admin())
+            ->test(ClienteLista::class)
+            ->assertDontSee('Registrar cliente')
+            ->assertSeeHtml(route('clientes.editar', $cliente))
+            ->assertSee('al registrar una venta');
     }
 
-    public function test_valida_nombre_y_formato_del_documento(): void
+    public function test_valida_nombre_y_formato_del_documento_al_editar(): void
     {
-        $this->formulario()->set('nombre', '')->call('guardar')->assertHasErrors(['nombre' => 'required']);
-        $this->formulario()->set('nombre', 'X')->set('documento', 'doc con espacios!')->call('guardar')->assertHasErrors(['documento']);
-        $this->formulario()->set('nombre', 'X')->set('telefono', str_repeat('9', 40))->call('guardar')->assertHasErrors(['telefono']);
+        $cliente = Cliente::factory()->create();
+        $admin = $this->admin();
+
+        $this->formulario($admin, ['cliente' => $cliente])->set('nombre', '')->call('guardar')->assertHasErrors(['nombre' => 'required']);
+        $this->formulario($admin, ['cliente' => $cliente])->set('documento', 'doc con espacios!')->call('guardar')->assertHasErrors(['documento']);
+        $this->formulario($admin, ['cliente' => $cliente])->set('telefono', str_repeat('9', 40))->call('guardar')->assertHasErrors(['telefono']);
     }
 
-    public function test_el_documento_no_se_repite_pero_puede_quedar_vacio_en_varios(): void
+    public function test_el_documento_no_se_repite_pero_puede_quedar_vacio(): void
     {
         Cliente::factory()->create(['documento' => '12345678']);
+        $otro = Cliente::factory()->create(['documento' => '87654321']);
+        $admin = $this->admin();
 
-        $this->formulario()->set('nombre', 'Otro')->set('documento', '12345678')->call('guardar')->assertHasErrors(['documento' => 'unique']);
+        $this->formulario($admin, ['cliente' => $otro])->set('documento', '12345678')->call('guardar')->assertHasErrors(['documento' => 'unique']);
+        $this->formulario($admin, ['cliente' => $otro])->set('documento', '')->call('guardar')->assertHasNoErrors();
 
-        $this->formulario()->set('nombre', 'Sin doc 1')->call('guardar')->assertHasNoErrors();
-        $this->formulario()->set('nombre', 'Sin doc 2')->call('guardar')->assertHasNoErrors();
+        $this->assertNull($otro->fresh()->documento);
     }
 
     public function test_el_administrador_edita_todo_y_queda_en_el_historial(): void
@@ -331,5 +334,111 @@ class ClientesTest extends TestCase
             ->call('guardar')
             ->assertSet('cliente_id', null)
             ->assertSet('cliente_nombre', '');
+    }
+
+    // ---------- Registro automático al vender (opción B) ----------
+
+    private function venderA(string $nombre, ?string $documento, ?int $clienteId = null): void
+    {
+        $almacen = Almacen::first() ?? Almacen::factory()->create();
+        $producto = Producto::factory()->create(['maneja_vencimiento' => false, 'precio' => 10]);
+        Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $almacen->id, 'cantidad' => 50]);
+
+        $componente = $this->venta();
+
+        if ($clienteId) {
+            $componente->call('elegirCliente', $clienteId);
+        } else {
+            $componente->set('cliente_nombre', $nombre)->set('cliente_documento', $documento ?? '');
+        }
+
+        $componente
+            ->set('almacen_id', $almacen->id)
+            ->call('elegirProductoLinea', 0, $producto->id)
+            ->set('lineas.0.cantidad', 1)
+            ->call('guardar')
+            ->assertHasNoErrors();
+    }
+
+    public function test_vender_a_alguien_nuevo_con_documento_lo_registra_automaticamente(): void
+    {
+        $this->venderA('Juan Quispe', '45678912');
+
+        $cliente = Cliente::where('documento', '45678912')->firstOrFail();
+        $this->assertSame('Juan Quispe', $cliente->nombre);
+        $this->assertTrue($cliente->activo);
+        $this->assertSame($cliente->id, Venta::latest('id')->firstOrFail()->cliente_id);
+    }
+
+    public function test_si_el_documento_ya_existe_se_reutiliza_el_cliente_sin_duplicarlo(): void
+    {
+        $existente = Cliente::factory()->create(['nombre' => 'Juan Quispe Mamani', 'documento' => '45678912']);
+
+        $this->venderA('Juan Quispe', '45678912');
+
+        $this->assertSame(1, Cliente::where('documento', '45678912')->count());
+        $venta = Venta::latest('id')->firstOrFail();
+        $this->assertSame($existente->id, $venta->cliente_id);
+        // la venta conserva lo que se escribió y el cliente no se pisa
+        $this->assertSame('Juan Quispe', $venta->cliente_nombre);
+        $this->assertSame('Juan Quispe Mamani', $existente->fresh()->nombre);
+    }
+
+    public function test_sin_documento_no_se_crea_ningun_cliente(): void
+    {
+        $this->venderA('Cliente de paso', null);
+
+        $this->assertDatabaseCount('clientes', 0);
+        $this->assertNull(Venta::latest('id')->firstOrFail()->cliente_id);
+    }
+
+    public function test_un_cliente_elegido_de_la_lista_no_se_vuelve_a_crear(): void
+    {
+        $cliente = Cliente::factory()->create(['nombre' => 'Ana Pérez', 'documento' => '12345678']);
+
+        $this->venderA('', null, $cliente->id);
+
+        $this->assertDatabaseCount('clientes', 1);
+        $this->assertSame($cliente->id, Venta::latest('id')->firstOrFail()->cliente_id);
+    }
+
+    public function test_el_documento_se_limpia_de_espacios_antes_de_buscar_o_crear(): void
+    {
+        Cliente::factory()->create(['documento' => '45678912']);
+
+        $this->venderA('Juan', '  45678912 ');
+
+        $this->assertSame(1, Cliente::where('documento', '45678912')->count());
+    }
+
+    public function test_un_cliente_desactivado_con_ese_documento_se_reutiliza_sin_reactivarlo(): void
+    {
+        $inactivo = Cliente::factory()->create(['documento' => '45678912', 'activo' => false]);
+
+        $this->venderA('Juan', '45678912');
+
+        $this->assertFalse($inactivo->fresh()->activo);
+        $this->assertSame($inactivo->id, Venta::latest('id')->firstOrFail()->cliente_id);
+        $this->assertSame(1, Cliente::count());
+    }
+
+    public function test_el_documento_de_la_venta_solo_admite_letras_numeros_y_guiones(): void
+    {
+        $almacen = Almacen::factory()->create();
+
+        $this->venta()
+            ->set('cliente_nombre', 'Juan')
+            ->set('cliente_documento', 'doc raro!')
+            ->set('almacen_id', $almacen->id)
+            ->call('guardar')
+            ->assertHasErrors(['cliente_documento']);
+    }
+
+    public function test_la_pantalla_de_ventas_explica_el_registro_automatico_y_ya_no_manda_a_registrar_aparte(): void
+    {
+        Livewire::actingAs($this->operador())
+            ->test(VentaForm::class)
+            ->assertDontSee('Registrar cliente nuevo')
+            ->assertSee('se registra solo');
     }
 }
