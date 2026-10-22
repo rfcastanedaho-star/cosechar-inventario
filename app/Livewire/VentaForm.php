@@ -35,7 +35,7 @@ class VentaForm extends Component
 
     public string $numero_comprobante = '';
 
-    /** @var array<int, array{producto_id: ?int, cantidad: int, precio_unitario: string}> */
+    /** @var array<int, array{producto_id: ?int, cantidad: int, precio_unitario: string, precio_manual: bool}> */
     public array $lineas = [];
 
     public bool $creado = false;
@@ -49,11 +49,11 @@ class VentaForm extends Component
     }
 
     /**
-     * @return array{producto_id: ?int, cantidad: int, precio_unitario: string}
+     * @return array{producto_id: ?int, cantidad: int, precio_unitario: string, precio_manual: bool}
      */
     private function lineaVacia(): array
     {
-        return ['producto_id' => null, 'cantidad' => 1, 'precio_unitario' => ''];
+        return ['producto_id' => null, 'cantidad' => 1, 'precio_unitario' => '', 'precio_manual' => false];
     }
 
     public function agregarLinea(): void
@@ -122,12 +122,60 @@ class VentaForm extends Component
         $this->cliente_id = null;
     }
 
-    /** Al elegir el producto se propone su precio de venta, sin pisar uno ya escrito. */
+    /** Al elegir el producto se propone su precio (normal o por mayor), sin pisar uno escrito a mano. */
     protected function alElegirProducto(int $indice, Producto $producto): void
     {
-        if (($this->lineas[$indice]['precio_unitario'] ?? '') === '') {
-            $this->lineas[$indice]['precio_unitario'] = (string) $producto->precio;
+        $this->recalcularPrecio($indice);
+    }
+
+    /** Cambiar la cantidad vuelve a proponer el precio; escribir un precio lo fija a mano. */
+    public function updatedLineas(mixed $valor, string $clave): void
+    {
+        [$indice, $campo] = array_pad(explode('.', $clave, 2), 2, null);
+        $indice = (int) $indice;
+
+        if (! isset($this->lineas[$indice])) {
+            return;
         }
+
+        if ($campo === 'precio_unitario') {
+            $this->lineas[$indice]['precio_manual'] = trim((string) $valor) !== '';
+        }
+
+        if (in_array($campo, ['cantidad', 'precio_unitario'], true)) {
+            $this->recalcularPrecio($indice);
+        }
+    }
+
+    private function recalcularPrecio(int $indice): void
+    {
+        $producto = $this->productoDeLinea($indice);
+
+        if ($producto === null || ($this->lineas[$indice]['precio_manual'] ?? false)) {
+            return;
+        }
+
+        $this->lineas[$indice]['precio_unitario'] = $this->precioSugerido($producto, $this->lineas[$indice]['cantidad'] ?? 0);
+    }
+
+    private function precioSugerido(Producto $producto, mixed $cantidad): string
+    {
+        $porMayor = $producto->precio_mayor !== null
+            && $producto->cantidad_mayor
+            && (int) $cantidad >= $producto->cantidad_mayor;
+
+        return (string) ($porMayor ? $producto->precio_mayor : $producto->precio);
+    }
+
+    /** ¿El precio de esta línea es el de por mayor, propuesto por el sistema? */
+    public function precioPorMayorAplicado(int $indice): bool
+    {
+        $producto = $this->productoDeLinea($indice);
+
+        return $producto !== null
+            && $producto->precio_mayor !== null
+            && ! ($this->lineas[$indice]['precio_manual'] ?? false)
+            && (int) ($this->lineas[$indice]['cantidad'] ?? 0) >= (int) $producto->cantidad_mayor;
     }
 
     #[Computed]

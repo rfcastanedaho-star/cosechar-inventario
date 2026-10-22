@@ -176,6 +176,12 @@
                         @error("lineas.{$indice}.precio_unitario")
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
+                        @if (($productoPrecio = $this->productoDeLinea($indice)) && $productoPrecio->precio_mayor !== null)
+                            <p class="mt-1 text-xs text-cosechar-muted">Por mayor: S/ {{ number_format($productoPrecio->precio_mayor, 2) }} desde {{ $productoPrecio->cantidad_mayor }} unidades</p>
+                            @if ($this->precioPorMayorAplicado($indice))
+                                <span class="mt-1 inline-block rounded-full bg-cosechar-olive/15 px-2 py-0.5 text-[11px] font-semibold text-cosechar-olive">Precio por mayor aplicado</span>
+                            @endif
+                        @endif
                     </div>
 
                     <div class="flex items-end justify-end sm:col-span-1">
