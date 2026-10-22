@@ -10,9 +10,11 @@
         </a>
     </div>
 
+    <x-leyenda-obligatorios />
+
     <form wire:submit="guardar" class="flex flex-col gap-4">
         <div>
-            <label for="name" class="mb-1 block text-sm font-medium text-cosechar-ink">Nombre</label>
+            <label for="name" class="mb-1 block text-sm font-medium text-cosechar-ink">Nombre <x-obligatorio /></label>
             <input type="text" id="name" wire:model.blur="name" class="{{ $campo }}">
             @error('name')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -20,7 +22,7 @@
         </div>
 
         <div>
-            <label for="email" class="mb-1 block text-sm font-medium text-cosechar-ink">Correo</label>
+            <label for="email" class="mb-1 block text-sm font-medium text-cosechar-ink">Correo <x-obligatorio /></label>
             <input type="email" id="email" wire:model.blur="email" autocomplete="off" class="{{ $campo }}">
             @error('email')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -28,7 +30,7 @@
         </div>
 
         <div>
-            <label for="rol" class="mb-1 block text-sm font-medium text-cosechar-ink">Rol</label>
+            <label for="rol" class="mb-1 block text-sm font-medium text-cosechar-ink">Rol <x-obligatorio /></label>
             <select id="rol" wire:model.blur="rol" class="{{ $campo }}">
                 @foreach (\App\Models\User::ROLES as $clave => $etiqueta)
                     <option value="{{ $clave }}">{{ $etiqueta }}</option>
@@ -43,7 +45,7 @@
         @unless ($this->editando)
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
-                    <label for="password" class="mb-1 block text-sm font-medium text-cosechar-ink">Contraseña</label>
+                    <label for="password" class="mb-1 block text-sm font-medium text-cosechar-ink">Contraseña <x-obligatorio /></label>
                     <input type="password" id="password" wire:model.blur="password" autocomplete="new-password" class="{{ $campo }}">
                     @error('password')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -51,7 +53,7 @@
                 </div>
 
                 <div>
-                    <label for="password_confirmation" class="mb-1 block text-sm font-medium text-cosechar-ink">Repetir contraseña</label>
+                    <label for="password_confirmation" class="mb-1 block text-sm font-medium text-cosechar-ink">Repetir contraseña <x-obligatorio /></label>
                     <input type="password" id="password_confirmation" wire:model.blur="password_confirmation" autocomplete="new-password" class="{{ $campo }}">
                 </div>
             </div>
@@ -81,7 +83,7 @@
 
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
-                    <label for="nuevaPassword" class="mb-1 block text-sm font-medium text-cosechar-ink">Nueva contraseña</label>
+                    <label for="nuevaPassword" class="mb-1 block text-sm font-medium text-cosechar-ink">Nueva contraseña <x-obligatorio /></label>
                     <input type="password" id="nuevaPassword" wire:model="nuevaPassword" autocomplete="new-password" class="{{ $campo }}">
                     @error('nuevaPassword')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -89,7 +91,7 @@
                 </div>
 
                 <div>
-                    <label for="nuevaPassword_confirmation" class="mb-1 block text-sm font-medium text-cosechar-ink">Repetir contraseña</label>
+                    <label for="nuevaPassword_confirmation" class="mb-1 block text-sm font-medium text-cosechar-ink">Repetir contraseña <x-obligatorio /></label>
                     <input type="password" id="nuevaPassword_confirmation" wire:model="nuevaPassword_confirmation" autocomplete="new-password" class="{{ $campo }}">
                 </div>
             </div>

@@ -13,9 +13,11 @@
         </div>
     @endif
 
+    <x-leyenda-obligatorios />
+
     <form wire:submit="guardar" class="flex flex-col gap-4">
         <div>
-            <label for="nombre" class="mb-1 block text-sm font-medium text-cosechar-ink">Nombre / Razón social</label>
+            <label for="nombre" class="mb-1 block text-sm font-medium text-cosechar-ink">Nombre / Razón social <x-obligatorio /></label>
             <input
                 type="text"
                 id="nombre"
@@ -29,7 +31,7 @@
         </div>
 
         <div>
-            <label for="ruc" class="mb-1 block text-sm font-medium text-cosechar-ink">RUC</label>
+            <label for="ruc" class="mb-1 block text-sm font-medium text-cosechar-ink">RUC <span class="font-normal text-cosechar-muted">(opcional)</span></label>
             <input
                 type="text"
                 id="ruc"
@@ -47,7 +49,7 @@
 
         <div class="grid grid-cols-2 gap-4">
             <div>
-                <label for="telefono" class="mb-1 block text-sm font-medium text-cosechar-ink">Teléfono</label>
+                <label for="telefono" class="mb-1 block text-sm font-medium text-cosechar-ink">Teléfono <span class="font-normal text-cosechar-muted">(opcional)</span></label>
                 <input
                     type="text"
                     id="telefono"
@@ -60,7 +62,7 @@
             </div>
 
             <div>
-                <label for="direccion" class="mb-1 block text-sm font-medium text-cosechar-ink">Dirección</label>
+                <label for="direccion" class="mb-1 block text-sm font-medium text-cosechar-ink">Dirección <span class="font-normal text-cosechar-muted">(opcional)</span></label>
                 <input
                     type="text"
                     id="direccion"

@@ -11,9 +11,11 @@
         </div>
     @endif
 
+    <x-leyenda-obligatorios />
+
     <form wire:submit="guardar" class="flex flex-col gap-4">
         <div>
-            <label for="password_actual" class="mb-1 block text-sm font-medium text-cosechar-ink">Contraseña actual</label>
+            <label for="password_actual" class="mb-1 block text-sm font-medium text-cosechar-ink">Contraseña actual <x-obligatorio /></label>
             <input type="password" id="password_actual" wire:model="password_actual" autocomplete="current-password" class="{{ $campo }}">
             @error('password_actual')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -21,7 +23,7 @@
         </div>
 
         <div>
-            <label for="password" class="mb-1 block text-sm font-medium text-cosechar-ink">Nueva contraseña</label>
+            <label for="password" class="mb-1 block text-sm font-medium text-cosechar-ink">Nueva contraseña <x-obligatorio /></label>
             <input type="password" id="password" wire:model="password" autocomplete="new-password" class="{{ $campo }}">
             <p class="mt-1 text-xs text-cosechar-muted">Mínimo 8 caracteres y distinta de la actual.</p>
             @error('password')
@@ -30,7 +32,7 @@
         </div>
 
         <div>
-            <label for="password_confirmation" class="mb-1 block text-sm font-medium text-cosechar-ink">Repetir la nueva contraseña</label>
+            <label for="password_confirmation" class="mb-1 block text-sm font-medium text-cosechar-ink">Repetir la nueva contraseña <x-obligatorio /></label>
             <input type="password" id="password_confirmation" wire:model="password_confirmation" autocomplete="new-password" class="{{ $campo }}">
         </div>
 

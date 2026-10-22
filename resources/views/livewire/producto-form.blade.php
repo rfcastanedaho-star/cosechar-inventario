@@ -7,6 +7,8 @@
         </div>
     @endif
 
+    <x-leyenda-obligatorios />
+
     <form wire:submit="guardar" class="flex flex-col gap-4">
         <div>
             <label for="imagen" class="mb-1 block text-sm font-medium text-cosechar-ink">Foto del producto <span class="font-normal text-cosechar-muted">(opcional)</span></label>
@@ -36,7 +38,7 @@
         </div>
 
         <div>
-            <label for="codigo" class="mb-1 block text-sm font-medium text-cosechar-ink">Código</label>
+            <label for="codigo" class="mb-1 block text-sm font-medium text-cosechar-ink">Código <x-obligatorio /></label>
             <input
                 type="text"
                 id="codigo"
@@ -67,7 +69,7 @@
         </div>
 
         <div>
-            <label for="nombre" class="mb-1 block text-sm font-medium text-cosechar-ink">Nombre</label>
+            <label for="nombre" class="mb-1 block text-sm font-medium text-cosechar-ink">Nombre <x-obligatorio /></label>
             <input
                 type="text"
                 id="nombre"
@@ -109,7 +111,7 @@
         </div>
 
         <div>
-            <label for="categoria_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Categoría</label>
+            <label for="categoria_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Categoría <x-obligatorio /></label>
             <select
                 id="categoria_id"
                 wire:model.blur="categoria_id" @disabled(! $this->puedeEditarSensibles)
@@ -134,7 +136,7 @@
         </div>
 
         <div>
-            <label for="unidad_medida" class="mb-1 block text-sm font-medium text-cosechar-ink">Unidad de medida</label>
+            <label for="unidad_medida" class="mb-1 block text-sm font-medium text-cosechar-ink">Unidad de medida <x-obligatorio /></label>
             <select
                 id="unidad_medida"
                 wire:model.blur="unidad_medida" @disabled(! $this->puedeEditarSensibles)
@@ -154,7 +156,7 @@
 
         <div class="grid grid-cols-2 gap-4">
             <div>
-                <label for="stock_minimo" class="mb-1 block text-sm font-medium text-cosechar-ink">Stock mínimo</label>
+                <label for="stock_minimo" class="mb-1 block text-sm font-medium text-cosechar-ink">Stock mínimo <x-obligatorio /></label>
                 <input
                     type="number"
                     id="stock_minimo"
@@ -167,7 +169,7 @@
             </div>
 
             <div>
-                <label for="precio" class="mb-1 block text-sm font-medium text-cosechar-ink">Precio (S/)</label>
+                <label for="precio" class="mb-1 block text-sm font-medium text-cosechar-ink">Precio (S/) <x-obligatorio /></label>
                 <input
                     type="number"
                     step="0.01"

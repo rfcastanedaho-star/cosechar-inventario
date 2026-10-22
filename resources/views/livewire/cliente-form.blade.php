@@ -10,9 +10,11 @@
         </a>
     </div>
 
+    <x-leyenda-obligatorios />
+
     <form wire:submit="guardar" class="flex flex-col gap-4">
         <div>
-            <label for="nombre" class="mb-1 block text-sm font-medium text-cosechar-ink">Nombre o razón social</label>
+            <label for="nombre" class="mb-1 block text-sm font-medium text-cosechar-ink">Nombre o razón social <x-obligatorio /></label>
             <input type="text" id="nombre" wire:model.blur="nombre" @disabled(! $this->puedeEditarIdentidad) class="{{ $campo }}">
             @error('nombre')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

@@ -40,9 +40,11 @@
         </button>
     </div>
 
+    <x-leyenda-obligatorios />
+
     <form wire:submit="guardar" class="flex flex-col gap-4">
         <div>
-            <label for="buscar_producto" class="mb-1 block text-sm font-medium text-cosechar-ink">Producto</label>
+            <label for="buscar_producto" class="mb-1 block text-sm font-medium text-cosechar-ink">Producto <x-obligatorio /></label>
 
             @if ($this->productoSeleccionado)
                 <div class="flex items-center justify-between gap-3 rounded-md border border-cosechar-border bg-white px-3 py-2 text-sm shadow-sm">
@@ -87,7 +89,7 @@
 
         <div>
             <label for="almacen_id" class="mb-1 block text-sm font-medium text-cosechar-ink">
-                {{ $tipo === 'entrada' ? 'Almacén de destino' : 'Almacén de origen' }}
+                {{ $tipo === 'entrada' ? 'Almacén de destino' : 'Almacén de origen' }} <x-obligatorio />
             </label>
             <select id="almacen_id" wire:model.live="almacen_id" class="{{ $campo }}">
                 <option value="">Seleccione un almacén</option>
@@ -108,7 +110,7 @@
 
         @if ($tipo === 'transferencia')
             <div>
-                <label for="almacen_destino_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Almacén de destino</label>
+                <label for="almacen_destino_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Almacén de destino <x-obligatorio /></label>
                 <select id="almacen_destino_id" wire:model.live="almacen_destino_id" class="{{ $campo }}">
                     <option value="">Seleccione un almacén</option>
                     @foreach ($this->almacenes as $almacen)
@@ -126,7 +128,7 @@
             </div>
         @elseif ($tipo === 'entrada')
             <div>
-                <label for="buscar_lote" class="mb-1 block text-sm font-medium text-cosechar-ink">Lote</label>
+                <label for="buscar_lote" class="mb-1 block text-sm font-medium text-cosechar-ink">Lote <x-obligatorio /></label>
 
                 @if ($this->loteSeleccionado)
                     <div class="flex items-center justify-between gap-3 rounded-md border border-cosechar-border bg-white px-3 py-2 text-sm shadow-sm">
@@ -195,7 +197,7 @@
             </div>
         @else
             <div>
-                <label for="motivo" class="mb-1 block text-sm font-medium text-cosechar-ink">Motivo de la salida</label>
+                <label for="motivo" class="mb-1 block text-sm font-medium text-cosechar-ink">Motivo de la salida <x-obligatorio /></label>
                 <select id="motivo" wire:model.blur="motivo" class="{{ $campo }}">
                     <option value="">Seleccione un motivo</option>
                     <option value="merma">Merma</option>
@@ -209,7 +211,7 @@
         @endif
 
         <div>
-            <label for="cantidad" class="mb-1 block text-sm font-medium text-cosechar-ink">Cantidad</label>
+            <label for="cantidad" class="mb-1 block text-sm font-medium text-cosechar-ink">Cantidad <x-obligatorio /></label>
             <input type="number" min="1" id="cantidad" wire:model.blur="cantidad" class="{{ $campo }}">
             @error('cantidad')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

@@ -13,9 +13,11 @@
         </div>
     @endif
 
+    <x-leyenda-obligatorios />
+
     <form wire:submit="guardar" class="flex flex-col gap-4">
         <div>
-            <label for="nombre" class="mb-1 block text-sm font-medium text-cosechar-ink">Nombre</label>
+            <label for="nombre" class="mb-1 block text-sm font-medium text-cosechar-ink">Nombre <x-obligatorio /></label>
             <input
                 type="text"
                 id="nombre"
@@ -32,7 +34,7 @@
         </div>
 
         <div>
-            <label for="direccion" class="mb-1 block text-sm font-medium text-cosechar-ink">Dirección</label>
+            <label for="direccion" class="mb-1 block text-sm font-medium text-cosechar-ink">Dirección <span class="font-normal text-cosechar-muted">(opcional)</span></label>
             <input
                 type="text"
                 id="direccion"
@@ -45,7 +47,7 @@
         </div>
 
         <div>
-            <label for="encargado" class="mb-1 block text-sm font-medium text-cosechar-ink">Encargado</label>
+            <label for="encargado" class="mb-1 block text-sm font-medium text-cosechar-ink">Encargado <span class="font-normal text-cosechar-muted">(opcional)</span></label>
             <input
                 type="text"
                 id="encargado"

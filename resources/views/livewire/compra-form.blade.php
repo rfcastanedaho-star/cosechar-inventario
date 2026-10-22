@@ -18,10 +18,12 @@
         </div>
     @endif
 
+    <x-leyenda-obligatorios />
+
     <form wire:submit="guardar" class="flex flex-col gap-6">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
-                <label for="buscar_proveedor" class="mb-1 block text-sm font-medium text-cosechar-ink">Proveedor</label>
+                <label for="buscar_proveedor" class="mb-1 block text-sm font-medium text-cosechar-ink">Proveedor <x-obligatorio /></label>
 
                 @if ($this->proveedorSeleccionado)
                     <div class="flex items-center justify-between gap-2 rounded-md border border-cosechar-border bg-white px-3 py-2 text-sm shadow-sm">
@@ -66,7 +68,7 @@
             </div>
 
             <div>
-                <label for="almacen_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Almacén destino</label>
+                <label for="almacen_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Almacén destino <x-obligatorio /></label>
                 <select id="almacen_id" wire:model.blur="almacen_id" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
                     <option value="">Seleccione un almacén</option>
                     @foreach ($this->almacenes as $almacen)
@@ -79,7 +81,7 @@
             </div>
 
             <div>
-                <label for="fecha" class="mb-1 block text-sm font-medium text-cosechar-ink">Fecha</label>
+                <label for="fecha" class="mb-1 block text-sm font-medium text-cosechar-ink">Fecha <x-obligatorio /></label>
                 <input type="date" id="fecha" wire:model.blur="fecha" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
                 @error('fecha')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -98,7 +100,7 @@
             @foreach ($lineas as $indice => $linea)
                 <div wire:key="linea-{{ $indice }}" class="grid grid-cols-1 gap-3 rounded-xl border border-cosechar-border p-4 sm:grid-cols-12 sm:items-start">
                     <div class="sm:col-span-3">
-                        <label class="mb-1 block text-xs font-medium text-cosechar-muted">Producto</label>
+                        <label class="mb-1 block text-xs font-medium text-cosechar-muted">Producto <x-obligatorio /></label>
                         @if ($productoLinea = $this->productoDeLinea($indice))
                             <div class="flex items-center justify-between gap-2 rounded-md border border-cosechar-border bg-white px-2 py-1.5 text-sm">
                                 <span class="min-w-0 truncate text-cosechar-ink" title="{{ $productoLinea->codigo }} — {{ $productoLinea->nombre }}"><x-producto-etiqueta :producto="$productoLinea" /></span>
@@ -138,7 +140,7 @@
                     </div>
 
                     <div class="sm:col-span-2">
-                        <label class="mb-1 block text-xs font-medium text-cosechar-muted">N.º de lote</label>
+                        <label class="mb-1 block text-xs font-medium text-cosechar-muted">N.º de lote <x-obligatorio /></label>
                         <input type="text" wire:model.blur="lineas.{{ $indice }}.numero_lote" class="w-full rounded-md border border-cosechar-border px-2 py-1.5 text-sm">
                         @error("lineas.{$indice}.numero_lote")
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -146,7 +148,7 @@
                     </div>
 
                     <div class="sm:col-span-2">
-                        <label class="mb-1 block text-xs font-medium text-cosechar-muted">Vencimiento</label>
+                        <label class="mb-1 block text-xs font-medium text-cosechar-muted">Vencimiento @if ($this->productoDeLinea($indice)?->maneja_vencimiento)<x-obligatorio />@else<span class="font-normal text-cosechar-muted">(si aplica)</span>@endif</label>
                         <input type="date" wire:model.blur="lineas.{{ $indice }}.fecha_vencimiento" class="w-full rounded-md border border-cosechar-border px-2 py-1.5 text-sm">
                         @error("lineas.{$indice}.fecha_vencimiento")
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -154,7 +156,7 @@
                     </div>
 
                     <div class="sm:col-span-2">
-                        <label class="mb-1 block text-xs font-medium text-cosechar-muted">Cantidad</label>
+                        <label class="mb-1 block text-xs font-medium text-cosechar-muted">Cantidad <x-obligatorio /></label>
                         <input type="number" min="1" wire:model.blur="lineas.{{ $indice }}.cantidad" class="w-full rounded-md border border-cosechar-border px-2 py-1.5 text-sm">
                         @error("lineas.{$indice}.cantidad")
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -162,7 +164,7 @@
                     </div>
 
                     <div class="sm:col-span-2">
-                        <label class="mb-1 block text-xs font-medium text-cosechar-muted">Costo unitario (S/)</label>
+                        <label class="mb-1 block text-xs font-medium text-cosechar-muted">Costo unitario (S/) <x-obligatorio /></label>
                         <input type="number" step="0.01" min="0" wire:model.blur="lineas.{{ $indice }}.costo_unitario" class="w-full rounded-md border border-cosechar-border px-2 py-1.5 text-sm">
                         @error("lineas.{$indice}.costo_unitario")
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>

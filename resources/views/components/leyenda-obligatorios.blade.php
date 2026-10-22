@@ -1,0 +1,1 @@
+<p class="mb-4 text-xs text-cosechar-muted">Los campos con <span class="text-red-600">*</span> son obligatorios.</p>

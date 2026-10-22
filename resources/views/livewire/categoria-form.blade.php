@@ -10,9 +10,11 @@
         </a>
     </div>
 
+    <x-leyenda-obligatorios />
+
     <form wire:submit="guardar" class="flex flex-col gap-4">
         <div>
-            <label for="nombre" class="mb-1 block text-sm font-medium text-cosechar-ink">Nombre</label>
+            <label for="nombre" class="mb-1 block text-sm font-medium text-cosechar-ink">Nombre <x-obligatorio /></label>
             <input type="text" id="nombre" wire:model.blur="nombre" autocomplete="off" class="{{ $campo }}">
             @error('nombre')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -20,7 +22,7 @@
         </div>
 
         <div>
-            <label for="categoria_padre_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Grupo</label>
+            <label for="categoria_padre_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Grupo <span class="font-normal text-cosechar-muted">(opcional)</span></label>
             <select id="categoria_padre_id" wire:model.blur="categoria_padre_id" @disabled($this->editando) class="{{ $campo }}">
                 <option value="">Ninguno (es un grupo principal)</option>
                 @foreach ($this->grupos as $grupo)
