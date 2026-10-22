@@ -95,6 +95,9 @@
                         <td class="px-4 py-3 text-cosechar-muted">{{ $producto->codigo }}</td>
                         <td class="px-4 py-3 font-medium text-cosechar-ink">
                             {{ $producto->nombre }}
+                            @if ($producto->marca || $producto->presentacion)
+                                <span class="block text-xs font-normal text-cosechar-muted">{{ collect([$producto->marca, $producto->presentacion])->filter()->join(' · ') }}</span>
+                            @endif
                             @unless ($producto->activo)
                                 <span class="ml-2 rounded-full bg-cosechar-border px-2 py-0.5 text-[11px] font-normal text-cosechar-muted">Inactivo</span>
                             @endunless

@@ -166,7 +166,7 @@
             <div>
                 @if ($this->productoSeleccionado)
                     <div class="{{ $campo }} flex items-center justify-between gap-2">
-                        <span class="min-w-0 truncate text-cosechar-ink">{{ $this->productoSeleccionado->codigo }} — {{ $this->productoSeleccionado->nombre }}</span>
+                        <span class="min-w-0 truncate text-cosechar-ink"><x-producto-etiqueta :producto="$this->productoSeleccionado" /></span>
                         <button type="button" wire:click="limpiarProducto" class="shrink-0 text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">Cambiar</button>
                     </div>
                 @else
@@ -187,7 +187,7 @@
                                         wire:click="elegirProducto({{ $sugerido->id }})"
                                         class="block w-full px-3 py-2 text-left text-sm text-cosechar-ink hover:bg-cosechar-cream"
                                     >
-                                        {{ $sugerido->codigo }} — {{ $sugerido->nombre }}
+                                        <x-producto-etiqueta :producto="$sugerido" />
                                     </button>
                                 </li>
                             @empty

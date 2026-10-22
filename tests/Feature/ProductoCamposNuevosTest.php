@@ -1,0 +1,262 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Livewire\ProductoForm;
+use App\Livewire\ProductoLista;
+use App\Models\Categoria;
+use App\Models\Producto;
+use App\Models\User;
+use App\Repositories\ProductoRepository;
+use App\Support\AuditoriaEtiquetas;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Features\SupportTesting\Testable;
+use Livewire\Livewire;
+use Tests\TestCase;
+
+class ProductoCamposNuevosTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private function admin(): User
+    {
+        return User::factory()->create(['rol' => 'administrador']);
+    }
+
+    private function operador(): User
+    {
+        return User::factory()->create(['rol' => 'operador_almacen']);
+    }
+
+    private function nuevo(?User $usuario = null): Testable
+    {
+        $categoria = Categoria::factory()->create();
+
+        return Livewire::actingAs($usuario ?? $this->admin())
+            ->test(ProductoForm::class)
+            ->set('codigo', 'NUE-1')
+            ->set('nombre', 'Producto nuevo')
+            ->set('categoria_id', $categoria->id)
+            ->set('unidad_medida', 'litro')
+            ->set('stock_minimo', 2)
+            ->set('precio', '20');
+    }
+
+    // ---------- Registro ----------
+
+    public function test_registra_codigo_de_barras_marca_presentacion_y_precio_por_mayor(): void
+    {
+        $this->nuevo()
+            ->set('codigo_barras', '7750123456789')
+            ->set('marca', 'Bayer')
+            ->set('presentacion', 'Frasco 250 ml')
+            ->set('precio_mayor', '16.50')
+            ->set('cantidad_mayor', '12')
+            ->call('guardar')
+            ->assertHasNoErrors();
+
+        $producto = Producto::where('codigo', 'NUE-1')->firstOrFail();
+        $this->assertSame('7750123456789', $producto->codigo_barras);
+        $this->assertSame('Bayer', $producto->marca);
+        $this->assertSame('Frasco 250 ml', $producto->presentacion);
+        $this->assertSame('16.50', $producto->precio_mayor);
+        $this->assertSame(12, $producto->cantidad_mayor);
+    }
+
+    public function test_los_campos_nuevos_son_opcionales_y_quedan_vacios_como_nulos(): void
+    {
+        $this->nuevo()->call('guardar')->assertHasNoErrors();
+
+        $producto = Producto::where('codigo', 'NUE-1')->firstOrFail();
+        $this->assertNull($producto->codigo_barras);
+        $this->assertNull($producto->marca);
+        $this->assertNull($producto->presentacion);
+        $this->assertNull($producto->precio_mayor);
+        $this->assertNull($producto->cantidad_mayor);
+    }
+
+    public function test_el_codigo_de_barras_no_se_repite_pero_varios_pueden_no_tenerlo(): void
+    {
+        Producto::factory()->create(['codigo_barras' => '7750123456789']);
+
+        $this->nuevo()->set('codigo_barras', '7750123456789')->call('guardar')->assertHasErrors(['codigo_barras' => 'unique']);
+
+        Producto::factory()->create(['codigo_barras' => null]);
+        $this->nuevo()->call('guardar')->assertHasNoErrors();
+    }
+
+    public function test_valida_el_formato_y_la_longitud_de_los_campos_nuevos(): void
+    {
+        $this->nuevo()->set('codigo_barras', 'con espacios!')->call('guardar')->assertHasErrors(['codigo_barras']);
+        $this->nuevo()->set('codigo_barras', str_repeat('1', 51))->call('guardar')->assertHasErrors(['codigo_barras' => 'max']);
+        $this->nuevo()->set('marca', str_repeat('a', 101))->call('guardar')->assertHasErrors(['marca' => 'max']);
+        $this->nuevo()->set('presentacion', str_repeat('a', 101))->call('guardar')->assertHasErrors(['presentacion' => 'max']);
+    }
+
+    public function test_el_precio_por_mayor_va_con_su_cantidad_minima_y_no_supera_el_precio_normal(): void
+    {
+        $this->nuevo()->set('precio_mayor', '15')->call('guardar')->assertHasErrors(['cantidad_mayor' => 'required_with']);
+        $this->nuevo()->set('cantidad_mayor', '12')->call('guardar')->assertHasErrors(['precio_mayor' => 'required_with']);
+        $this->nuevo()->set('precio_mayor', '25')->set('cantidad_mayor', '12')->call('guardar')->assertHasErrors(['precio_mayor' => 'lte']);
+        $this->nuevo()->set('precio_mayor', '-1')->set('cantidad_mayor', '12')->call('guardar')->assertHasErrors(['precio_mayor' => 'min']);
+        $this->nuevo()->set('precio_mayor', '15')->set('cantidad_mayor', '1')->call('guardar')->assertHasErrors(['cantidad_mayor' => 'min']);
+        $this->nuevo()->set('precio_mayor', '15')->set('cantidad_mayor', '2.5')->call('guardar')->assertHasErrors(['cantidad_mayor' => 'integer']);
+    }
+
+    public function test_un_precio_por_mayor_igual_al_normal_es_valido(): void
+    {
+        $this->nuevo()->set('precio_mayor', '20')->set('cantidad_mayor', '5')->call('guardar')->assertHasNoErrors();
+    }
+
+    // ---------- Código automático ----------
+
+    public function test_el_formulario_propone_el_primer_codigo_si_no_hay_productos_con_ese_formato(): void
+    {
+        Livewire::actingAs($this->admin())->test(ProductoForm::class)->assertSet('codigo', 'PRD-0001');
+    }
+
+    public function test_propone_el_siguiente_numero_ignorando_codigos_con_otro_formato(): void
+    {
+        Producto::factory()->create(['codigo' => 'PRD-0007']);
+        Producto::factory()->create(['codigo' => 'PRD-0003']);
+        Producto::factory()->create(['codigo' => 'FUN-9999']);
+        Producto::factory()->create(['codigo' => 'PRD-ABC']);
+
+        $this->assertSame('PRD-0008', (new ProductoRepository)->siguienteCodigo());
+        Livewire::actingAs($this->admin())->test(ProductoForm::class)->assertSet('codigo', 'PRD-0008');
+    }
+
+    public function test_el_codigo_propuesto_se_puede_cambiar(): void
+    {
+        $categoria = Categoria::factory()->create();
+
+        Livewire::actingAs($this->admin())
+            ->test(ProductoForm::class)
+            ->set('codigo', 'MI-CODIGO')
+            ->set('nombre', 'Producto')
+            ->set('categoria_id', $categoria->id)
+            ->set('unidad_medida', 'kg')
+            ->set('stock_minimo', 1)
+            ->set('precio', '5')
+            ->call('guardar')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('productos', ['codigo' => 'MI-CODIGO']);
+    }
+
+    public function test_despues_de_guardar_propone_el_codigo_siguiente(): void
+    {
+        $this->nuevo()
+            ->set('codigo', 'PRD-0001')
+            ->call('guardar')
+            ->assertHasNoErrors()
+            ->assertSet('codigo', 'PRD-0002');
+    }
+
+    public function test_al_editar_no_se_cambia_el_codigo_por_uno_propuesto(): void
+    {
+        $producto = Producto::factory()->create(['codigo' => 'FUN-001']);
+
+        Livewire::actingAs($this->admin())
+            ->test(ProductoForm::class, ['producto' => $producto])
+            ->assertSet('codigo', 'FUN-001');
+    }
+
+    // ---------- Edición ----------
+
+    public function test_el_administrador_edita_los_campos_nuevos_y_queda_en_el_historial(): void
+    {
+        $admin = $this->admin();
+        $producto = Producto::factory()->create(['marca' => 'Marca Vieja', 'precio' => 20]);
+
+        Livewire::actingAs($admin)
+            ->test(ProductoForm::class, ['producto' => $producto])
+            ->assertSet('marca', 'Marca Vieja')
+            ->set('marca', 'Bayer')
+            ->set('presentacion', '1 litro')
+            ->set('codigo_barras', '7750000000017')
+            ->set('precio_mayor', '15')
+            ->set('cantidad_mayor', '6')
+            ->call('guardar')
+            ->assertHasNoErrors();
+
+        $producto->refresh();
+        $this->assertSame('Bayer', $producto->marca);
+        $this->assertSame('1 litro', $producto->presentacion);
+        $this->assertSame('7750000000017', $producto->codigo_barras);
+        $this->assertSame('15.00', $producto->precio_mayor);
+        $this->assertSame(6, $producto->cantidad_mayor);
+        $this->assertDatabaseHas('auditoria_cambios', [
+            'auditable_type' => Producto::class, 'auditable_id' => $producto->id, 'campo' => 'marca',
+            'valor_anterior' => 'Marca Vieja', 'valor_nuevo' => 'Bayer',
+        ]);
+    }
+
+    public function test_el_operador_no_puede_cambiar_los_campos_nuevos(): void
+    {
+        $producto = Producto::factory()->create(['marca' => 'Original', 'precio' => 20, 'precio_mayor' => 15, 'cantidad_mayor' => 6]);
+
+        Livewire::actingAs($this->operador())
+            ->test(ProductoForm::class, ['producto' => $producto])
+            ->set('marca', 'Manipulada')
+            ->set('presentacion', 'Manipulada')
+            ->set('codigo_barras', '999')
+            ->set('precio_mayor', '1')
+            ->set('cantidad_mayor', '2')
+            ->call('guardar')
+            ->assertHasNoErrors();
+
+        $producto->refresh();
+        $this->assertSame('Original', $producto->marca);
+        $this->assertNull($producto->presentacion);
+        $this->assertNull($producto->codigo_barras);
+        $this->assertSame('15.00', $producto->precio_mayor);
+        $this->assertSame(6, $producto->cantidad_mayor);
+    }
+
+    public function test_el_formulario_de_edicion_conserva_el_codigo_de_barras_propio(): void
+    {
+        $producto = Producto::factory()->create(['codigo_barras' => '7750123456789']);
+
+        Livewire::actingAs($this->admin())
+            ->test(ProductoForm::class, ['producto' => $producto])
+            ->call('guardar')
+            ->assertHasNoErrors();
+    }
+
+    // ---------- Auditoría ----------
+
+    public function test_la_auditoria_muestra_los_campos_nuevos_en_lenguaje_comun(): void
+    {
+        $this->assertSame('Código de barras', AuditoriaEtiquetas::campo('codigo_barras'));
+        $this->assertSame('Marca', AuditoriaEtiquetas::campo('marca'));
+        $this->assertSame('Presentación', AuditoriaEtiquetas::campo('presentacion'));
+        $this->assertSame('Precio por mayor', AuditoriaEtiquetas::campo('precio_mayor'));
+        $this->assertSame('Cantidad mínima por mayor', AuditoriaEtiquetas::campo('cantidad_mayor'));
+        $this->assertSame('S/ 15.00', AuditoriaEtiquetas::valor('precio_mayor', '15'));
+    }
+
+    // ---------- Lista ----------
+
+    public function test_la_lista_muestra_marca_y_presentacion_bajo_el_nombre(): void
+    {
+        Producto::factory()->create(['nombre' => 'Fungicida Cobre', 'marca' => 'Bayer', 'presentacion' => 'Frasco 250 ml']);
+
+        Livewire::actingAs($this->admin())
+            ->test(ProductoLista::class)
+            ->assertSee('Fungicida Cobre')
+            ->assertSee('Bayer')
+            ->assertSee('Frasco 250 ml');
+    }
+
+    public function test_la_lista_busca_tambien_por_marca_y_por_codigo_de_barras(): void
+    {
+        Producto::factory()->create(['nombre' => 'Fungicida Cobre', 'marca' => 'Bayer', 'codigo_barras' => '7750123456789']);
+        Producto::factory()->create(['nombre' => 'Herbicida Total', 'marca' => 'Basf', 'codigo_barras' => '7750999999999']);
+
+        $lista = Livewire::actingAs($this->admin())->test(ProductoLista::class);
+
+        $lista->set('buscar', 'bayer')->assertSee('Fungicida Cobre')->assertDontSee('Herbicida Total');
+        $lista->set('buscar', '7750999')->assertSee('Herbicida Total')->assertDontSee('Fungicida Cobre');
+    }
+}

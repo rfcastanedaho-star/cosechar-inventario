@@ -20,6 +20,17 @@ class ProductoRepository
         return Producto::with('categoria', 'lotes')->find($id);
     }
 
+    /** Siguiente código libre con el formato PRD-0001; ignora los códigos con otro formato. */
+    public function siguienteCodigo(): string
+    {
+        $maximo = Producto::where('codigo', 'like', 'PRD-%')
+            ->pluck('codigo')
+            ->map(fn (string $codigo) => preg_match('/^PRD-(\d+)$/', $codigo, $m) ? (int) $m[1] : 0)
+            ->max() ?? 0;
+
+        return 'PRD-'.str_pad((string) ($maximo + 1), 4, '0', STR_PAD_LEFT);
+    }
+
     public function findByCodigo(string $codigo): ?Producto
     {
         return Producto::where('codigo', $codigo)->first();
@@ -46,7 +57,7 @@ class ProductoRepository
     }
 
     /**
-     * Productos cuyo nombre o código contienen el texto escrito, para el
+     * Productos cuyo nombre, código, código de barras o marca contienen el texto escrito, para el
      * buscador por iniciales: primero los que empiezan igual, luego el resto.
      * Los comodines de LIKE (% y _) se buscan como texto literal.
      */
@@ -66,10 +77,12 @@ class ProductoRepository
             ->when($soloActivos, fn ($q) => $q->where('activo', true))
             ->where(fn ($q) => $q
                 ->whereRaw("nombre LIKE ? ESCAPE '!'", [$contiene])
-                ->orWhereRaw("codigo LIKE ? ESCAPE '!'", [$contiene]))
+                ->orWhereRaw("codigo LIKE ? ESCAPE '!'", [$contiene])
+                ->orWhereRaw("codigo_barras LIKE ? ESCAPE '!'", [$contiene])
+                ->orWhereRaw("marca LIKE ? ESCAPE '!'", [$contiene]))
             ->orderByRaw(
-                "CASE WHEN nombre LIKE ? ESCAPE '!' THEN 0 WHEN codigo LIKE ? ESCAPE '!' THEN 1 ELSE 2 END",
-                [$empieza, $empieza],
+                "CASE WHEN codigo_barras = ? THEN 0 WHEN nombre LIKE ? ESCAPE '!' THEN 1 WHEN codigo LIKE ? ESCAPE '!' OR codigo_barras LIKE ? ESCAPE '!' THEN 2 ELSE 3 END",
+                [$termino, $empieza, $empieza, $empieza],
             )
             ->orderBy('nombre')
             ->limit($limite)

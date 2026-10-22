@@ -126,7 +126,7 @@
                         <label class="mb-1 block text-xs font-medium text-cosechar-muted">Producto</label>
                         @if ($productoLinea = $this->productoDeLinea($indice))
                             <div class="flex items-center justify-between gap-2 rounded-md border border-cosechar-border bg-white px-2 py-1.5 text-sm">
-                                <span class="min-w-0 truncate text-cosechar-ink" title="{{ $productoLinea->codigo }} — {{ $productoLinea->nombre }}">{{ $productoLinea->codigo }} — {{ $productoLinea->nombre }}</span>
+                                <span class="min-w-0 truncate text-cosechar-ink" title="{{ $productoLinea->codigo }} — {{ $productoLinea->nombre }}"><x-producto-etiqueta :producto="$productoLinea" /></span>
                                 <button type="button" wire:click="limpiarProductoLinea({{ $indice }})" class="shrink-0 text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">Cambiar</button>
                             </div>
                         @else
@@ -148,7 +148,7 @@
                                                 wire:click="elegirProductoLinea({{ $indice }}, {{ $sugerido->id }})"
                                                 class="block w-full px-2 py-1.5 text-left text-sm text-cosechar-ink hover:bg-cosechar-cream"
                                             >
-                                                {{ $sugerido->codigo }} — {{ $sugerido->nombre }}
+                                                <x-producto-etiqueta :producto="$sugerido" />
                                             </button>
                                         </li>
                                     @empty

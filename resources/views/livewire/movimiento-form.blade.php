@@ -46,7 +46,7 @@
 
             @if ($this->productoSeleccionado)
                 <div class="flex items-center justify-between gap-3 rounded-md border border-cosechar-border bg-white px-3 py-2 text-sm shadow-sm">
-                    <span class="text-cosechar-ink">{{ $this->productoSeleccionado->codigo }} — {{ $this->productoSeleccionado->nombre }}</span>
+                    <span class="text-cosechar-ink"><x-producto-etiqueta :producto="$this->productoSeleccionado" /></span>
                     <button type="button" wire:click="limpiarProducto" class="text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">
                         Cambiar
                     </button>
@@ -71,7 +71,7 @@
                                     wire:click="elegirProducto({{ $sugerido->id }})"
                                     class="block w-full px-3 py-2 text-left text-sm text-cosechar-ink hover:bg-cosechar-cream"
                                 >
-                                    {{ $sugerido->codigo }} — {{ $sugerido->nombre }}
+                                    <x-producto-etiqueta :producto="$sugerido" />
                                 </button>
                             </li>
                         @empty
