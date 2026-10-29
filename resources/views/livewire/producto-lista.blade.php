@@ -20,8 +20,8 @@
     @endif
 
     <div class="mb-6 flex items-center justify-between">
-        <h1 class="text-lg font-semibold text-cosechar-ink">Productos</h1>
-        <a href="{{ route('productos.nuevo') }}" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90">
+        <h1 class="text-lg font-semibold text-cosechar-ink">Historial de productos</h1>
+        <a href="{{ route('productos.index') }}" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90">
             Registrar producto
         </a>
     </div>

@@ -59,7 +59,7 @@ class ProductoListaTest extends TestCase
     {
         $operador = User::factory()->create(['rol' => 'operador_almacen']);
 
-        $this->actingAs($operador)->get(route('productos.index'))->assertOk();
+        $this->actingAs($operador)->get(route('productos.historial'))->assertOk();
     }
 
     public function test_el_buscador_filtra_por_nombre_o_codigo(): void

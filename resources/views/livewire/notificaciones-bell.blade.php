@@ -23,7 +23,7 @@
             <p class="px-3 py-4 text-center text-sm text-cosechar-muted">Sin alertas pendientes.</p>
         @else
             @if ($this->stockBajo > 0)
-                <a href="{{ route('productos.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-cosechar-cream">
+                <a href="{{ route('productos.historial') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-cosechar-cream">
                     <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F3E0DC] text-cosechar-danger">
                         <x-icon name="warning" class="h-4 w-4" />
                     </span>
