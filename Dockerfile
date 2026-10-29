@@ -27,4 +27,7 @@ COPY --from=assets /app/public/build ./public/build
 RUN php artisan config:clear
 
 EXPOSE 10000
-CMD sh -c "php artisan migrate --force && php artisan storage:link || true && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"
+# El servidor integrado de PHP atiende de a una peticion; Livewire manda varias seguidas
+# (validaciones al salir de cada campo, subida de foto) y se encolaban hasta tardar minutos.
+ENV PHP_CLI_SERVER_WORKERS=4
+CMD sh -c "php artisan migrate --force && php artisan storage:link || true && php artisan serve --no-reload --host=0.0.0.0 --port=${PORT:-10000}"

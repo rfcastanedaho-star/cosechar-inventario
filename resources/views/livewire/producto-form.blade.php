@@ -42,7 +42,7 @@
             <input
                 type="text"
                 id="codigo"
-                wire:model.live="codigo" @disabled(! $this->puedeEditarSensibles)
+                wire:model.blur="codigo" @disabled(! $this->puedeEditarSensibles)
                 class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
             >
             @error('codigo')
