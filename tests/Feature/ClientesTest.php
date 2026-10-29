@@ -39,13 +39,12 @@ class ClientesTest extends TestCase
         $this->get(route('clientes.index'))->assertRedirect(route('login'));
     }
 
-    public function test_cualquier_usuario_autenticado_ve_la_lista_y_el_menu(): void
+    public function test_cualquier_usuario_autenticado_ve_el_directorio_de_clientes(): void
     {
         $this->actingAs($this->operador())
             ->get(route('clientes.index'))
             ->assertOk()
-            ->assertSee('Clientes')
-            ->assertSee(route('clientes.index'), false);
+            ->assertSee('Clientes');
     }
 
     // ---------- Lista ----------

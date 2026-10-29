@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\VuelveAlHistorial;
 use App\Models\Proveedor;
 use App\Services\AuditoriaService;
 use Illuminate\Support\Facades\Gate;
@@ -13,6 +14,8 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class ProveedorForm extends Component
 {
+    use VuelveAlHistorial;
+
     public ?int $proveedorId = null;
 
     public string $nombre = '';
@@ -96,7 +99,17 @@ class ProveedorForm extends Component
 
         $auditoria->actualizar(Proveedor::findOrFail($this->proveedorId), $cambios, auth()->user());
 
-        return redirect()->route('proveedores.index');
+        return redirect()->route($this->retorno['ruta']);
+    }
+
+    protected function rutaDirectorio(): string
+    {
+        return 'proveedores.index';
+    }
+
+    protected function etiquetaDirectorio(): string
+    {
+        return 'Volver a proveedores';
     }
 
     public function render()

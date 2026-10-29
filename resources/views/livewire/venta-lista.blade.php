@@ -34,7 +34,11 @@
                 @forelse ($this->ventas as $venta)
                     <tr wire:key="venta-{{ $venta->id }}" class="{{ $venta->anulada_at ? 'bg-cosechar-cream/60 text-cosechar-muted' : '' }}">
                         <td class="px-4 py-3 text-cosechar-muted">{{ $venta->fecha->format('d/m/Y') }}</td>
-                        <td class="px-4 py-3 font-medium {{ $venta->anulada_at ? '' : 'text-cosechar-ink' }}">{{ $venta->cliente_nombre }}</td>
+                        <td class="px-4 py-3 font-medium {{ $venta->anulada_at ? '' : 'text-cosechar-ink' }}">{{ $venta->cliente_nombre }}
+                            @if ($venta->cliente_id)
+                                <a href="{{ route('clientes.editar', ['cliente' => $venta->cliente_id, 'desde' => 'ventas']) }}" class="block text-xs font-normal text-cosechar-olive underline hover:text-cosechar-forest">Corregir cliente</a>
+                            @endif
+                        </td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $venta->almacen->nombre }}</td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $venta->numero_comprobante ?: '—' }}</td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $venta->detalles->pluck('producto.nombre')->join(', ') }}</td>

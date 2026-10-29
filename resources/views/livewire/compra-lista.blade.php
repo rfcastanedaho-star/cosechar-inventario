@@ -34,7 +34,9 @@
                 @forelse ($this->compras as $compra)
                     <tr wire:key="compra-{{ $compra->id }}" class="{{ $compra->anulada_at ? 'bg-cosechar-cream/60 text-cosechar-muted' : '' }}">
                         <td class="px-4 py-3 text-cosechar-muted">{{ $compra->fecha->format('d/m/Y') }}</td>
-                        <td class="px-4 py-3 font-medium {{ $compra->anulada_at ? '' : 'text-cosechar-ink' }}">{{ $compra->proveedor->nombre }}</td>
+                        <td class="px-4 py-3 font-medium {{ $compra->anulada_at ? '' : 'text-cosechar-ink' }}">{{ $compra->proveedor->nombre }}
+                            <a href="{{ route('proveedores.editar', ['proveedor' => $compra->proveedor_id, 'desde' => 'compras']) }}" class="block text-xs font-normal text-cosechar-olive underline hover:text-cosechar-forest">Corregir proveedor</a>
+                        </td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $compra->almacen->nombre }}</td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $compra->numero_comprobante ?: '—' }}</td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $compra->detalles->pluck('producto.nombre')->join(', ') }}</td>

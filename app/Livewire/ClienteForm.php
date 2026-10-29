@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\VuelveAlHistorial;
 use App\Models\Cliente;
 use App\Services\AuditoriaService;
 use Illuminate\Support\Facades\Gate;
@@ -13,6 +14,8 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class ClienteForm extends Component
 {
+    use VuelveAlHistorial;
+
     public ?int $clienteId = null;
 
     public string $nombre = '';
@@ -99,7 +102,17 @@ class ClienteForm extends Component
 
         $auditoria->actualizar(Cliente::findOrFail($this->clienteId), $datos, auth()->user());
 
-        return redirect()->route('clientes.index');
+        return redirect()->route($this->retorno['ruta']);
+    }
+
+    protected function rutaDirectorio(): string
+    {
+        return 'clientes.index';
+    }
+
+    protected function etiquetaDirectorio(): string
+    {
+        return 'Volver a clientes';
     }
 
     public function render()

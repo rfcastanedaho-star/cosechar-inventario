@@ -1,8 +1,8 @@
 <div class="mx-auto max-w-xl p-8">
     <div class="mb-6 flex items-center justify-between gap-3">
         <h1 class="text-lg font-semibold text-cosechar-ink">Editar proveedor</h1>
-        <a href="{{ route('proveedores.index') }}" class="rounded-md border border-cosechar-border bg-white px-4 py-2 text-sm font-medium text-cosechar-ink hover:bg-cosechar-cream">
-            Volver a proveedores
+        <a href="{{ route($this->retorno['ruta']) }}" class="rounded-md border border-cosechar-border bg-white px-4 py-2 text-sm font-medium text-cosechar-ink hover:bg-cosechar-cream">
+            {{ $this->retorno['etiqueta'] }}
         </a>
     </div>
     <x-leyenda-obligatorios />
