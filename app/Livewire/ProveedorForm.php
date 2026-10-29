@@ -3,7 +3,6 @@
 namespace App\Livewire;
 
 use App\Models\Proveedor;
-use App\Repositories\ProveedorRepository;
 use App\Services\AuditoriaService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -23,8 +22,6 @@ class ProveedorForm extends Component
     public string $telefono = '';
 
     public string $direccion = '';
-
-    public bool $creado = false;
 
     public function mount(?Proveedor $proveedor = null): void
     {
@@ -83,36 +80,23 @@ class ProveedorForm extends Component
         $this->validateOnly($property);
     }
 
-    public function guardar(ProveedorRepository $proveedores, AuditoriaService $auditoria): void
+    public function guardar(AuditoriaService $auditoria)
     {
         $data = $this->validate();
 
-        if ($this->editando) {
-            $cambios = [
-                'telefono' => $data['telefono'] ?: null,
-                'direccion' => $data['direccion'] ?: null,
-            ];
-
-            if ($this->puedeEditarIdentidad) {
-                $cambios['nombre'] = $data['nombre'];
-                $cambios['ruc'] = $data['ruc'] ?: null;
-            }
-
-            $auditoria->actualizar(Proveedor::findOrFail($this->proveedorId), $cambios, auth()->user());
-            $this->creado = true;
-
-            return;
-        }
-
-        $proveedores->create([
-            'nombre' => $data['nombre'],
-            'ruc' => $data['ruc'] ?: null,
+        $cambios = [
             'telefono' => $data['telefono'] ?: null,
             'direccion' => $data['direccion'] ?: null,
-        ]);
+        ];
 
-        $this->reset(['nombre', 'ruc', 'telefono', 'direccion']);
-        $this->creado = true;
+        if ($this->puedeEditarIdentidad) {
+            $cambios['nombre'] = $data['nombre'];
+            $cambios['ruc'] = $data['ruc'] ?: null;
+        }
+
+        $auditoria->actualizar(Proveedor::findOrFail($this->proveedorId), $cambios, auth()->user());
+
+        return redirect()->route('proveedores.index');
     }
 
     public function render()

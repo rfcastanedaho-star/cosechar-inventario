@@ -23,6 +23,13 @@ class CompraForm extends Component
     /** Texto del buscador de proveedor (nombre o RUC). */
     public string $buscarProveedor = '';
 
+    /** Datos del proveedor: se rellenan al elegir uno registrado o se escriben para registrarlo al guardar. */
+    public string $proveedor_nombre = '';
+
+    public string $proveedor_ruc = '';
+
+    public string $proveedor_telefono = '';
+
     public ?int $almacen_id = null;
 
     public string $fecha = '';
@@ -87,9 +94,25 @@ class CompraForm extends Component
             return;
         }
 
-        $this->proveedor_id = $id;
+        $proveedor = Proveedor::findOrFail($id);
+
+        $this->proveedor_id = $proveedor->id;
+        $this->proveedor_nombre = $proveedor->nombre;
+        $this->proveedor_ruc = $proveedor->ruc ?? '';
+        $this->proveedor_telefono = $proveedor->telefono ?? '';
         $this->buscarProveedor = '';
-        $this->resetErrorBag('proveedor_id');
+        $this->resetErrorBag(['proveedor_nombre', 'proveedor_ruc']);
+    }
+
+    /** Si se cambia a mano el nombre o el RUC, ya no es el proveedor registrado: se tratará como uno por registrar. */
+    public function updatedProveedorNombre(): void
+    {
+        $this->proveedor_id = null;
+    }
+
+    public function updatedProveedorRuc(): void
+    {
+        $this->proveedor_id = null;
     }
 
     /** Enter en el buscador: elige la primera sugerencia. */
@@ -104,8 +127,7 @@ class CompraForm extends Component
 
     public function limpiarProveedor(): void
     {
-        $this->proveedor_id = null;
-        $this->buscarProveedor = '';
+        $this->reset(['proveedor_id', 'buscarProveedor', 'proveedor_nombre', 'proveedor_ruc', 'proveedor_telefono']);
     }
 
     #[Computed]
@@ -131,7 +153,10 @@ class CompraForm extends Component
     protected function rules(): array
     {
         $reglas = [
-            'proveedor_id' => ['required', 'exists:proveedores,id'],
+            'proveedor_id' => ['nullable', 'exists:proveedores,id'],
+            'proveedor_nombre' => ['required', 'string', 'max:150'],
+            'proveedor_ruc' => ['nullable', 'digits:11'],
+            'proveedor_telefono' => ['nullable', 'string', 'max:30'],
             'almacen_id' => ['required', 'exists:almacenes,id'],
             'fecha' => ['required', 'date'],
             'numero_comprobante' => ['nullable', 'string', 'max:50'],
@@ -157,7 +182,8 @@ class CompraForm extends Component
     protected function messages(): array
     {
         return [
-            'proveedor_id.required' => 'Debe seleccionar un proveedor.',
+            'proveedor_nombre.required' => 'Escriba el nombre del proveedor o elija uno registrado.',
+            'proveedor_ruc.digits' => 'El RUC debe tener 11 dígitos.',
             'almacen_id.required' => 'Debe seleccionar el almacén destino.',
             'fecha.required' => 'La fecha es obligatoria.',
             '*.producto_id.required' => 'Debe seleccionar un producto.',
@@ -171,11 +197,18 @@ class CompraForm extends Component
 
     public function guardar(CompraService $servicio): void
     {
+        $this->proveedor_nombre = trim($this->proveedor_nombre);
+        $this->proveedor_ruc = trim($this->proveedor_ruc);
+        $this->proveedor_telefono = trim($this->proveedor_telefono);
+
         $data = $this->validate();
 
         $compra = $servicio->registrar(
             [
-                'proveedor_id' => $data['proveedor_id'],
+                'proveedor_id' => $data['proveedor_id'] ?? null,
+                'proveedor_nombre' => $data['proveedor_nombre'],
+                'proveedor_ruc' => $data['proveedor_ruc'] ?: null,
+                'proveedor_telefono' => $data['proveedor_telefono'] ?: null,
                 'almacen_id' => $data['almacen_id'],
                 'fecha' => $data['fecha'],
                 'numero_comprobante' => $data['numero_comprobante'] ?: null,
@@ -184,7 +217,7 @@ class CompraForm extends Component
             auth()->user(),
         );
 
-        $this->reset(['proveedor_id', 'buscarProveedor', 'almacen_id', 'numero_comprobante']);
+        $this->reset(['proveedor_id', 'buscarProveedor', 'proveedor_nombre', 'proveedor_ruc', 'proveedor_telefono', 'almacen_id', 'numero_comprobante']);
         $this->lineas = [$this->lineaVacia()];
         $this->busquedaProducto = [];
         $this->fecha = now()->toDateString();

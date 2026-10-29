@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Compra;
 use App\Models\User;
 use App\Repositories\LoteRepository;
+use App\Repositories\ProveedorRepository;
 use Illuminate\Support\Facades\DB;
 
 class CompraService
@@ -12,6 +13,7 @@ class CompraService
     public function __construct(
         private LoteRepository $lotes,
         private StockMovimientoService $movimientos,
+        private ProveedorRepository $proveedores = new ProveedorRepository,
     ) {}
 
     /**
@@ -19,14 +21,28 @@ class CompraService
      * almacén de destino) y el movimiento de entrada correspondiente,
      * reutilizando la misma lógica de stock que Movimientos > Entrada.
      *
-     * @param  array{proveedor_id: int, almacen_id: int, fecha: string, numero_comprobante: ?string}  $cabecera
+     * El proveedor viene elegido (proveedor_id) o se escribe (proveedor_nombre, y opcionalmente
+     * proveedor_ruc y proveedor_telefono): en ese caso se registra, o se reutiliza si ya existe,
+     * dentro de la misma transacción que la compra.
+     *
+     * @param  array{proveedor_id?: ?int, proveedor_nombre?: ?string, proveedor_ruc?: ?string, proveedor_telefono?: ?string, almacen_id: int, fecha: string, numero_comprobante: ?string}  $cabecera
      * @param  array<int, array{producto_id: int, numero_lote: string, fecha_vencimiento: ?string, cantidad: int, costo_unitario: float|string}>  $lineas
      */
     public function registrar(array $cabecera, array $lineas, User $responsable): Compra
     {
         return DB::transaction(function () use ($cabecera, $lineas, $responsable) {
+            $proveedorId = $cabecera['proveedor_id'] ?? null;
+
+            if ($proveedorId === null) {
+                $proveedorId = $this->proveedores->registrarOReutilizar(
+                    $cabecera['proveedor_nombre'],
+                    $cabecera['proveedor_ruc'] ?? null,
+                    $cabecera['proveedor_telefono'] ?? null,
+                )->id;
+            }
+
             $compra = Compra::create([
-                'proveedor_id' => $cabecera['proveedor_id'],
+                'proveedor_id' => $proveedorId,
                 'almacen_id' => $cabecera['almacen_id'],
                 'responsable_id' => $responsable->id,
                 'fecha' => $cabecera['fecha'],

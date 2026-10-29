@@ -168,6 +168,6 @@ class CompraBuscadorProveedorTest extends TestCase
         $this->formulario()
             ->set('almacen_id', Almacen::factory()->create()->id)
             ->call('guardar')
-            ->assertHasErrors(['proveedor_id' => 'required']);
+            ->assertHasErrors(['proveedor_nombre' => 'required']);
     }
 }

@@ -183,7 +183,7 @@ class BuscadorProductoPorLineaTest extends TestCase
         $this->formulario(CompraForm::class)
             ->set('busquedaProducto.0', 'fung')
             ->call('elegirPrimeroLinea', 0)
-            ->set('proveedor_id', Proveedor::factory()->create()->id)
+            ->call('elegirProveedor', Proveedor::factory()->create()->id)
             ->set('almacen_id', Almacen::factory()->create()->id)
             ->set('lineas.0.numero_lote', 'L-BUSCADOR')
             ->set('lineas.0.cantidad', 12)

@@ -14,6 +14,7 @@ use App\Livewire\UsuarioForm;
 use App\Livewire\VentaForm;
 use App\Models\Cliente;
 use App\Models\Producto;
+use App\Models\Proveedor;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -34,14 +35,13 @@ class CamposObligatoriosTest extends TestCase
     {
         return [
             'producto' => [ProductoForm::class, [], ['Código *', 'Nombre *', 'Categoría *', 'Unidad de medida *', 'Stock mínimo *', 'Precio (S/) *'], ['Marca *', 'Presentación *', 'Código de barras *', 'Precio por mayor (S/) *', 'Foto del producto *']],
-            'compra' => [CompraForm::class, [], ['Proveedor *', 'Almacén destino *', 'Fecha *', 'Producto *', 'N.º de lote *', 'Cantidad *', 'Costo unitario (S/) *'], ['comprobante (opcional) *']],
+            'compra' => [CompraForm::class, [], ['Nombre del proveedor *', 'Almacén destino *', 'Fecha *', 'Producto *', 'N.º de lote *', 'Cantidad *', 'Costo unitario (S/) *'], ['RUC (opcional) *', 'Teléfono (opcional) *', 'comprobante (opcional) *']],
             'venta' => [VentaForm::class, [], ['Cliente *', 'Almacén de origen *', 'Fecha *', 'Producto *', 'Cantidad *', 'Precio unitario (S/) *'], ['Documento (opcional) *', 'comprobante (opcional) *']],
             'movimiento entrada' => [MovimientoForm::class, ['tipo' => 'entrada'], ['Producto *', 'Almacén de destino *', 'Lote *', 'Cantidad *'], []],
             'movimiento salida' => [MovimientoForm::class, ['tipo' => 'salida'], ['Producto *', 'Almacén de origen *', 'Motivo de la salida *', 'Cantidad *'], []],
             'movimiento transferencia' => [MovimientoForm::class, ['tipo' => 'transferencia'], ['Producto *', 'Almacén de origen *', 'Almacén de destino *', 'Cantidad *'], []],
             'usuario' => [UsuarioForm::class, [], ['Nombre *', 'Correo *', 'Rol *', 'Contraseña *', 'Repetir contraseña *'], []],
             'categoria' => [CategoriaForm::class, [], ['Nombre *'], ['Grupo *']],
-            'proveedor' => [ProveedorForm::class, [], ['Nombre / Razón social *'], ['RUC *', 'Teléfono *', 'Dirección *']],
             'almacen' => [AlmacenForm::class, [], ['Nombre *'], ['Dirección *', 'Encargado *']],
             'cambiar contraseña' => [CambiarPassword::class, [], ['Contraseña actual *', 'Nueva contraseña *', 'Repetir la nueva contraseña *'], []],
         ];
@@ -87,6 +87,16 @@ class CamposObligatoriosTest extends TestCase
         $this->assertStringContainsString('Los campos con * son obligatorios', $texto);
         $this->assertStringContainsString('Nombre o razón social *', $texto);
         $this->assertStringContainsString('DNI o RUC (opcional)', $texto);
+        $this->assertStringNotContainsString('(opcional) *', $texto);
+    }
+
+    public function test_el_formulario_de_proveedor_marca_el_nombre_y_deja_el_resto_como_opcional(): void
+    {
+        $texto = $this->texto(ProveedorForm::class, [], ['proveedor' => Proveedor::factory()->create()]);
+
+        $this->assertStringContainsString('Los campos con * son obligatorios', $texto);
+        $this->assertStringContainsString('Nombre / Razón social *', $texto);
+        $this->assertStringContainsString('RUC (opcional)', $texto);
         $this->assertStringNotContainsString('(opcional) *', $texto);
     }
 

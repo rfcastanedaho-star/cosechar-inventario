@@ -1,11 +1,8 @@
 <div class="mx-auto max-w-5xl p-8">
-    <div class="mb-6 flex items-center justify-between">
-        <h1 class="text-lg font-semibold text-cosechar-ink">Historial de proveedores</h1>
-        <a href="{{ route('proveedores.index') }}" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90">
-            Registrar proveedor
-        </a>
+    <div class="mb-6">
+        <h1 class="text-lg font-semibold text-cosechar-ink">Proveedores</h1>
+        <p class="mt-1 text-sm text-cosechar-muted">Los proveedores se registran solos al registrar una compra. Aquí puede consultarlos y corregir sus datos.</p>
     </div>
-
     @include('livewire.partials.filtros-historial', [
         'placeholder' => 'Nombre o RUC...',
         'estados' => ['activo' => 'Activo', 'inactivo' => 'Desactivado'],

@@ -6,6 +6,7 @@ use App\Livewire\ProveedorLista;
 use App\Models\Proveedor;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -27,34 +28,30 @@ class ProveedorListaTest extends TestCase
         $this->assertCount(2, $proveedores);
     }
 
-    public function test_cualquier_usuario_autenticado_puede_ver_el_historial_de_proveedores(): void
+    public function test_la_pantalla_de_proveedores_es_el_directorio_para_consultar_y_corregir(): void
     {
-        $usuario = User::factory()->create();
+        $proveedor = Proveedor::factory()->create();
 
-        $this->actingAs($usuario)
-            ->get(route('proveedores.historial'))
-            ->assertOk()
-            ->assertSee('Historial de proveedores');
-    }
-
-    public function test_la_pantalla_de_proveedores_es_el_registro_y_enlaza_al_historial(): void
-    {
-        $usuario = User::factory()->create();
-
-        $this->actingAs($usuario)
+        $this->actingAs(User::factory()->create())
             ->get(route('proveedores.index'))
             ->assertOk()
-            ->assertSee('Registrar proveedor')
-            ->assertSee('Ver historial de proveedores')
-            ->assertSee(route('proveedores.historial'), false);
+            ->assertSee('Proveedores')
+            ->assertSee('se registran solos al registrar una compra')
+            ->assertSee(route('proveedores.editar', $proveedor), false)
+            ->assertDontSee('Registrar proveedor');
     }
 
-    public function test_el_historial_enlaza_de_vuelta_al_registro_de_proveedores(): void
+    public function test_ya_no_existe_una_pantalla_para_registrar_proveedores_a_mano(): void
     {
-        $usuario = User::factory()->create();
+        $this->assertFalse(Route::has('proveedores.nuevo'));
 
-        $this->actingAs($usuario)
-            ->get(route('proveedores.historial'))
-            ->assertSee(route('proveedores.index'), false);
+        $this->actingAs(User::factory()->create())->get('/proveedores/nuevo')->assertNotFound();
+    }
+
+    public function test_la_direccion_antigua_del_historial_lleva_al_directorio(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->get('/proveedores/historial')
+            ->assertRedirect(route('proveedores.index'));
     }
 }

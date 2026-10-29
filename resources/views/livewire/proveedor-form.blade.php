@@ -1,18 +1,10 @@
 <div class="mx-auto max-w-xl p-8">
-    <div class="mb-6 flex items-center justify-between">
-        <h1 class="text-lg font-semibold text-cosechar-ink">{{ $this->editando ? 'Editar proveedor' : 'Registrar proveedor' }}</h1>
-        <a href="{{ route('proveedores.historial') }}" class="rounded-md border border-cosechar-border bg-white px-4 py-2 text-sm font-medium text-cosechar-ink hover:bg-cosechar-cream">
-            Ver historial de proveedores
+    <div class="mb-6 flex items-center justify-between gap-3">
+        <h1 class="text-lg font-semibold text-cosechar-ink">Editar proveedor</h1>
+        <a href="{{ route('proveedores.index') }}" class="rounded-md border border-cosechar-border bg-white px-4 py-2 text-sm font-medium text-cosechar-ink hover:bg-cosechar-cream">
+            Volver a proveedores
         </a>
     </div>
-
-    @if ($creado)
-        <div class="mb-4 flex items-center justify-between rounded-md bg-green-100 px-4 py-2 text-sm text-green-800">
-            <span>{{ $this->editando ? 'Cambios guardados correctamente.' : 'Proveedor registrado correctamente.' }}</span>
-            <a href="{{ route('proveedores.historial') }}" class="font-medium underline hover:text-green-900">Ver historial</a>
-        </div>
-    @endif
-
     <x-leyenda-obligatorios />
 
     <form wire:submit="guardar" class="flex flex-col gap-4">
@@ -82,7 +74,7 @@
                 wire:target="guardar"
                 class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-                <span wire:loading.remove wire:target="guardar">{{ $this->editando ? 'Guardar cambios' : 'Guardar proveedor' }}</span>
+                <span wire:loading.remove wire:target="guardar">Guardar cambios</span>
                 <span wire:loading wire:target="guardar">Guardando...</span>
             </button>
         </div>

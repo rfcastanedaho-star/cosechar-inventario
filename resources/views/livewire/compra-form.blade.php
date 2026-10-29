@@ -21,52 +21,82 @@
     <x-leyenda-obligatorios />
 
     <form wire:submit="guardar" class="flex flex-col gap-6">
+        <div class="rounded-xl border border-cosechar-border bg-white p-4">
+            <label for="buscar_proveedor" class="mb-1 block text-sm font-medium text-cosechar-ink">Buscar proveedor registrado <span class="font-normal text-cosechar-muted">(opcional)</span></label>
+
+            @if ($this->proveedorSeleccionado)
+                <div class="flex items-center justify-between gap-2 rounded-md border border-cosechar-border bg-cosechar-cream px-3 py-2 text-sm">
+                    <span class="min-w-0 truncate text-cosechar-ink">
+                        <span class="mr-2 rounded-full bg-cosechar-olive/15 px-2 py-0.5 text-[11px] font-semibold text-cosechar-olive">Proveedor registrado</span>
+                        {{ $this->proveedorSeleccionado->nombre }}@if ($this->proveedorSeleccionado->ruc) · RUC {{ $this->proveedorSeleccionado->ruc }}@endif
+                    </span>
+                    <button type="button" wire:click="limpiarProveedor" class="shrink-0 text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">Cambiar</button>
+                </div>
+            @else
+                <input
+                    type="text"
+                    id="buscar_proveedor"
+                    wire:model.live.debounce.250ms="buscarProveedor"
+                    wire:keydown.enter.prevent="elegirPrimerProveedor"
+                    placeholder="Escriba el nombre o el RUC del proveedor"
+                    autocomplete="off"
+                    class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
+                >
+
+                @if (trim($buscarProveedor) !== '')
+                    <ul class="mt-1 max-h-60 overflow-auto rounded-md border border-cosechar-border bg-white shadow-sm">
+                        @forelse ($this->proveedoresSugeridos as $sugerido)
+                            <li>
+                                <button
+                                    type="button"
+                                    wire:click="elegirProveedor({{ $sugerido->id }})"
+                                    class="block w-full px-3 py-2 text-left text-sm text-cosechar-ink hover:bg-cosechar-cream"
+                                >
+                                    {{ $sugerido->nombre }}
+                                    @if ($sugerido->ruc)
+                                        <span class="text-xs text-cosechar-muted">· RUC {{ $sugerido->ruc }}</span>
+                                    @endif
+                                </button>
+                            </li>
+                        @empty
+                            <li class="px-3 py-2 text-sm text-cosechar-muted">No se encontró ningún proveedor registrado. Puede escribir sus datos abajo.</li>
+                        @endforelse
+                    </ul>
+                @endif
+            @endif
+        </div>
+
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
-                <label for="buscar_proveedor" class="mb-1 block text-sm font-medium text-cosechar-ink">Proveedor <x-obligatorio /></label>
-
-                @if ($this->proveedorSeleccionado)
-                    <div class="flex items-center justify-between gap-2 rounded-md border border-cosechar-border bg-white px-3 py-2 text-sm shadow-sm">
-                        <span class="min-w-0 truncate text-cosechar-ink" title="{{ $this->proveedorSeleccionado->nombre }}">{{ $this->proveedorSeleccionado->nombre }}</span>
-                        <button type="button" wire:click="limpiarProveedor" class="shrink-0 text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">Cambiar</button>
-                    </div>
-                @else
-                    <input
-                        type="text"
-                        id="buscar_proveedor"
-                        wire:model.live.debounce.250ms="buscarProveedor"
-                        wire:keydown.enter.prevent="elegirPrimerProveedor"
-                        placeholder="Escriba el nombre o el RUC del proveedor"
-                        autocomplete="off"
-                        class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
-                    >
-
-                    @if (trim($buscarProveedor) !== '')
-                        <ul class="mt-1 max-h-60 overflow-auto rounded-md border border-cosechar-border bg-white shadow-sm">
-                            @forelse ($this->proveedoresSugeridos as $sugerido)
-                                <li>
-                                    <button
-                                        type="button"
-                                        wire:click="elegirProveedor({{ $sugerido->id }})"
-                                        class="block w-full px-3 py-2 text-left text-sm text-cosechar-ink hover:bg-cosechar-cream"
-                                    >
-                                        {{ $sugerido->nombre }}
-                                        @if ($sugerido->ruc)
-                                            <span class="text-xs text-cosechar-muted">· RUC {{ $sugerido->ruc }}</span>
-                                        @endif
-                                    </button>
-                                </li>
-                            @empty
-                                <li class="px-3 py-2 text-sm text-cosechar-muted">No se encontró ningún proveedor con ese nombre o RUC.</li>
-                            @endforelse
-                        </ul>
-                    @endif
-                @endif
-                @error('proveedor_id')
+                <label for="proveedor_nombre" class="mb-1 block text-sm font-medium text-cosechar-ink">Nombre del proveedor <x-obligatorio /></label>
+                <input type="text" id="proveedor_nombre" wire:model.blur="proveedor_nombre" autocomplete="off" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
+                @error('proveedor_nombre')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
 
+            <div>
+                <label for="proveedor_ruc" class="mb-1 block text-sm font-medium text-cosechar-ink">RUC <span class="font-normal text-cosechar-muted">(opcional)</span></label>
+                <input type="text" id="proveedor_ruc" wire:model.blur="proveedor_ruc" inputmode="numeric" autocomplete="off" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
+                @error('proveedor_ruc')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label for="proveedor_telefono" class="mb-1 block text-sm font-medium text-cosechar-ink">Teléfono <span class="font-normal text-cosechar-muted">(opcional)</span></label>
+                <input type="text" id="proveedor_telefono" wire:model.blur="proveedor_telefono" autocomplete="off" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
+                @error('proveedor_telefono')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
+
+        @unless ($proveedor_id)
+            <p class="-mt-3 text-xs text-cosechar-muted">Si el proveedor no está registrado, escriba aquí sus datos: se registra solo al guardar la compra.</p>
+        @endunless
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
                 <label for="almacen_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Almacén destino <x-obligatorio /></label>
                 <select id="almacen_id" wire:model.blur="almacen_id" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
@@ -87,13 +117,12 @@
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
-        </div>
 
-        <div class="sm:max-w-xs">
-            <label for="numero_comprobante" class="mb-1 block text-sm font-medium text-cosechar-ink">N.º de comprobante (opcional)</label>
-            <input type="text" id="numero_comprobante" wire:model.blur="numero_comprobante" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
+            <div>
+                <label for="numero_comprobante" class="mb-1 block text-sm font-medium text-cosechar-ink">N.º de comprobante <span class="font-normal text-cosechar-muted">(opcional)</span></label>
+                <input type="text" id="numero_comprobante" wire:model.blur="numero_comprobante" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
+            </div>
         </div>
-
         <div class="flex flex-col gap-3">
             <h2 class="text-sm font-semibold text-cosechar-ink">Productos comprados</h2>
 

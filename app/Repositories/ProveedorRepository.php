@@ -67,6 +67,37 @@ class ProveedorRepository
             ->get();
     }
 
+    /**
+     * Proveedor para una compra: el que ya existe (aunque esté desactivado) o uno nuevo.
+     * Con RUC se busca por RUC; si no existe y hay un proveedor del mismo nombre sin RUC,
+     * se completa ese en vez de duplicarlo. Sin RUC se busca por el mismo nombre.
+     * Nunca se pisan los datos de un proveedor ya registrado.
+     */
+    public function registrarOReutilizar(string $nombre, ?string $ruc = null, ?string $telefono = null): Proveedor
+    {
+        $nombre = trim($nombre);
+        $ruc = trim((string) $ruc) ?: null;
+        $telefono = trim((string) $telefono) ?: null;
+
+        if ($ruc !== null) {
+            if ($existente = Proveedor::where('ruc', $ruc)->first()) {
+                return $existente;
+            }
+
+            $sinRuc = Proveedor::whereNull('ruc')->whereRaw('LOWER(nombre) = ?', [mb_strtolower($nombre)])->first();
+
+            if ($sinRuc) {
+                $sinRuc->update(['ruc' => $ruc, 'telefono' => $sinRuc->telefono ?? $telefono]);
+
+                return $sinRuc;
+            }
+        } elseif ($existente = Proveedor::whereRaw('LOWER(nombre) = ?', [mb_strtolower($nombre)])->orderByDesc('activo')->orderBy('id')->first()) {
+            return $existente;
+        }
+
+        return Proveedor::create(['nombre' => $nombre, 'ruc' => $ruc, 'telefono' => $telefono, 'activo' => true]);
+    }
+
     public function find(int $id): ?Proveedor
     {
         return Proveedor::find($id);

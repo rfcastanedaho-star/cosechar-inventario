@@ -24,7 +24,7 @@ class CompraFormTest extends TestCase
 
         Livewire::actingAs($usuario)
             ->test(CompraForm::class)
-            ->set('proveedor_id', $proveedor->id)
+            ->call('elegirProveedor', $proveedor->id)
             ->set('almacen_id', $almacen->id)
             ->set('fecha', '2026-09-20')
             ->set('lineas.0.producto_id', $producto->id)
@@ -54,10 +54,10 @@ class CompraFormTest extends TestCase
 
         Livewire::actingAs($usuario)
             ->test(CompraForm::class)
-            ->set('proveedor_id', null)
+            ->set('proveedor_nombre', '')
             ->set('almacen_id', null)
             ->call('guardar')
-            ->assertHasErrors(['proveedor_id' => 'required', 'almacen_id' => 'required']);
+            ->assertHasErrors(['proveedor_nombre' => 'required', 'almacen_id' => 'required']);
     }
 
     public function test_puede_agregar_y_quitar_lineas(): void
@@ -93,7 +93,7 @@ class CompraFormTest extends TestCase
 
         Livewire::actingAs($usuario)
             ->test(CompraForm::class)
-            ->set('proveedor_id', $proveedor->id)
+            ->call('elegirProveedor', $proveedor->id)
             ->set('almacen_id', $almacen->id)
             ->set('lineas.0.producto_id', $producto->id)
             ->set('lineas.0.numero_lote', 'LOTE-X1')
@@ -113,7 +113,7 @@ class CompraFormTest extends TestCase
 
         Livewire::actingAs($usuario)
             ->test(CompraForm::class)
-            ->set('proveedor_id', $proveedor->id)
+            ->call('elegirProveedor', $proveedor->id)
             ->set('almacen_id', $almacen->id)
             ->set('lineas.0.producto_id', $productoA->id)
             ->set('lineas.0.numero_lote', 'A1')
