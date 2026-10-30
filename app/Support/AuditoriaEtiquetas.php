@@ -5,10 +5,12 @@ namespace App\Support;
 use App\Models\Almacen;
 use App\Models\Categoria;
 use App\Models\Cliente;
+use App\Models\Lote;
 use App\Models\Producto;
 use App\Models\Proveedor;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 /**
@@ -25,6 +27,7 @@ class AuditoriaEtiquetas
         'usuario' => User::class,
         'cliente' => Cliente::class,
         'categoria' => Categoria::class,
+        'lote' => Lote::class,
     ];
 
     private const NOMBRES_ENTIDAD = [
@@ -34,6 +37,7 @@ class AuditoriaEtiquetas
         User::class => 'Usuario',
         Cliente::class => 'Cliente',
         Categoria::class => 'Categoría',
+        Lote::class => 'Lote',
     ];
 
     private const CAMPOS = [
@@ -55,6 +59,8 @@ class AuditoriaEtiquetas
         'marca' => 'Marca',
         'presentacion' => 'Presentación',
         'maneja_vencimiento' => 'Usa lotes',
+        'numero_lote' => 'N.º de lote',
+        'fecha_vencimiento' => 'Vencimiento',
         'direccion' => 'Dirección',
         'telefono' => 'Teléfono',
         'password' => 'Contraseña',
@@ -90,6 +96,7 @@ class AuditoriaEtiquetas
         return match ($campo) {
             'activo' => $valor === '1' ? 'Activo' : 'Inactivo',
             'maneja_vencimiento' => $valor === '1' ? 'Sí' : 'No',
+            'fecha_vencimiento' => Carbon::parse($valor)->format('d/m/Y'),
             'precio', 'precio_costo', 'precio_mayor' => is_numeric($valor) ? 'S/ '.number_format((float) $valor, 2, '.', '') : $valor,
             'rol' => User::ROLES[$valor] ?? $valor,
             'unidad_medida' => self::UNIDADES[$valor] ?? $valor,
@@ -108,6 +115,7 @@ class AuditoriaEtiquetas
         return match (true) {
             $modelo instanceof Producto => $modelo->codigo.' — '.$modelo->nombre,
             $modelo instanceof User => $modelo->name,
+            $modelo instanceof Lote => ($modelo->producto?->nombre ?? 'Producto').' — '.$modelo->etiqueta,
             default => (string) ($modelo->nombre ?? $modelo->name ?? '#'.$modelo->getKey()),
         };
     }

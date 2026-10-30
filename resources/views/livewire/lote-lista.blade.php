@@ -21,7 +21,7 @@
     </div>
 
     @if ($mensaje)
-        <div class="mb-4 rounded-md bg-green-100 px-4 py-2 text-sm text-green-800">{{ $mensaje }} Quedó registrado en el kardex.</div>
+        <div class="mb-4 rounded-md bg-green-100 px-4 py-2 text-sm text-green-800">{{ $mensaje }}</div>
     @endif
 
     <div class="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -90,6 +90,49 @@
         </form>
     @endif
 
+    @if ($this->loteEnEdicion)
+        @php($loteEditado = $this->loteEnEdicion)
+        <form wire:submit="guardarEdicion" class="mb-4 rounded-2xl border border-cosechar-olive/40 bg-white p-4">
+            <div class="mb-3 flex items-start justify-between gap-3">
+                <div>
+                    <h2 class="text-sm font-semibold text-cosechar-ink">Editar lote</h2>
+                    <p class="text-sm text-cosechar-muted">
+                        <x-producto-etiqueta :producto="$loteEditado->producto" /> · Cantidad: <span class="font-medium text-cosechar-ink">{{ $loteEditado->cantidad }}</span>
+                        <span class="text-xs">(la cantidad se corrige con + / −)</span>
+                    </p>
+                </div>
+                <button type="button" wire:click="cancelarEdicion" class="text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">Cancelar</button>
+            </div>
+
+            <x-leyenda-obligatorios />
+
+            <div class="grid gap-3 sm:grid-cols-3">
+                <div>
+                    <label for="editNumero" class="mb-1 block text-xs font-medium text-cosechar-muted">N.º de lote <x-obligatorio /></label>
+                    <input type="text" id="editNumero" wire:model="editNumero" maxlength="50" class="{{ $campo }}">
+                    @error('editNumero')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="editVencimiento" class="mb-1 block text-xs font-medium text-cosechar-muted">Fecha de vencimiento <span class="font-normal">(opcional)</span></label>
+                    <input type="date" id="editVencimiento" wire:model="editVencimiento" class="{{ $campo }}">
+                    @error('editVencimiento')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="flex items-end">
+                    <button type="submit" wire:loading.attr="disabled" wire:target="guardarEdicion" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90 disabled:cursor-not-allowed disabled:opacity-50">
+                        <span wire:loading.remove wire:target="guardarEdicion">Guardar cambios</span>
+                        <span wire:loading wire:target="guardarEdicion">Guardando...</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    @endif
+
     @include('livewire.partials.filtros-historial', [
         'placeholder' => 'Producto, código, marca o N.º de lote...',
         'estados' => \App\Models\Lote::ESTADOS,
@@ -117,7 +160,15 @@
                     <tr wire:key="lote-{{ $lote->id }}" class="{{ $lote->estado === 'agotado' ? 'bg-cosechar-cream/60 text-cosechar-muted' : '' }}">
                         <td class="px-4 py-3 font-medium text-cosechar-ink"><x-producto-etiqueta :producto="$lote->producto" /></td>
                         <td class="px-4 py-3 text-cosechar-ink">{{ $lote->etiqueta }}</td>
-                        <td class="px-4 py-3 text-cosechar-muted">{{ $lote->fecha_vencimiento?->format('d/m/Y') ?? 'No aplica' }}</td>
+                        <td class="px-4 py-3 text-cosechar-muted">
+                            @if ($lote->fecha_vencimiento)
+                                {{ $lote->fecha_vencimiento->format('d/m/Y') }}
+                            @elseif ($lote->producto->maneja_vencimiento)
+                                <span class="font-medium text-amber-700">Falta completar</span>
+                            @else
+                                No aplica
+                            @endif
+                        </td>
                         <td class="px-4 py-3 text-right font-medium text-cosechar-ink">{{ $lote->cantidad }}</td>
                         @if ($conCosto)
                             <td class="px-4 py-3 text-right text-cosechar-muted">{{ $lote->costo_unitario !== null ? 'S/ '.number_format($lote->costo_unitario, 2) : '—' }}</td>
@@ -129,6 +180,9 @@
                         <td class="whitespace-nowrap px-4 py-3 text-right">
                             <button type="button" wire:click="iniciarAjuste({{ $lote->id }}, 'salida')" aria-label="Reducir lote {{ $lote->etiqueta }}" title="Reducir" class="rounded-md border border-cosechar-border px-2.5 py-1 text-sm font-medium text-cosechar-danger hover:bg-cosechar-cream">−</button>
                             <button type="button" wire:click="iniciarAjuste({{ $lote->id }}, 'entrada')" aria-label="Aumentar lote {{ $lote->etiqueta }}" title="Aumentar" class="rounded-md border border-cosechar-border px-2.5 py-1 text-sm font-medium text-cosechar-olive hover:bg-cosechar-cream">+</button>
+                            @if ($lote->numero_lote !== \App\Models\Lote::SIN_LOTE)
+                                <button type="button" wire:click="iniciarEdicion({{ $lote->id }})" aria-label="Editar lote {{ $lote->etiqueta }}" class="ml-2 text-xs font-medium text-cosechar-olive underline hover:text-cosechar-forest">Editar</button>
+                            @endif
                             <button type="button" wire:click="verDetalle({{ $lote->id }})" class="ml-2 text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">{{ $detalleId === $lote->id ? 'Ocultar' : 'Detalle' }}</button>
                         </td>
                     </tr>

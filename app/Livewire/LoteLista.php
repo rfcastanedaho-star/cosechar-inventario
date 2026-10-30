@@ -9,6 +9,7 @@ use App\Models\StockMovimiento;
 use App\Models\VentaDetalleLote;
 use App\Repositories\LoteRepository;
 use App\Repositories\StockMovimientoRepository;
+use App\Services\AuditoriaService;
 use App\Services\StockMovimientoService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -37,6 +38,13 @@ class LoteLista extends Component
     public string $ajusteMotivo = '';
 
     public ?int $detalleId = null;
+
+    /** Lote cuyo N.º y vencimiento se están corrigiendo (los lotes que nacen en Compras salen sin vencimiento). */
+    public ?int $editandoId = null;
+
+    public string $editNumero = '';
+
+    public string $editVencimiento = '';
 
     public ?string $mensaje = null;
 
@@ -115,7 +123,7 @@ class LoteLista extends Component
             return;
         }
 
-        $this->resetErrorBag();
+        $this->cancelarEdicion();
         $this->mensaje = null;
         $this->ajustandoId = $id;
         $this->ajusteTipo = $tipo;
@@ -173,8 +181,68 @@ class LoteLista extends Component
             return;
         }
 
-        $this->mensaje = ($this->ajusteTipo === 'entrada' ? 'Se aumentaron ' : 'Se redujeron ')."{$data['ajusteCantidad']} unidades del lote {$lote->numero_lote}.";
+        $this->mensaje = ($this->ajusteTipo === 'entrada' ? 'Se aumentaron ' : 'Se redujeron ')."{$data['ajusteCantidad']} unidades del lote {$lote->etiqueta}. Quedó registrado en el kardex.";
         $this->reset(['ajustandoId', 'ajusteCantidad', 'ajusteMotivo']);
+        unset($this->lotes, $this->resumen);
+    }
+
+    #[Computed]
+    public function loteEnEdicion(): ?Lote
+    {
+        return $this->editandoId ? Lote::with('producto')->find($this->editandoId) : null;
+    }
+
+    /** El lote automático «Sin lote» no se edita: es solo el lugar donde está el stock de un producto sin lotes. */
+    public function iniciarEdicion(int $id): void
+    {
+        $lote = Lote::find($id);
+
+        if (! $lote || $lote->numero_lote === Lote::SIN_LOTE) {
+            return;
+        }
+
+        $this->resetErrorBag();
+        $this->cancelarAjuste();
+        $this->mensaje = null;
+        $this->editandoId = $lote->id;
+        $this->editNumero = $lote->numero_lote;
+        $this->editVencimiento = $lote->fecha_vencimiento?->toDateString() ?? '';
+    }
+
+    public function cancelarEdicion(): void
+    {
+        $this->resetErrorBag();
+        $this->reset(['editandoId', 'editNumero', 'editVencimiento']);
+    }
+
+    public function guardarEdicion(AuditoriaService $auditoria): void
+    {
+        $lote = $this->loteEnEdicion;
+
+        if (! $lote) {
+            return;
+        }
+
+        $data = $this->validate([
+            'editNumero' => [
+                'required', 'string', 'max:50', Rule::notIn([Lote::SIN_LOTE]),
+                Rule::unique('lotes', 'numero_lote')->where('producto_id', $lote->producto_id)->ignore($lote->id),
+            ],
+            'editVencimiento' => ['nullable', 'date'],
+        ], [
+            'editNumero.required' => 'Escriba el número de lote.',
+            'editNumero.not_in' => 'Ese nombre está reservado para los productos sin lotes; escriba otro número.',
+            'editNumero.unique' => 'Este producto ya tiene un lote con ese número.',
+            'editVencimiento.date' => 'Escriba una fecha de vencimiento válida.',
+        ]);
+
+        $auditoria->actualizar($lote, [
+            'numero_lote' => trim($data['editNumero']),
+            'fecha_vencimiento' => $data['editVencimiento'] ?: null,
+        ], auth()->user());
+
+        $this->mensaje = "Se actualizó el lote {$lote->numero_lote}.";
+        $this->cancelarEdicion();
         unset($this->lotes, $this->resumen);
     }
 
