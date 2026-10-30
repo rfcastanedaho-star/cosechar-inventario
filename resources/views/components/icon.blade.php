@@ -16,6 +16,14 @@
             <svg viewBox="0 0 24 24" {!! $base !!}><path d="M4 9h13"/><path d="M14 5l3.5 4L14 13"/><path d="M20 15H7"/><path d="M10 19l-3.5-4L10 11"/></svg>
             @break
 
+        @case('lotes')
+            <svg viewBox="0 0 24 24" {!! $base !!}><path d="M12 3.5 20.5 8 12 12.5 3.5 8z"/><path d="M3.5 12 12 16.5 20.5 12"/><path d="M3.5 16 12 20.5 20.5 16"/></svg>
+            @break
+
+        @case('inventario')
+            <svg viewBox="0 0 24 24" {!! $base !!}><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8.5h8M8 12h8M8 15.5h5"/></svg>
+            @break
+
         @case('reportes')
             <svg viewBox="0 0 24 24" {!! $base !!}><path d="M6 3.5h8l4 4V20a.6.6 0 0 1-.6.6H6.6A.6.6 0 0 1 6 20z"/><path d="M14 3.5V8h4"/><path d="M8.5 16l2-2.5 2 1.8 3-3.8"/></svg>
             @break

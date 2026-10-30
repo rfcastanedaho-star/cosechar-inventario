@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\Lote;
 use App\Repositories\Concerns\EscapaComodinesLike;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class LoteRepository
@@ -61,6 +62,48 @@ class LoteRepository
         return $manejaVencimiento
             ? $query->orderBy('fecha_vencimiento', 'asc')->get()   // FEFO
             : $query->orderBy('fecha_ingreso', 'asc')->get();       // FIFO
+    }
+
+    /**
+     * Control de lotes: paginado por producto y vencimiento, con búsqueda por producto,
+     * código, marca o número de lote, y filtro por estado.
+     *
+     * @param  array{buscar?: ?string, estado?: ?string}  $filtros
+     */
+    public function historial(array $filtros = [], int $porPagina = 15): LengthAwarePaginator
+    {
+        $buscar = trim((string) ($filtros['buscar'] ?? ''));
+        $patron = '%'.$this->textoLiteral($buscar).'%';
+
+        return Lote::query()
+            ->select('lotes.*')
+            ->join('productos', 'productos.id', '=', 'lotes.producto_id')
+            ->with(['producto', 'almacen'])
+            ->when($buscar !== '', fn ($q) => $q->where(fn ($w) => $w
+                ->whereRaw("lotes.numero_lote LIKE ? ESCAPE '!'", [$patron])
+                ->orWhereRaw("productos.nombre LIKE ? ESCAPE '!'", [$patron])
+                ->orWhereRaw("productos.codigo LIKE ? ESCAPE '!'", [$patron])
+                ->orWhereRaw("productos.marca LIKE ? ESCAPE '!'", [$patron])))
+            ->conEstado($filtros['estado'] ?? null)
+            ->orderBy('productos.nombre')
+            ->orderBy('lotes.fecha_vencimiento')
+            ->orderBy('lotes.id')
+            ->paginate($porPagina);
+    }
+
+    /**
+     * Tarjetas de Lotes: con stock, por vencer, vencidos (con stock) y agotados.
+     *
+     * @return array{con_stock: int, por_vencer: int, vencidos: int, agotados: int}
+     */
+    public function resumen(): array
+    {
+        return [
+            'con_stock' => Lote::where('cantidad', '>', 0)->count(),
+            'por_vencer' => Lote::conEstado('por_vencer')->count(),
+            'vencidos' => Lote::conEstado('vencido')->count(),
+            'agotados' => Lote::conEstado('agotado')->count(),
+        ];
     }
 
     public function create(array $data): Lote
