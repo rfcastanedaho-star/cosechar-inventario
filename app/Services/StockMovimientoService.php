@@ -165,6 +165,50 @@ class StockMovimientoService
     }
 
     /**
+     * Ajuste manual de un lote (desde Lotes): no se edita la cantidad, se crea un movimiento con su
+     * razón y responsable, y el lote se actualiza con él. Entrada = aumentar, salida = reducir.
+     */
+    public function ajustarLote(Lote $lote, string $tipo, int $cantidad, string $motivo, User $responsable): StockMovimiento
+    {
+        $motivosValidos = match ($tipo) {
+            'entrada' => StockMovimiento::MOTIVOS_AUMENTAR,
+            'salida' => StockMovimiento::MOTIVOS_REDUCIR,
+            default => throw new InvalidArgumentException('El ajuste debe ser una entrada o una salida.'),
+        };
+
+        if ($cantidad <= 0) {
+            throw new InvalidArgumentException('La cantidad debe ser mayor a cero.');
+        }
+
+        if (! in_array($motivo, $motivosValidos, true)) {
+            throw new InvalidArgumentException('La razón elegida no corresponde a este tipo de ajuste.');
+        }
+
+        return DB::transaction(function () use ($lote, $tipo, $cantidad, $motivo, $responsable) {
+            if ($tipo === 'salida') {
+                $actual = Lote::lockForUpdate()->findOrFail($lote->id);
+
+                if ($actual->cantidad < $cantidad) {
+                    throw StockInsuficienteException::paraLote($actual, $cantidad, $actual->cantidad);
+                }
+
+                $this->lotes->decrementar($lote, $cantidad);
+            } else {
+                $this->lotes->incrementar($lote, $cantidad);
+            }
+
+            return $this->movimientos->create([
+                'lote_id' => $lote->id,
+                'tipo' => $tipo,
+                'cantidad' => $cantidad,
+                'fecha' => now(),
+                'responsable_id' => $responsable->id,
+                'motivo' => $motivo,
+            ]);
+        });
+    }
+
+    /**
      * Mueve stock de un almacén a otro: descuenta del origen con FEFO/FIFO
      * y, por cada lote tocado, suma la misma cantidad en el lote del destino
      * (con el mismo número y fechas; se crea si no existe). Todo en una sola

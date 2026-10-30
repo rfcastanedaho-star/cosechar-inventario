@@ -18,7 +18,20 @@ class StockMovimiento extends Model
         'transferencia' => 'Transferencia',
         'anulacion' => 'Anulación',
         'saldo_inicial' => 'Saldo inicial',
+        'producto_vencido' => 'Producto vencido',
+        'error_conteo' => 'Error de conteo',
+        'devolucion' => 'Devolución',
+        'perdida' => 'Pérdida',
+        'otro' => 'Otro',
     ];
+
+    /**
+     * Razones que elige el usuario al ajustar un lote. Compra, venta, anulación y saldo inicial
+     * las pone solo el sistema; "ajuste_inventario" y "transferencia" quedan solo para el historial antiguo.
+     */
+    public const MOTIVOS_REDUCIR = ['merma', 'producto_danado', 'producto_vencido', 'error_conteo', 'devolucion', 'perdida', 'otro'];
+
+    public const MOTIVOS_AUMENTAR = ['error_conteo', 'devolucion', 'otro'];
 
     protected $fillable = [
         'lote_id', 'tipo', 'cantidad', 'fecha', 'responsable_id', 'motivo', 'venta_id',
