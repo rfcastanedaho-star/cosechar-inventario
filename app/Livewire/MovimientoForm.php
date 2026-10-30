@@ -21,11 +21,11 @@ class MovimientoForm extends Component
     /**
      * Motivo de toda entrada manual: sumar al lote lo que el conteo físico
      * encontró de más. Los lotes nuevos nacen en Compras (con proveedor y
-     * costo) o en una transferencia, nunca aquí.
+     * costo), nunca aquí.
      */
     public const MOTIVO_ENTRADA = 'ajuste_inventario';
 
-    /** Motivos de una salida manual (las ventas y la transferencia tienen su propio flujo). */
+    /** Motivos de una salida manual (las ventas tienen su propio flujo). */
     public const MOTIVOS_SALIDA = ['merma', 'producto_danado', 'ajuste_inventario'];
 
     public string $tipo = 'entrada';
@@ -37,8 +37,6 @@ class MovimientoForm extends Component
 
     public ?int $almacen_id = null;
 
-    public ?int $almacen_destino_id = null;
-
     public ?int $lote_id = null;
 
     /** Texto del buscador de lotes (número de lote). */
@@ -49,6 +47,14 @@ class MovimientoForm extends Component
     public string $motivo = '';
 
     public bool $creado = false;
+
+    /** Con un solo almacén activo no hay nada que elegir: se usa ese. */
+    public function mount(): void
+    {
+        if ($this->almacenes->count() === 1) {
+            $this->almacen_id = $this->almacenes->first()->id;
+        }
+    }
 
     #[Computed]
     public function productoSeleccionado(): ?Producto
@@ -179,19 +185,6 @@ class MovimientoForm extends Component
     {
         $almacen = ['required', Rule::exists('almacenes', 'id')->where('activo', true)];
 
-        if ($this->tipo === 'transferencia') {
-            return [
-                'producto_id' => ['required', 'exists:productos,id'],
-                'almacen_id' => $almacen,
-                'almacen_destino_id' => [
-                    'required',
-                    'different:almacen_id',
-                    Rule::exists('almacenes', 'id')->where('activo', true),
-                ],
-                'cantidad' => ['required', 'integer', 'min:1'],
-            ];
-        }
-
         if ($this->tipo === 'entrada') {
             return [
                 'producto_id' => ['required', 'exists:productos,id'],
@@ -226,9 +219,6 @@ class MovimientoForm extends Component
             'cantidad.min' => 'La cantidad debe ser mayor a cero.',
             'motivo.required' => 'Debe seleccionar un motivo de salida.',
             'motivo.in' => 'El motivo seleccionado no es válido.',
-            'almacen_destino_id.required' => 'Debe seleccionar el almacén de destino.',
-            'almacen_destino_id.different' => 'El almacén de destino debe ser distinto del de origen.',
-            'almacen_destino_id.exists' => 'Seleccione un almacén de destino activo.',
         ];
     }
 
@@ -241,8 +231,12 @@ class MovimientoForm extends Component
         }
 
         if ($property === 'tipo') {
+            if (! in_array($this->tipo, ['entrada', 'salida'], true)) {
+                $this->tipo = 'entrada';
+            }
+
             $this->resetErrorBag();
-            $this->reset(['motivo', 'almacen_destino_id', 'lote_id', 'buscarLote']);
+            $this->reset(['motivo', 'lote_id', 'buscarLote']);
 
             return;
         }
@@ -254,10 +248,6 @@ class MovimientoForm extends Component
         }
 
         $this->validateOnly($property);
-
-        if ($property === 'almacen_id' && $this->tipo === 'transferencia' && $this->almacen_destino_id) {
-            $this->validateOnly('almacen_destino_id');
-        }
     }
 
     public function guardar(StockMovimientoService $servicio): void
@@ -275,22 +265,6 @@ class MovimientoForm extends Component
             );
 
             $this->reset(['cantidad', 'lote_id']);
-        } elseif ($this->tipo === 'transferencia') {
-            try {
-                $servicio->transferir(
-                    Producto::find($data['producto_id']),
-                    $data['almacen_id'],
-                    $data['almacen_destino_id'],
-                    $data['cantidad'],
-                    auth()->user(),
-                );
-            } catch (StockInsuficienteException $e) {
-                $this->addError('cantidad', $e->getMessage());
-
-                return;
-            }
-
-            $this->reset(['cantidad', 'almacen_destino_id']);
         } else {
             try {
                 $servicio->registrarSalidaEnAlmacen(

@@ -85,6 +85,8 @@ class MovimientoFormAlmacenTest extends TestCase
 
     public function test_el_almacen_es_obligatorio_en_entradas_y_salidas(): void
     {
+        // Con un solo almacén se elige solo; la obligación aplica cuando hay varios.
+        Almacen::factory()->create();
         $usuario = User::factory()->create();
         $producto = Producto::factory()->create();
 

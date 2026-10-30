@@ -4,7 +4,7 @@
 
 <div class="mx-auto max-w-xl p-8">
     <div class="mb-6 flex items-center justify-between gap-3">
-        <h1 class="text-lg font-semibold text-cosechar-ink">Registrar movimiento de stock</h1>
+        <h1 class="text-lg font-semibold text-cosechar-ink">Registrar ajuste de stock</h1>
         <a href="{{ route('movimientos.historial') }}" class="rounded-md border border-cosechar-border bg-white px-4 py-2 text-sm font-medium text-cosechar-ink hover:bg-cosechar-cream">
             Ver historial de movimientos
         </a>
@@ -30,13 +30,6 @@
             class="flex-1 rounded-lg py-2 {{ $tipo === 'salida' ? 'bg-white text-cosechar-ink shadow-sm' : 'text-cosechar-muted' }}"
         >
             Salida
-        </button>
-        <button
-            type="button"
-            wire:click="$set('tipo', 'transferencia')"
-            class="flex-1 rounded-lg py-2 {{ $tipo === 'transferencia' ? 'bg-white text-cosechar-ink shadow-sm' : 'text-cosechar-muted' }}"
-        >
-            Transferencia
         </button>
     </div>
 
@@ -88,45 +81,30 @@
         </div>
 
         <div>
-            <label for="almacen_id" class="mb-1 block text-sm font-medium text-cosechar-ink">
-                {{ $tipo === 'entrada' ? 'Almacén de destino' : 'Almacén de origen' }} <x-obligatorio />
-            </label>
-            <select id="almacen_id" wire:model.live="almacen_id" class="{{ $campo }}">
-                <option value="">Seleccione un almacén</option>
-                @foreach ($this->almacenes as $almacen)
-                    <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
-                @endforeach
-            </select>
-            @error('almacen_id')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
+            @if ($this->almacenes->count() === 1)
+                <p class="text-sm text-cosechar-muted">Almacén: <span class="font-medium text-cosechar-ink">{{ $this->almacenes->first()->nombre }}</span></p>
+            @else
+                <label for="almacen_id" class="mb-1 block text-sm font-medium text-cosechar-ink">
+                    Almacén <x-obligatorio />
+                </label>
+                <select id="almacen_id" wire:model.live="almacen_id" class="{{ $campo }}">
+                    <option value="">Seleccione un almacén</option>
+                    @foreach ($this->almacenes as $almacen)
+                        <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
+                    @endforeach
+                </select>
+                @error('almacen_id')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            @endif
 
             @if ($producto_id)
                 <p class="mt-1 text-sm text-cosechar-muted">
-                    Stock actual {{ $almacen_id ? 'en este almacén' : '(todos los almacenes)' }}: {{ $this->stockActual }}
+                    Stock actual {{ $almacen_id ? '' : '(todos los almacenes) ' }}del producto: {{ $this->stockActual }}
                 </p>
             @endif
         </div>
-
-        @if ($tipo === 'transferencia')
-            <div>
-                <label for="almacen_destino_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Almacén de destino <x-obligatorio /></label>
-                <select id="almacen_destino_id" wire:model.live="almacen_destino_id" class="{{ $campo }}">
-                    <option value="">Seleccione un almacén</option>
-                    @foreach ($this->almacenes as $almacen)
-                        @if ($almacen->id !== $almacen_id)
-                            <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
-                        @endif
-                    @endforeach
-                </select>
-                @error('almacen_destino_id')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-                <p class="mt-1 text-sm text-cosechar-muted">
-                    Sale del almacén de origen (por vencimiento más próximo) y entra al de destino con el mismo lote.
-                </p>
-            </div>
-        @elseif ($tipo === 'entrada')
+        @if ($tipo === 'entrada')
             <div>
                 <label for="buscar_lote" class="mb-1 block text-sm font-medium text-cosechar-ink">Lote <x-obligatorio /></label>
 
@@ -178,7 +156,7 @@
                 @enderror
 
                 @if (! $producto_id || ! $almacen_id)
-                    <p class="mt-1 text-sm text-cosechar-muted">Elija el producto y el almacén para buscar sus lotes.</p>
+                    <p class="mt-1 text-sm text-cosechar-muted">Elija el producto para buscar sus lotes.</p>
                 @elseif (! $this->hayLotes)
                     <p class="mt-1 text-sm text-amber-700">
                         Este producto no tiene lotes en este almacén. Regístrelo primero en Compras.

@@ -67,7 +67,7 @@
                 autocomplete="off"
                 class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring disabled:bg-cosechar-cream"
             >
-            <p class="mt-1 text-xs text-cosechar-muted">Con un lector, basta pasar el producto para encontrarlo en Ventas, Compras y Movimientos.</p>
+            <p class="mt-1 text-xs text-cosechar-muted">Con un lector, basta pasar el producto para encontrarlo en Ventas, Compras y Ajustes de stock.</p>
             @error('codigo_barras')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror

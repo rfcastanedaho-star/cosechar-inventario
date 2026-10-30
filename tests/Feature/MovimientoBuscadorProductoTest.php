@@ -143,11 +143,11 @@ class MovimientoBuscadorProductoTest extends TestCase
             ->assertSet('producto_id', null);
     }
 
-    public function test_el_buscador_funciona_tambien_en_salida_y_transferencia(): void
+    public function test_el_buscador_funciona_tambien_en_entrada_y_salida(): void
     {
         Producto::factory()->create(['nombre' => 'Fungicida Cobre']);
 
-        foreach (['salida', 'transferencia'] as $tipo) {
+        foreach (['entrada', 'salida'] as $tipo) {
             $this->formulario()
                 ->set('tipo', $tipo)
                 ->set('buscarProducto', 'fu')

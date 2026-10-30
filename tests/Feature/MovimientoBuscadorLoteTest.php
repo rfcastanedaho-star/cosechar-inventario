@@ -113,11 +113,11 @@ class MovimientoBuscadorLoteTest extends TestCase
             ->assertSee('Compras');
     }
 
-    public function test_pide_elegir_producto_y_almacen_antes_de_buscar(): void
+    public function test_pide_elegir_producto_antes_de_buscar(): void
     {
         Livewire::actingAs(User::factory()->create())
             ->test(MovimientoForm::class)
-            ->assertSee('Elija el producto y el almacén');
+            ->assertSee('Elija el producto para buscar sus lotes');
     }
 
     public function test_muestra_como_maximo_ocho_sugerencias(): void

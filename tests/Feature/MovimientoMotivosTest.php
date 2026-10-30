@@ -6,7 +6,6 @@ use App\Livewire\MovimientoForm;
 use App\Models\Almacen;
 use App\Models\Lote;
 use App\Models\Producto;
-use App\Models\StockMovimiento;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -208,98 +207,5 @@ class MovimientoMotivosTest extends TestCase
         $componente->set('producto_id', $sinLotes->id)
             ->assertSee('no tiene lotes en este almacén')
             ->assertSee('Compras');
-    }
-
-    public function test_la_pestana_transferencia_mueve_stock_entre_almacenes(): void
-    {
-        $origen = Almacen::factory()->create();
-        $destino = Almacen::factory()->create();
-        $producto = Producto::factory()->create(['maneja_vencimiento' => false]);
-        $loteOrigen = Lote::factory()->for($producto, 'producto')->create([
-            'almacen_id' => $origen->id, 'numero_lote' => 'L-MOV', 'cantidad' => 30,
-        ]);
-
-        Livewire::actingAs(User::factory()->create())
-            ->test(MovimientoForm::class)
-            ->set('tipo', 'transferencia')
-            ->set('producto_id', $producto->id)
-            ->set('almacen_id', $origen->id)
-            ->set('almacen_destino_id', $destino->id)
-            ->set('cantidad', 12)
-            ->call('guardar')
-            ->assertHasNoErrors()
-            ->assertSet('creado', true);
-
-        $this->assertSame(18, $loteOrigen->fresh()->cantidad);
-        $this->assertDatabaseHas('lotes', ['almacen_id' => $destino->id, 'numero_lote' => 'L-MOV', 'cantidad' => 12]);
-        $this->assertSame(2, StockMovimiento::where('motivo', 'transferencia')->count());
-    }
-
-    public function test_la_transferencia_exige_un_destino_distinto_del_origen(): void
-    {
-        $origen = Almacen::factory()->create();
-        $producto = Producto::factory()->create();
-        Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $origen->id, 'cantidad' => 30]);
-
-        $componente = Livewire::actingAs(User::factory()->create())
-            ->test(MovimientoForm::class)
-            ->set('tipo', 'transferencia')
-            ->set('producto_id', $producto->id)
-            ->set('almacen_id', $origen->id)
-            ->set('cantidad', 5);
-
-        $componente->call('guardar')->assertHasErrors(['almacen_destino_id' => 'required']);
-
-        $componente->set('almacen_destino_id', $origen->id)->call('guardar')->assertHasErrors(['almacen_destino_id' => 'different']);
-
-        $this->assertDatabaseCount('stock_movimientos', 0);
-    }
-
-    public function test_la_transferencia_no_acepta_un_destino_desactivado(): void
-    {
-        $origen = Almacen::factory()->create();
-        $cerrado = Almacen::factory()->create(['activo' => false]);
-        $producto = Producto::factory()->create();
-        Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $origen->id, 'cantidad' => 30]);
-
-        Livewire::actingAs(User::factory()->create())
-            ->test(MovimientoForm::class)
-            ->set('tipo', 'transferencia')
-            ->set('producto_id', $producto->id)
-            ->set('almacen_id', $origen->id)
-            ->set('almacen_destino_id', $cerrado->id)
-            ->set('cantidad', 5)
-            ->call('guardar')
-            ->assertHasErrors(['almacen_destino_id']);
-    }
-
-    public function test_la_transferencia_no_puede_mover_mas_de_lo_que_hay_en_el_origen(): void
-    {
-        $origen = Almacen::factory()->create();
-        $destino = Almacen::factory()->create();
-        $producto = Producto::factory()->create();
-        $lote = Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $origen->id, 'cantidad' => 4]);
-
-        Livewire::actingAs(User::factory()->create())
-            ->test(MovimientoForm::class)
-            ->set('tipo', 'transferencia')
-            ->set('producto_id', $producto->id)
-            ->set('almacen_id', $origen->id)
-            ->set('almacen_destino_id', $destino->id)
-            ->set('cantidad', 10)
-            ->call('guardar')
-            ->assertHasErrors(['cantidad']);
-
-        $this->assertSame(4, $lote->fresh()->cantidad);
-        $this->assertDatabaseCount('stock_movimientos', 0);
-    }
-
-    public function test_la_pantalla_ofrece_las_tres_pestanas(): void
-    {
-        Livewire::actingAs(User::factory()->create())
-            ->test(MovimientoForm::class)
-            ->assertSee('Entrada')
-            ->assertSee('Salida')
-            ->assertSee('Transferencia');
     }
 }
