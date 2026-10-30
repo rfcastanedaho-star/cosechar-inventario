@@ -229,6 +229,7 @@ class ProductoEdicionTest extends TestCase
             ->set('unidad_medida', 'kg')
             ->set('stock_minimo', 3)
             ->set('precio', '10')
+            ->set('precio_costo', '7')
             ->call('guardar')
             ->assertHasNoErrors()
             ->assertSee('Producto registrado correctamente');

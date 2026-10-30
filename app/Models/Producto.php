@@ -16,13 +16,14 @@ class Producto extends Model
 
     protected $fillable = [
         'codigo', 'nombre', 'marca', 'presentacion', 'categoria_id', 'unidad_medida',
-        'stock_minimo', 'precio', 'maneja_vencimiento', 'activo',
+        'stock_minimo', 'precio', 'precio_costo', 'maneja_vencimiento', 'activo',
     ];
 
     protected $casts = [
         'maneja_vencimiento' => 'boolean',
         'activo' => 'boolean',
         'precio' => 'decimal:2',
+        'precio_costo' => 'decimal:2',
     ];
 
     public function categoria(): BelongsTo

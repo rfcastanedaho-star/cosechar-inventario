@@ -50,6 +50,7 @@ class ProductoSinCodigoBarrasTest extends TestCase
             ->set('categoria_id', $producto->categoria_id)
             ->set('unidad_medida', 'litro')
             ->set('precio', '95')
+            ->set('precio_costo', '70')
             ->call('guardar')
             ->assertHasNoErrors();
 

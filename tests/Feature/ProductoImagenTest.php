@@ -37,7 +37,8 @@ class ProductoImagenTest extends TestCase
             ->set('categoria_id', $categoria->id)
             ->set('unidad_medida', 'kg')
             ->set('stock_minimo', 1)
-            ->set('precio', '5');
+            ->set('precio', '5')
+            ->set('precio_costo', '3');
 
         if ($imagen) {
             $componente->set('imagen', $imagen);

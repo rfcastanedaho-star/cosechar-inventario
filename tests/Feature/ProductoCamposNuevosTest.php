@@ -39,7 +39,8 @@ class ProductoCamposNuevosTest extends TestCase
             ->set('categoria_id', $categoria->id)
             ->set('unidad_medida', 'litro')
             ->set('stock_minimo', 2)
-            ->set('precio', '20');
+            ->set('precio', '20')
+            ->set('precio_costo', '14');
     }
 
     // ---------- Registro ----------
@@ -100,6 +101,7 @@ class ProductoCamposNuevosTest extends TestCase
             ->set('unidad_medida', 'kg')
             ->set('stock_minimo', 1)
             ->set('precio', '5')
+            ->set('precio_costo', '3')
             ->call('guardar')
             ->assertHasNoErrors();
 

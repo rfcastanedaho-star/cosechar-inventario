@@ -146,19 +146,6 @@
 
         <div class="grid grid-cols-2 gap-4">
             <div>
-                <label for="stock_minimo" class="mb-1 block text-sm font-medium text-cosechar-ink">Stock mínimo <x-obligatorio /></label>
-                <input
-                    type="number"
-                    id="stock_minimo"
-                    wire:model.blur="stock_minimo" @disabled(! $this->puedeEditarSensibles)
-                    class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
-                >
-                @error('stock_minimo')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
                 <label for="precio" class="mb-1 block text-sm font-medium text-cosechar-ink">Precio (S/) <x-obligatorio /></label>
                 <input
                     type="number"
@@ -166,24 +153,100 @@
                     min="0"
                     id="precio"
                     wire:model.blur="precio" @disabled(! $this->puedeEditarSensibles)
-                    class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
+                    class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring disabled:bg-cosechar-cream"
                 >
                 @error('precio')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label for="precio_costo" class="mb-1 block text-sm font-medium text-cosechar-ink">Precio costo (S/) <x-obligatorio /></label>
+                <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    id="precio_costo"
+                    wire:model.blur="precio_costo" @disabled(! $this->puedeEditarSensibles)
+                    class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring disabled:bg-cosechar-cream"
+                >
+                @error('precio_costo')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            @unless ($this->editando)
+                <div>
+                    <label for="stock_inicial" class="mb-1 block text-sm font-medium text-cosechar-ink">Stock inicial <span class="font-normal text-cosechar-muted">(opcional)</span></label>
+                    <input
+                        type="number"
+                        min="0"
+                        id="stock_inicial"
+                        wire:model.live.debounce.600ms="stock_inicial"
+                        class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring disabled:bg-cosechar-cream"
+                    >
+                    @error('stock_inicial')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            @endunless
+
+            <div>
+                <label for="stock_minimo" class="mb-1 block text-sm font-medium text-cosechar-ink">Stock mínimo <x-obligatorio /></label>
+                <input
+                    type="number"
+                    id="stock_minimo"
+                    wire:model.blur="stock_minimo" @disabled(! $this->puedeEditarSensibles)
+                    class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring disabled:bg-cosechar-cream"
+                >
+                @error('stock_minimo')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
         </div>
 
         <label class="flex items-center gap-2 text-sm text-cosechar-ink">
-            <input type="checkbox" wire:model="maneja_vencimiento" @disabled(! $this->puedeEditarSensibles || $this->venceBloqueado) class="rounded border border-cosechar-border">
+            <input type="checkbox" wire:model.live="maneja_vencimiento" @disabled(! $this->puedeEditarSensibles || $this->venceBloqueado) class="rounded border border-cosechar-border">
             Maneja fecha de vencimiento
             @if ($this->venceBloqueado)
                 <span class="text-xs text-cosechar-muted">(no se puede cambiar: el producto ya tiene lotes)</span>
             @endif
         </label>
 
+        @if ($this->tieneStockInicial)
+            <div class="flex flex-col gap-4 rounded-xl border border-cosechar-border bg-white p-4">
+                <p class="text-xs text-cosechar-muted">El stock inicial entra como lote «INICIAL», valorizado al precio costo, y queda en el historial de movimientos como saldo inicial.</p>
+
+                @if ($this->almacenes->count() > 1)
+                    <div>
+                        <label for="almacen_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Almacén del stock inicial <x-obligatorio /></label>
+                        <select id="almacen_id" wire:model.blur="almacen_id" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring disabled:bg-cosechar-cream">
+                            <option value="">Seleccione un almacén</option>
+                            @foreach ($this->almacenes as $almacen)
+                                <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
+                            @endforeach
+                        </select>
+                        @error('almacen_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                @endif
+
+                @if ($maneja_vencimiento)
+                    <div>
+                        <label for="vencimiento_inicial" class="mb-1 block text-sm font-medium text-cosechar-ink">Vencimiento del stock inicial <x-obligatorio /></label>
+                        <input type="date" id="vencimiento_inicial" wire:model.blur="vencimiento_inicial" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring disabled:bg-cosechar-cream">
+                        @error('vencimiento_inicial')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                @endif
+            </div>
+        @endif
         @if ($this->editando && ! $this->puedeEditarSensibles)
-            <p class="text-xs text-cosechar-muted">Solo el administrador puede cambiar el código, la marca, la presentación, la categoría, la unidad, el stock mínimo, el precio y el vencimiento.</p>
+            <p class="text-xs text-cosechar-muted">Solo el administrador puede cambiar el código, la marca, la presentación, la categoría, la unidad, el stock mínimo, el precio, el precio costo y el vencimiento.</p>
         @endif
 
         <button

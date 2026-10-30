@@ -24,7 +24,8 @@ class ProductoFactory extends Factory
             'categoria_id' => Categoria::factory(),
             'unidad_medida' => $this->faker->randomElement(['saco', 'kg', 'litro', 'galon', 'unidad']),
             'stock_minimo' => $this->faker->numberBetween(0, 20),
-            'precio' => $this->faker->randomFloat(2, 1, 500),
+            'precio' => $precio = $this->faker->randomFloat(2, 1, 500),
+            'precio_costo' => round($precio * 0.7, 2),
             'maneja_vencimiento' => false,
         ];
     }

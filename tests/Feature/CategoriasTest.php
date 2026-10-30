@@ -229,6 +229,7 @@ class CategoriasTest extends TestCase
             ->set('unidad_medida', 'kg')
             ->set('stock_minimo', 1)
             ->set('precio', '5')
+            ->set('precio_costo', '3')
             ->call('guardar')
             ->assertHasNoErrors();
     }

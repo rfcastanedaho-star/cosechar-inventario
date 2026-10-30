@@ -48,6 +48,7 @@ class AuditoriaEtiquetas
         'unidad_medida' => 'Unidad de medida',
         'stock_minimo' => 'Stock mínimo',
         'precio' => 'Precio',
+        'precio_costo' => 'Precio de costo',
         'precio_mayor' => 'Precio por mayor',
         'cantidad_mayor' => 'Cantidad mínima por mayor',
         'codigo_barras' => 'Código de barras',
@@ -89,7 +90,7 @@ class AuditoriaEtiquetas
         return match ($campo) {
             'activo' => $valor === '1' ? 'Activo' : 'Inactivo',
             'maneja_vencimiento' => $valor === '1' ? 'Sí' : 'No',
-            'precio', 'precio_mayor' => is_numeric($valor) ? 'S/ '.number_format((float) $valor, 2, '.', '') : $valor,
+            'precio', 'precio_costo', 'precio_mayor' => is_numeric($valor) ? 'S/ '.number_format((float) $valor, 2, '.', '') : $valor,
             'rol' => User::ROLES[$valor] ?? $valor,
             'unidad_medida' => self::UNIDADES[$valor] ?? $valor,
             'categoria_id' => $categorias[(int) $valor] ?? '#'.$valor,

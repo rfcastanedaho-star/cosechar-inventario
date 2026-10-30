@@ -2,11 +2,13 @@
 
 namespace App\Livewire;
 
+use App\Models\Almacen;
 use App\Models\Categoria;
 use App\Models\Producto;
 use App\Repositories\ProductoRepository;
 use App\Services\AuditoriaService;
 use App\Services\ImagenProductoService;
+use App\Services\ProductoService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -24,7 +26,7 @@ class ProductoForm extends Component
     /** Campos que identifican o valorizan al producto: al editar, solo el administrador los cambia. */
     private const CAMPOS_SENSIBLES = [
         'codigo', 'marca', 'presentacion', 'categoria_id', 'unidad_medida',
-        'stock_minimo', 'precio', 'maneja_vencimiento',
+        'stock_minimo', 'precio', 'precio_costo', 'maneja_vencimiento',
     ];
 
     public ?int $productoId = null;
@@ -48,6 +50,15 @@ class ProductoForm extends Component
 
     public string $precio = '';
 
+    public string $precio_costo = '';
+
+    /** Solo al registrar: unidades que ya hay en el almacén, con su vencimiento si el producto lo maneja. */
+    public string $stock_inicial = '';
+
+    public string $vencimiento_inicial = '';
+
+    public ?int $almacen_id = null;
+
     public bool $maneja_vencimiento = false;
 
     public bool $creado = false;
@@ -62,6 +73,7 @@ class ProductoForm extends Component
             $this->unidad_medida = $producto->unidad_medida;
             $this->stock_minimo = $producto->stock_minimo;
             $this->precio = (string) $producto->precio;
+            $this->precio_costo = $producto->precio_costo !== null ? (string) $producto->precio_costo : '';
             $this->maneja_vencimiento = $producto->maneja_vencimiento;
             $this->marca = $producto->marca ?? '';
             $this->presentacion = $producto->presentacion ?? '';
@@ -70,6 +82,26 @@ class ProductoForm extends Component
         }
 
         $this->codigo = app(ProductoRepository::class)->siguienteCodigo();
+        $this->almacen_id = $this->almacenUnico();
+    }
+
+    /** Con un solo almacén activo no hay nada que elegir. */
+    private function almacenUnico(): ?int
+    {
+        return $this->almacenes->count() === 1 ? $this->almacenes->first()->id : null;
+    }
+
+    #[Computed]
+    public function almacenes(): Collection
+    {
+        return Almacen::where('activo', true)->orderBy('nombre')->get();
+    }
+
+    /** ¿Se está registrando mercadería que ya existe? */
+    #[Computed]
+    public function tieneStockInicial(): bool
+    {
+        return ! $this->editando && is_numeric($this->stock_inicial) && (int) $this->stock_inicial > 0;
     }
 
     #[Computed]
@@ -103,6 +135,14 @@ class ProductoForm extends Component
             return $reglas;
         }
 
+        if (! $this->editando) {
+            $reglas += [
+                'stock_inicial' => ['nullable', 'integer', 'min:0'],
+                'vencimiento_inicial' => [Rule::requiredIf($this->tieneStockInicial && $this->maneja_vencimiento), 'nullable', 'date'],
+                'almacen_id' => [Rule::requiredIf($this->tieneStockInicial), 'nullable', Rule::exists('almacenes', 'id')->where('activo', true)],
+            ];
+        }
+
         return $reglas + [
             'codigo' => ['required', 'string', 'max:50', Rule::unique('productos', 'codigo')->ignore($this->productoId)],
             'categoria_id' => [
@@ -121,6 +161,7 @@ class ProductoForm extends Component
             'unidad_medida' => ['required', 'in:saco,kg,litro,galon,unidad'],
             'stock_minimo' => ['required', 'integer', 'min:0'],
             'precio' => ['required', 'numeric', 'min:0'],
+            'precio_costo' => ['required', 'numeric', 'min:0'],
             'marca' => ['nullable', 'string', 'max:100'],
             'presentacion' => ['nullable', 'string', 'max:100'],
             'maneja_vencimiento' => ['boolean'],
@@ -139,6 +180,12 @@ class ProductoForm extends Component
             'stock_minimo.required' => 'El stock mínimo es obligatorio.',
             'precio.required' => 'El precio es obligatorio.',
             'precio.numeric' => 'El precio debe ser un número válido.',
+            'precio_costo.required' => 'El precio de costo es obligatorio.',
+            'precio_costo.numeric' => 'El precio de costo debe ser un número válido.',
+            'stock_inicial.integer' => 'El stock inicial debe ser un número entero.',
+            'stock_inicial.min' => 'El stock inicial no puede ser negativo.',
+            'vencimiento_inicial.required' => 'Indique cuándo vence el stock inicial.',
+            'almacen_id.required' => 'Seleccione el almacén donde está el stock inicial.',
             'imagen.image' => 'El archivo debe ser una imagen.',
             'imagen.mimes' => 'La foto debe ser JPG, PNG o WebP.',
             'imagen.max' => 'La foto no puede pesar más de 4 MB.',
@@ -163,10 +210,16 @@ class ProductoForm extends Component
         $this->validateOnly($property);
     }
 
-    public function guardar(ProductoRepository $productos, ImagenProductoService $imagenes, AuditoriaService $auditoria): void
+    public function guardar(ProductoRepository $productos, ProductoService $servicio, ImagenProductoService $imagenes, AuditoriaService $auditoria): void
     {
         $data = $this->validate();
         unset($data['imagen']);
+
+        // El stock inicial no es un dato del producto: se registra aparte, como su primer lote.
+        $stockInicial = $this->tieneStockInicial
+            ? ['cantidad' => (int) $data['stock_inicial'], 'almacen_id' => (int) $data['almacen_id'], 'fecha_vencimiento' => $data['vencimiento_inicial'] ?: null]
+            : null;
+        unset($data['stock_inicial'], $data['vencimiento_inicial'], $data['almacen_id']);
 
         // Los campos opcionales vacíos se guardan como nulos.
         foreach (['marca', 'presentacion'] as $opcional) {
@@ -195,13 +248,14 @@ class ProductoForm extends Component
             return;
         }
 
-        $producto = $productos->create($data);
+        $producto = $servicio->registrar($data, $stockInicial, auth()->user());
 
         if ($this->imagen) {
             $imagenes->guardar($producto, $this->imagen);
         }
 
-        $this->reset(['codigo', 'nombre', 'marca', 'presentacion', 'categoria_id', 'unidad_medida', 'stock_minimo', 'precio', 'maneja_vencimiento', 'imagen']);
+        $this->reset(['codigo', 'nombre', 'marca', 'presentacion', 'categoria_id', 'unidad_medida', 'stock_minimo', 'precio', 'precio_costo', 'stock_inicial', 'vencimiento_inicial', 'maneja_vencimiento', 'imagen']);
+        $this->almacen_id = $this->almacenUnico();
         $this->codigo = $productos->siguienteCodigo();
         $this->creado = true;
     }

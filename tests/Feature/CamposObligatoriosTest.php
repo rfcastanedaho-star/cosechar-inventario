@@ -34,7 +34,7 @@ class CamposObligatoriosTest extends TestCase
     public static function formularios(): array
     {
         return [
-            'producto' => [ProductoForm::class, [], ['Código *', 'Nombre *', 'Categoría *', 'Unidad de medida *', 'Stock mínimo *', 'Precio (S/) *'], ['Marca *', 'Presentación *', 'Foto del producto *']],
+            'producto' => [ProductoForm::class, [], ['Código *', 'Nombre *', 'Categoría *', 'Unidad de medida *', 'Stock mínimo *', 'Precio (S/) *', 'Precio costo (S/) *'], ['Stock inicial *', 'Marca *', 'Presentación *', 'Foto del producto *']],
             'compra' => [CompraForm::class, [], ['Nombre del proveedor *', 'Almacén destino *', 'Fecha *', 'Producto *', 'N.º de lote *', 'Cantidad *', 'Costo unitario (S/) *'], ['RUC (opcional) *', 'Teléfono (opcional) *', 'comprobante (opcional) *']],
             'venta' => [VentaForm::class, [], ['Cliente *', 'Almacén de origen *', 'Fecha *', 'Producto *', 'Cantidad *', 'Precio unitario (S/) *'], ['Documento (opcional) *', 'comprobante (opcional) *']],
             'movimiento entrada' => [MovimientoForm::class, ['tipo' => 'entrada'], ['Producto *', 'Lote *', 'Cantidad *'], []],
