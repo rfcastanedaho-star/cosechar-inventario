@@ -1,3 +1,4 @@
+@php($variosAlmacenes = ! \App\Models\Almacen::unicoActivo())
 <div class="mx-auto max-w-6xl p-8">
     <div class="mb-6 flex items-center justify-between">
         <h1 class="text-lg font-semibold text-cosechar-ink">Historial de compras</h1>
@@ -11,7 +12,7 @@
     @endif
 
     @include('livewire.partials.filtros-historial', [
-        'placeholder' => 'Proveedor, comprobante o producto...',
+        'placeholder' => 'Factura, proveedor o producto...',
         'estados' => ['vigente' => 'Vigente', 'anulada' => 'Anulada'],
         'conAlmacen' => true, 'conFechas' => true, 'almacenes' => $this->almacenesFiltro,
         'total' => $this->compras->total(),
@@ -21,10 +22,12 @@
         <table class="w-full text-sm">
             <thead class="bg-cosechar-cream text-left text-xs uppercase text-cosechar-muted">
                 <tr>
-                    <th class="px-4 py-3">Fecha</th>
+                    <th class="px-4 py-3">Fecha de factura</th>
                     <th class="px-4 py-3">Proveedor</th>
-                    <th class="px-4 py-3">Almacén</th>
-                    <th class="px-4 py-3">Comprobante</th>
+                    @if ($variosAlmacenes)
+                        <th class="px-4 py-3">Almacén</th>
+                    @endif
+                    <th class="px-4 py-3">N.º de factura</th>
                     <th class="px-4 py-3">Productos</th>
                     <th class="px-4 py-3 text-right">Total</th>
                     <th class="px-4 py-3">Estado</th>
@@ -35,11 +38,16 @@
                     <tr wire:key="compra-{{ $compra->id }}" class="{{ $compra->anulada_at ? 'bg-cosechar-cream/60 text-cosechar-muted' : '' }}">
                         <td class="px-4 py-3 text-cosechar-muted">{{ $compra->fecha->format('d/m/Y') }}</td>
                         <td class="px-4 py-3 font-medium {{ $compra->anulada_at ? '' : 'text-cosechar-ink' }}">{{ $compra->proveedor->nombre }}
+                            @if ($compra->proveedor->telefono || $compra->proveedor->correo)
+                                <span class="block text-xs font-normal text-cosechar-muted">{{ collect([$compra->proveedor->telefono, $compra->proveedor->correo])->filter()->join(' · ') }}</span>
+                            @endif
                             <a href="{{ route('proveedores.editar', ['proveedor' => $compra->proveedor_id, 'desde' => 'compras']) }}" class="block text-xs font-normal text-cosechar-olive underline hover:text-cosechar-forest">Corregir proveedor</a>
                         </td>
-                        <td class="px-4 py-3 text-cosechar-muted">{{ $compra->almacen->nombre }}</td>
+                        @if ($variosAlmacenes)
+                            <td class="px-4 py-3 text-cosechar-muted">{{ $compra->almacen->nombre }}</td>
+                        @endif
                         <td class="px-4 py-3 text-cosechar-muted">{{ $compra->numero_comprobante ?: '—' }}</td>
-                        <td class="px-4 py-3 text-cosechar-muted">{{ $compra->detalles->pluck('producto.nombre')->join(', ') }}</td>
+                        <td class="px-4 py-3 text-cosechar-muted">{{ $compra->detalles->map(fn ($detalle) => $detalle->producto?->nombre.' × '.$detalle->cantidad)->join(', ') }}</td>
                         <td class="px-4 py-3 text-right font-medium {{ $compra->anulada_at ? 'line-through' : 'text-cosechar-ink' }}">S/ {{ number_format($compra->total, 2) }}</td>
                         <td class="px-4 py-3">
                             @if ($compra->anulada_at)
@@ -75,7 +83,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-6 text-center text-cosechar-muted">{{ $this->hayFiltros() ? 'No se encontraron compras con esos filtros.' : 'No hay compras registradas.' }}</td>
+                        <td colspan="{{ $variosAlmacenes ? 7 : 6 }}" class="px-4 py-6 text-center text-cosechar-muted">{{ $this->hayFiltros() ? 'No se encontraron compras con esos filtros.' : 'No hay compras registradas.' }}</td>
                     </tr>
                 @endforelse
             </tbody>

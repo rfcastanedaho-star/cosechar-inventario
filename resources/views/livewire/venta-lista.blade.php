@@ -1,3 +1,4 @@
+@php($variosAlmacenes = ! \App\Models\Almacen::unicoActivo())
 <div class="mx-auto max-w-6xl p-8">
     <div class="mb-6 flex items-center justify-between">
         <h1 class="text-lg font-semibold text-cosechar-ink">Historial de ventas</h1>
@@ -23,7 +24,9 @@
                 <tr>
                     <th class="px-4 py-3">Fecha</th>
                     <th class="px-4 py-3">Cliente</th>
-                    <th class="px-4 py-3">Almacén</th>
+                    @if ($variosAlmacenes)
+                        <th class="px-4 py-3">Almacén</th>
+                    @endif
                     <th class="px-4 py-3">Comprobante</th>
                     <th class="px-4 py-3">Productos</th>
                     <th class="px-4 py-3 text-right">Total</th>
@@ -39,7 +42,9 @@
                                 <a href="{{ route('clientes.editar', ['cliente' => $venta->cliente_id, 'desde' => 'ventas']) }}" class="block text-xs font-normal text-cosechar-olive underline hover:text-cosechar-forest">Corregir cliente</a>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-cosechar-muted">{{ $venta->almacen->nombre }}</td>
+                        @if ($variosAlmacenes)
+                            <td class="px-4 py-3 text-cosechar-muted">{{ $venta->almacen->nombre }}</td>
+                        @endif
                         <td class="px-4 py-3 text-cosechar-muted">{{ $venta->numero_comprobante ?: '—' }}</td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $venta->detalles->map(fn ($detalle) => $detalle->producto->nombre.($detalle->por_mayor ? ' (por mayor)' : ''))->join(', ') }}</td>
                         <td class="px-4 py-3 text-right font-medium {{ $venta->anulada_at ? 'line-through' : 'text-cosechar-ink' }}">S/ {{ number_format($venta->total, 2) }}</td>
@@ -77,7 +82,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-6 text-center text-cosechar-muted">{{ $this->hayFiltros() ? 'No se encontraron ventas con esos filtros.' : 'No hay ventas registradas.' }}</td>
+                        <td colspan="{{ $variosAlmacenes ? 7 : 6 }}" class="px-4 py-6 text-center text-cosechar-muted">{{ $this->hayFiltros() ? 'No se encontraron ventas con esos filtros.' : 'No hay ventas registradas.' }}</td>
                     </tr>
                 @endforelse
             </tbody>

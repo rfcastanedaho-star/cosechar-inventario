@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-5xl p-8" x-data>
+<div class="mx-auto max-w-6xl p-8" x-data>
     <input
         type="file"
         class="hidden"
@@ -84,6 +84,10 @@
                     <th class="px-4 py-3">Código</th>
                     <th class="px-4 py-3">Producto</th>
                     <th class="px-4 py-3">Categoría</th>
+                    <th class="px-4 py-3">Precio</th>
+                    @can('ver-valorizacion')
+                        <th class="px-4 py-3">Costo</th>
+                    @endcan
                     <th class="px-4 py-3">Stock actual</th>
                     <th class="px-4 py-3">Stock mínimo</th>
                     @can('editar-stock-minimo')
@@ -129,7 +133,11 @@
                             @endunless
                         </td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $producto->categoria->nombre }}</td>
-                        <td class="px-4 py-3 {{ ($producto->stock_actual ?? 0) < $producto->stock_minimo ? 'font-semibold text-cosechar-danger' : 'text-cosechar-ink' }}">
+                        <td class="whitespace-nowrap px-4 py-3 text-cosechar-ink">S/ {{ number_format($producto->precio, 2) }}</td>
+                        @can('ver-valorizacion')
+                            <td class="whitespace-nowrap px-4 py-3 text-cosechar-muted">{{ $producto->precio_costo !== null ? 'S/ '.number_format($producto->precio_costo, 2) : '—' }}</td>
+                        @endcan
+                        <td class="px-4 py-3 {{ ($producto->stock_actual ?? 0) <$producto->stock_minimo ? 'font-semibold text-cosechar-danger' : 'text-cosechar-ink' }}">
                             {{ $producto->stock_actual ?? 0 }}
                         </td>
                         @can('editar-stock-minimo')
@@ -171,7 +179,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="px-4 py-6 text-center text-cosechar-muted">{{ trim($buscar) !== '' || $categoria !== null ? 'No se encontraron productos con esos filtros.' : 'No hay productos registrados.' }}</td>
+                        <td colspan="11" class="px-4 py-6 text-center text-cosechar-muted">{{ trim($buscar) !== '' || $categoria !== null ? 'No se encontraron productos con esos filtros.' : 'No hay productos registrados.' }}</td>
                     </tr>
                 @endforelse
             </tbody>
