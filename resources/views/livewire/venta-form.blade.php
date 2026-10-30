@@ -173,19 +173,19 @@
                     </div>
 
                     <div class="sm:col-span-3">
-                        <label class="mb-1 block text-xs font-medium text-cosechar-muted">Precio unitario (S/) <x-obligatorio /></label>
+                        <label class="mb-1 block text-xs font-medium text-cosechar-muted">{{ $linea['por_mayor'] ? 'Precio por mayor (S/)' : 'Precio unitario (S/)' }} <x-obligatorio /></label>
                         <input type="number" step="0.01" min="0" wire:model.blur="lineas.{{ $indice }}.precio_unitario" class="w-full rounded-md border border-cosechar-border px-2 py-1.5 text-sm">
                         @error("lineas.{$indice}.precio_unitario")
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
-                        @if (($productoPrecio = $this->productoDeLinea($indice)) && $productoPrecio->precio_mayor !== null)
-                            <p class="mt-1 text-xs text-cosechar-muted">Por mayor: S/ {{ number_format($productoPrecio->precio_mayor, 2) }} desde {{ $productoPrecio->cantidad_mayor }} unidades</p>
-                            @if ($this->precioPorMayorAplicado($indice))
-                                <span class="mt-1 inline-block rounded-full bg-cosechar-olive/15 px-2 py-0.5 text-[11px] font-semibold text-cosechar-olive">Precio por mayor aplicado</span>
-                            @endif
+                        <label class="mt-2 flex items-center gap-2 text-xs text-cosechar-ink">
+                            <input type="checkbox" wire:model.live="lineas.{{ $indice }}.por_mayor" class="rounded border border-cosechar-border">
+                            Venta por mayor
+                        </label>
+                        @if ($linea['por_mayor'] && ($productoPrecio = $this->productoDeLinea($indice)))
+                            <p class="mt-1 text-xs text-cosechar-muted">Precio normal: S/ {{ number_format($productoPrecio->precio, 2) }}</p>
                         @endif
                     </div>
-
                     <div class="flex items-end justify-end sm:col-span-1">
                         <button
                             type="button"

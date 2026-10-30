@@ -24,7 +24,7 @@ class ProductoForm extends Component
     /** Campos que identifican o valorizan al producto: al editar, solo el administrador los cambia. */
     private const CAMPOS_SENSIBLES = [
         'codigo', 'marca', 'presentacion', 'categoria_id', 'unidad_medida',
-        'stock_minimo', 'precio', 'precio_mayor', 'cantidad_mayor', 'maneja_vencimiento',
+        'stock_minimo', 'precio', 'maneja_vencimiento',
     ];
 
     public ?int $productoId = null;
@@ -48,11 +48,6 @@ class ProductoForm extends Component
 
     public string $precio = '';
 
-    /** Precio por mayor y cantidad mínima de unidades desde la que se aplica. */
-    public string $precio_mayor = '';
-
-    public string $cantidad_mayor = '';
-
     public bool $maneja_vencimiento = false;
 
     public bool $creado = false;
@@ -70,8 +65,6 @@ class ProductoForm extends Component
             $this->maneja_vencimiento = $producto->maneja_vencimiento;
             $this->marca = $producto->marca ?? '';
             $this->presentacion = $producto->presentacion ?? '';
-            $this->precio_mayor = $producto->precio_mayor !== null ? (string) $producto->precio_mayor : '';
-            $this->cantidad_mayor = $producto->cantidad_mayor !== null ? (string) $producto->cantidad_mayor : '';
 
             return;
         }
@@ -130,8 +123,6 @@ class ProductoForm extends Component
             'precio' => ['required', 'numeric', 'min:0'],
             'marca' => ['nullable', 'string', 'max:100'],
             'presentacion' => ['nullable', 'string', 'max:100'],
-            'precio_mayor' => ['nullable', 'numeric', 'min:0', 'lte:precio', 'required_with:cantidad_mayor'],
-            'cantidad_mayor' => ['nullable', 'integer', 'min:2', 'required_with:precio_mayor'],
             'maneja_vencimiento' => ['boolean'],
         ];
     }
@@ -148,11 +139,6 @@ class ProductoForm extends Component
             'stock_minimo.required' => 'El stock mínimo es obligatorio.',
             'precio.required' => 'El precio es obligatorio.',
             'precio.numeric' => 'El precio debe ser un número válido.',
-            'precio_mayor.lte' => 'El precio por mayor no puede ser mayor que el precio normal.',
-            'precio_mayor.required_with' => 'Escriba el precio por mayor.',
-            'cantidad_mayor.required_with' => 'Escriba desde cuántas unidades se aplica el precio por mayor.',
-            'cantidad_mayor.min' => 'El precio por mayor debe aplicarse desde 2 unidades o más.',
-            'cantidad_mayor.integer' => 'La cantidad debe ser un número entero.',
             'imagen.image' => 'El archivo debe ser una imagen.',
             'imagen.mimes' => 'La foto debe ser JPG, PNG o WebP.',
             'imagen.max' => 'La foto no puede pesar más de 4 MB.',
@@ -183,7 +169,7 @@ class ProductoForm extends Component
         unset($data['imagen']);
 
         // Los campos opcionales vacíos se guardan como nulos.
-        foreach (['marca', 'presentacion', 'precio_mayor', 'cantidad_mayor'] as $opcional) {
+        foreach (['marca', 'presentacion'] as $opcional) {
             if (array_key_exists($opcional, $data) && ($data[$opcional] === '' || $data[$opcional] === null)) {
                 $data[$opcional] = null;
             }
@@ -215,7 +201,7 @@ class ProductoForm extends Component
             $imagenes->guardar($producto, $this->imagen);
         }
 
-        $this->reset(['codigo', 'nombre', 'marca', 'presentacion', 'categoria_id', 'unidad_medida', 'stock_minimo', 'precio', 'precio_mayor', 'cantidad_mayor', 'maneja_vencimiento', 'imagen']);
+        $this->reset(['codigo', 'nombre', 'marca', 'presentacion', 'categoria_id', 'unidad_medida', 'stock_minimo', 'precio', 'maneja_vencimiento', 'imagen']);
         $this->codigo = $productos->siguienteCodigo();
         $this->creado = true;
     }

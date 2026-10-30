@@ -174,41 +174,6 @@
             </div>
         </div>
 
-        <div class="rounded-xl border border-cosechar-border bg-white p-4">
-            <p class="mb-1 text-sm font-medium text-cosechar-ink">Precio por mayor <span class="font-normal text-cosechar-muted">(opcional)</span></p>
-            <p class="mb-3 text-xs text-cosechar-muted">En Ventas se propone este precio cuando se lleva la cantidad mínima o más, por ejemplo desde 12 unidades.</p>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label for="precio_mayor" class="mb-1 block text-xs font-medium text-cosechar-muted">Precio por mayor (S/)</label>
-                    <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        id="precio_mayor"
-                        wire:model.blur="precio_mayor" @disabled(! $this->puedeEditarSensibles)
-                        class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring disabled:bg-cosechar-cream"
-                    >
-                    @error('precio_mayor')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <label for="cantidad_mayor" class="mb-1 block text-xs font-medium text-cosechar-muted">Desde cuántas unidades</label>
-                    <input
-                        type="number"
-                        min="2"
-                        id="cantidad_mayor"
-                        wire:model.blur="cantidad_mayor" @disabled(! $this->puedeEditarSensibles)
-                        class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring disabled:bg-cosechar-cream"
-                    >
-                    @error('cantidad_mayor')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
-        </div>
-
         <label class="flex items-center gap-2 text-sm text-cosechar-ink">
             <input type="checkbox" wire:model="maneja_vencimiento" @disabled(! $this->puedeEditarSensibles || $this->venceBloqueado) class="rounded border border-cosechar-border">
             Maneja fecha de vencimiento
@@ -218,7 +183,7 @@
         </label>
 
         @if ($this->editando && ! $this->puedeEditarSensibles)
-            <p class="text-xs text-cosechar-muted">Solo el administrador puede cambiar el código, la marca, la presentación, la categoría, la unidad, el stock mínimo, los precios y el vencimiento.</p>
+            <p class="text-xs text-cosechar-muted">Solo el administrador puede cambiar el código, la marca, la presentación, la categoría, la unidad, el stock mínimo, el precio y el vencimiento.</p>
         @endif
 
         <button

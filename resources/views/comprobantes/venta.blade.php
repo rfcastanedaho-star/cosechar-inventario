@@ -40,7 +40,7 @@
         <tbody>
             @foreach ($venta->detalles as $detalle)
                 <tr>
-                    <td>{{ $detalle->producto->codigo }} — {{ $detalle->producto->nombre }}</td>
+                    <td>{{ $detalle->producto->codigo }} — {{ $detalle->producto->nombre }}@if ($detalle->por_mayor) (por mayor)@endif</td>
                     <td class="num">{{ $detalle->cantidad }}</td>
                     <td class="num">S/ {{ number_format($detalle->precio_unitario, 2) }}</td>
                     <td class="num">S/ {{ number_format($detalle->cantidad * $detalle->precio_unitario, 2) }}</td>

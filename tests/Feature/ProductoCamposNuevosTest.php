@@ -44,21 +44,17 @@ class ProductoCamposNuevosTest extends TestCase
 
     // ---------- Registro ----------
 
-    public function test_registra_marca_presentacion_y_precio_por_mayor(): void
+    public function test_registra_marca_y_presentacion(): void
     {
         $this->nuevo()
             ->set('marca', 'Bayer')
             ->set('presentacion', 'Frasco 250 ml')
-            ->set('precio_mayor', '16.50')
-            ->set('cantidad_mayor', '12')
             ->call('guardar')
             ->assertHasNoErrors();
 
         $producto = Producto::where('codigo', 'NUE-1')->firstOrFail();
         $this->assertSame('Bayer', $producto->marca);
         $this->assertSame('Frasco 250 ml', $producto->presentacion);
-        $this->assertSame('16.50', $producto->precio_mayor);
-        $this->assertSame(12, $producto->cantidad_mayor);
     }
 
     public function test_los_campos_nuevos_son_opcionales_y_quedan_vacios_como_nulos(): void
@@ -68,8 +64,6 @@ class ProductoCamposNuevosTest extends TestCase
         $producto = Producto::where('codigo', 'NUE-1')->firstOrFail();
         $this->assertNull($producto->marca);
         $this->assertNull($producto->presentacion);
-        $this->assertNull($producto->precio_mayor);
-        $this->assertNull($producto->cantidad_mayor);
     }
 
     public function test_valida_el_formato_y_la_longitud_de_los_campos_nuevos(): void
@@ -77,23 +71,6 @@ class ProductoCamposNuevosTest extends TestCase
         $this->nuevo()->set('marca', str_repeat('a', 101))->call('guardar')->assertHasErrors(['marca' => 'max']);
         $this->nuevo()->set('presentacion', str_repeat('a', 101))->call('guardar')->assertHasErrors(['presentacion' => 'max']);
     }
-
-    public function test_el_precio_por_mayor_va_con_su_cantidad_minima_y_no_supera_el_precio_normal(): void
-    {
-        $this->nuevo()->set('precio_mayor', '15')->call('guardar')->assertHasErrors(['cantidad_mayor' => 'required_with']);
-        $this->nuevo()->set('cantidad_mayor', '12')->call('guardar')->assertHasErrors(['precio_mayor' => 'required_with']);
-        $this->nuevo()->set('precio_mayor', '25')->set('cantidad_mayor', '12')->call('guardar')->assertHasErrors(['precio_mayor' => 'lte']);
-        $this->nuevo()->set('precio_mayor', '-1')->set('cantidad_mayor', '12')->call('guardar')->assertHasErrors(['precio_mayor' => 'min']);
-        $this->nuevo()->set('precio_mayor', '15')->set('cantidad_mayor', '1')->call('guardar')->assertHasErrors(['cantidad_mayor' => 'min']);
-        $this->nuevo()->set('precio_mayor', '15')->set('cantidad_mayor', '2.5')->call('guardar')->assertHasErrors(['cantidad_mayor' => 'integer']);
-    }
-
-    public function test_un_precio_por_mayor_igual_al_normal_es_valido(): void
-    {
-        $this->nuevo()->set('precio_mayor', '20')->set('cantidad_mayor', '5')->call('guardar')->assertHasNoErrors();
-    }
-
-    // ---------- Código automático ----------
 
     public function test_el_formulario_propone_el_primer_codigo_si_no_hay_productos_con_ese_formato(): void
     {
@@ -159,16 +136,12 @@ class ProductoCamposNuevosTest extends TestCase
             ->assertSet('marca', 'Marca Vieja')
             ->set('marca', 'Bayer')
             ->set('presentacion', '1 litro')
-            ->set('precio_mayor', '15')
-            ->set('cantidad_mayor', '6')
             ->call('guardar')
             ->assertHasNoErrors();
 
         $producto->refresh();
         $this->assertSame('Bayer', $producto->marca);
         $this->assertSame('1 litro', $producto->presentacion);
-        $this->assertSame('15.00', $producto->precio_mayor);
-        $this->assertSame(6, $producto->cantidad_mayor);
         $this->assertDatabaseHas('auditoria_cambios', [
             'auditable_type' => Producto::class, 'auditable_id' => $producto->id, 'campo' => 'marca',
             'valor_anterior' => 'Marca Vieja', 'valor_nuevo' => 'Bayer',
@@ -177,22 +150,18 @@ class ProductoCamposNuevosTest extends TestCase
 
     public function test_el_operador_no_puede_cambiar_los_campos_nuevos(): void
     {
-        $producto = Producto::factory()->create(['marca' => 'Original', 'precio' => 20, 'precio_mayor' => 15, 'cantidad_mayor' => 6]);
+        $producto = Producto::factory()->create(['marca' => 'Original', 'precio' => 20]);
 
         Livewire::actingAs($this->operador())
             ->test(ProductoForm::class, ['producto' => $producto])
             ->set('marca', 'Manipulada')
             ->set('presentacion', 'Manipulada')
-            ->set('precio_mayor', '1')
-            ->set('cantidad_mayor', '2')
             ->call('guardar')
             ->assertHasNoErrors();
 
         $producto->refresh();
         $this->assertSame('Original', $producto->marca);
         $this->assertNull($producto->presentacion);
-        $this->assertSame('15.00', $producto->precio_mayor);
-        $this->assertSame(6, $producto->cantidad_mayor);
     }
 
     // ---------- Auditoría ----------
@@ -203,7 +172,6 @@ class ProductoCamposNuevosTest extends TestCase
         $this->assertSame('Marca', AuditoriaEtiquetas::campo('marca'));
         $this->assertSame('Presentación', AuditoriaEtiquetas::campo('presentacion'));
         $this->assertSame('Precio por mayor', AuditoriaEtiquetas::campo('precio_mayor'));
-        $this->assertSame('Cantidad mínima por mayor', AuditoriaEtiquetas::campo('cantidad_mayor'));
         $this->assertSame('S/ 15.00', AuditoriaEtiquetas::valor('precio_mayor', '15'));
     }
 

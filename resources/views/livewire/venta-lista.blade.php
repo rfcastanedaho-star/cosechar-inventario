@@ -41,7 +41,7 @@
                         </td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $venta->almacen->nombre }}</td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $venta->numero_comprobante ?: '—' }}</td>
-                        <td class="px-4 py-3 text-cosechar-muted">{{ $venta->detalles->pluck('producto.nombre')->join(', ') }}</td>
+                        <td class="px-4 py-3 text-cosechar-muted">{{ $venta->detalles->map(fn ($detalle) => $detalle->producto->nombre.($detalle->por_mayor ? ' (por mayor)' : ''))->join(', ') }}</td>
                         <td class="px-4 py-3 text-right font-medium {{ $venta->anulada_at ? 'line-through' : 'text-cosechar-ink' }}">S/ {{ number_format($venta->total, 2) }}</td>
                         <td class="px-4 py-3">
                             @if ($venta->anulada_at)

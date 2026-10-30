@@ -21,7 +21,7 @@ class VentaService
      * cabecera con el total cobrado al cliente.
      *
      * @param  array{cliente_id?: ?int, cliente_nombre: string, cliente_documento: ?string, almacen_id: int, fecha: string, numero_comprobante: ?string}  $cabecera
-     * @param  array<int, array{producto_id: int, cantidad: int, precio_unitario: float|string}>  $lineas
+     * @param  array<int, array{producto_id: int, cantidad: int, precio_unitario: float|string, por_mayor?: bool}>  $lineas
      */
     public function registrar(array $cabecera, array $lineas, User $responsable): Venta
     {
@@ -63,6 +63,7 @@ class VentaService
                     'producto_id' => $producto->id,
                     'cantidad' => $linea['cantidad'],
                     'precio_unitario' => $linea['precio_unitario'],
+                    'por_mayor' => (bool) ($linea['por_mayor'] ?? false),
                 ]);
 
                 $total += $linea['cantidad'] * $linea['precio_unitario'];
