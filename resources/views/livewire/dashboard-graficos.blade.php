@@ -234,8 +234,8 @@
                                 fill: true,
                             },
                             {
-                                label: 'Salidas',
-                                data: datosIniciales.salidas,
+                                label: 'Ventas',
+                                data: datosIniciales.ventas,
                                 borderColor: '#B4473E',
                                 backgroundColor: '#B4473E20',
                                 pointBackgroundColor: '#B4473E',
@@ -244,6 +244,19 @@
                                 pointHoverRadius: 6,
                                 tension: 0.3,
                                 fill: true,
+                            },
+                            {
+                                label: 'Ajustes (merma, dañado, conteo)',
+                                data: datosIniciales.ajustes,
+                                borderColor: '#C58A1B',
+                                backgroundColor: '#C58A1B20',
+                                pointBackgroundColor: '#C58A1B',
+                                pointBorderColor: '#fff',
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                tension: 0.3,
+                                borderDash: [6, 4],
+                                fill: false,
                             },
                         ],
                     },
@@ -257,7 +270,8 @@
                     const datos = evento.detail.movimientos;
                     this.chart.data.labels = datos.labels;
                     this.chart.data.datasets[0].data = datos.entradas;
-                    this.chart.data.datasets[1].data = datos.salidas;
+                    this.chart.data.datasets[1].data = datos.ventas;
+                    this.chart.data.datasets[2].data = datos.ajustes;
                     this.chart.update();
                 });
             },

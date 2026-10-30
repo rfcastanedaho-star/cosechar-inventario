@@ -136,6 +136,21 @@
                     @if ($detalleId === $lote->id)
                         <tr wire:key="detalle-{{ $lote->id }}" class="bg-cosechar-cream/40">
                             <td colspan="{{ $conCosto ? 8 : 7 }}" class="px-4 py-4">
+                                @php($totales = $this->totalesDelLote)
+                                <div class="mb-4 grid gap-3 sm:grid-cols-2">
+                                    <div class="rounded-xl border border-cosechar-border bg-white p-3">
+                                        <p class="text-xs font-medium text-cosechar-muted">Vendido</p>
+                                        <p class="mt-1 text-lg font-semibold text-cosechar-ink">{{ $totales['vendido'] }} <span class="text-xs font-normal text-cosechar-muted">unidades en ventas</span></p>
+                                    </div>
+                                    <div class="rounded-xl border border-cosechar-border bg-white p-3">
+                                        <p class="text-xs font-medium text-cosechar-muted">Ajustes (merma, dañado, conteo)</p>
+                                        <p class="mt-1 text-lg font-semibold text-cosechar-ink">
+                                            <span class="text-cosechar-danger">−{{ $totales['ajustes_menos'] }}</span>
+                                            <span class="text-cosechar-olive">+{{ $totales['ajustes_mas'] }}</span>
+                                            <span class="text-xs font-normal text-cosechar-muted">no cuentan como venta</span>
+                                        </p>
+                                    </div>
+                                </div>
                                 <div class="grid gap-6 lg:grid-cols-2">
                                     <div>
                                         <h3 class="mb-2 text-xs font-semibold uppercase text-cosechar-muted">Movimientos del lote</h3>

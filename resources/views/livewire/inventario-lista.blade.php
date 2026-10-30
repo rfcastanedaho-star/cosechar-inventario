@@ -81,6 +81,8 @@
                         <th class="px-4 py-3">Categoría</th>
                         <th class="px-4 py-3 text-right">Stock actual</th>
                         <th class="px-4 py-3">Lotes</th>
+                        <th class="px-4 py-3 text-right">Vendido</th>
+                        <th class="px-4 py-3 text-right" title="Mermas, dañados y errores de conteo: no cuentan como venta">Ajustes</th>
                         <th class="px-4 py-3 text-right">Stock mínimo</th>
                         <th class="px-4 py-3">Estado</th>
                         <th class="px-4 py-3"></th>
@@ -95,6 +97,12 @@
                             <td class="px-4 py-3 text-cosechar-muted">{{ $producto->categoria->nombre }}</td>
                             <td class="px-4 py-3 text-right font-medium {{ $estadoStock === 'normal' ? 'text-cosechar-ink' : 'text-cosechar-danger' }}">{{ (int) ($producto->stock_actual ?? 0) }}</td>
                             <td class="px-4 py-3 text-cosechar-muted">{{ $producto->lotes->count() }} {{ $producto->lotes->count() === 1 ? 'lote' : 'lotes' }}</td>
+                            @php($total = $this->totales[$producto->id])
+                            <td class="px-4 py-3 text-right text-cosechar-ink">{{ $total['vendido'] }}</td>
+                            <td class="whitespace-nowrap px-4 py-3 text-right">
+                                <span class="text-cosechar-danger">−{{ $total['ajustes_menos'] }}</span>
+                                <span class="text-cosechar-olive">+{{ $total['ajustes_mas'] }}</span>
+                            </td>
                             <td class="px-4 py-3 text-right text-cosechar-muted">{{ $producto->stock_minimo }}</td>
                             <td class="px-4 py-3">
                                 <span class="rounded-full px-2 py-1 text-xs font-semibold {{ $insignias[$estadoStock] }}">{{ \App\Livewire\InventarioLista::ESTADOS[$estadoStock] }}</span>
@@ -106,7 +114,7 @@
 
                         @if ($abierto === $producto->id)
                             <tr wire:key="inv-lotes-{{ $producto->id }}" class="bg-cosechar-cream/40">
-                                <td colspan="8" class="px-4 py-4">
+                                <td colspan="10" class="px-4 py-4">
                                     @forelse ($producto->lotes as $lote)
                                         <p class="text-sm text-cosechar-ink">
                                             Lote <span class="font-medium">{{ $lote->numero_lote }}</span> ·
@@ -122,7 +130,7 @@
                         @endif
                     @empty
                         <tr>
-                            <td colspan="8" class="px-4 py-6 text-center text-cosechar-muted">{{ $this->hayFiltros() ? 'No se encontraron productos con esos filtros.' : 'No hay productos registrados.' }}</td>
+                            <td colspan="10" class="px-4 py-6 text-center text-cosechar-muted">{{ $this->hayFiltros() ? 'No se encontraron productos con esos filtros.' : 'No hay productos registrados.' }}</td>
                         </tr>
                     @endforelse
                 </tbody>

@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Producto;
+use App\Repositories\StockMovimientoRepository;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -93,6 +94,17 @@ class InventarioLista extends Component
             ))
             ->when($estado !== null, fn (Collection $productos) => $productos->filter(fn (Producto $p) => self::estadoDe($p) === $estado))
             ->values();
+    }
+
+    /**
+     * Vendido y ajustes de cada producto mostrado (separados: una merma no es una venta).
+     *
+     * @return array<int, array{vendido: int, ajustes_menos: int, ajustes_mas: int}>
+     */
+    #[Computed]
+    public function totales(): array
+    {
+        return app(StockMovimientoRepository::class)->totalesPorProducto($this->productos->pluck('id')->all());
     }
 
     /** @return array{productos: int, unidades: int, valor: float, bajo: int} */

@@ -33,6 +33,12 @@ class StockMovimiento extends Model
 
     public const MOTIVOS_AUMENTAR = ['error_conteo', 'devolucion', 'otro'];
 
+    /**
+     * Motivos que cuentan como ajuste (merma, dañado, conteo…). Nunca son venta: el «vendido»
+     * sale solo de los movimientos de venta (menos sus anulaciones).
+     */
+    public const MOTIVOS_AJUSTE = ['merma', 'producto_danado', 'producto_vencido', 'error_conteo', 'devolucion', 'perdida', 'otro', 'ajuste_inventario'];
+
     protected $fillable = [
         'lote_id', 'tipo', 'cantidad', 'fecha', 'responsable_id', 'motivo', 'venta_id',
     ];

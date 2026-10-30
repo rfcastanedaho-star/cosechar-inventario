@@ -131,7 +131,10 @@ class DashboardGraficos extends Component
     }
 
     /**
-     * @return array{labels: array<int, string>, entradas: array<int, int>, salidas: array<int, int>}
+     * Entradas (compras y saldos), ventas (netas de anulaciones) y ajustes (mermas, dañados…) por día.
+     * Un ajuste nunca se cuenta como venta.
+     *
+     * @return array{labels: array<int, string>, entradas: array<int, int>, ventas: array<int, int>, ajustes: array<int, int>}
      */
     private function calcularMovimientos30Dias(): array
     {
@@ -141,24 +144,21 @@ class DashboardGraficos extends Component
 
         $dias = collect(range(0, 29))->map(fn (int $i) => now()->subDays(29 - $i)->format('Y-m-d'));
 
-        $entradas = $dias->map(
+        $porDia = fn (callable $suma) => $dias->map(
             fn (string $dia) => (int) $movimientos
-                ->where('tipo', 'entrada')
                 ->filter(fn ($m) => $m->fecha->format('Y-m-d') === $dia)
-                ->sum('cantidad')
-        );
-
-        $salidas = $dias->map(
-            fn (string $dia) => (int) $movimientos
-                ->where('tipo', 'salida')
-                ->filter(fn ($m) => $m->fecha->format('Y-m-d') === $dia)
-                ->sum('cantidad')
-        );
+                ->sum($suma)
+        )->all();
 
         return [
             'labels' => $dias->map(fn (string $d) => Carbon::parse($d)->format('d/m'))->all(),
-            'entradas' => $entradas->all(),
-            'salidas' => $salidas->all(),
+            'entradas' => $porDia(fn ($m) => $m->tipo === 'entrada' && ! in_array($m->motivo, ['anulacion', 'transferencia', ...StockMovimiento::MOTIVOS_AJUSTE], true) ? $m->cantidad : 0),
+            'ventas' => $porDia(fn ($m) => match (true) {
+                $m->tipo === 'salida' && $m->motivo === 'venta' => $m->cantidad,
+                $m->tipo === 'entrada' && $m->motivo === 'anulacion' => -$m->cantidad,
+                default => 0,
+            }),
+            'ajustes' => $porDia(fn ($m) => $m->tipo === 'salida' && in_array($m->motivo, StockMovimiento::MOTIVOS_AJUSTE, true) ? $m->cantidad : 0),
         ];
     }
 

@@ -8,6 +8,7 @@ use App\Models\Lote;
 use App\Models\StockMovimiento;
 use App\Models\VentaDetalleLote;
 use App\Repositories\LoteRepository;
+use App\Repositories\StockMovimientoRepository;
 use App\Services\StockMovimientoService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -79,6 +80,19 @@ class LoteLista extends Component
         return $this->detalleId
             ? StockMovimiento::with('responsable')->where('lote_id', $this->detalleId)->orderByDesc('fecha')->orderByDesc('id')->limit(10)->get()
             : new Collection;
+    }
+
+    /**
+     * Vendido y ajustes del lote abierto en el detalle (separados: una merma no es una venta).
+     *
+     * @return array{vendido: int, ajustes_menos: int, ajustes_mas: int}
+     */
+    #[Computed]
+    public function totalesDelLote(): array
+    {
+        return $this->detalleId
+            ? app(StockMovimientoRepository::class)->totalesPorLote([$this->detalleId])[$this->detalleId]
+            : ['vendido' => 0, 'ajustes_menos' => 0, 'ajustes_mas' => 0];
     }
 
     /** Líneas de venta que consumieron unidades del lote abierto en el detalle. */
