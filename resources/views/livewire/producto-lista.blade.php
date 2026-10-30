@@ -21,7 +21,7 @@
 
     <div class="mb-6 flex items-center justify-between">
         <h1 class="text-lg font-semibold text-cosechar-ink">Historial de productos</h1>
-        <a href="{{ route('productos.index') }}" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90">
+        <a href="{{ route('productos.nuevo') }}" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90">
             Registrar producto
         </a>
     </div>
@@ -56,6 +56,13 @@
                 @endif
             @endforeach
         </select>
+
+        @can('gestionar-categorias')
+            <a href="{{ route('categorias.index') }}" class="inline-flex shrink-0 items-center gap-2 rounded-full border border-cosechar-border bg-white px-4 py-2 text-sm font-medium text-cosechar-ink shadow-sm hover:bg-cosechar-cream">
+                <x-icon name="categorias" class="h-4 w-4" />
+                Categorías
+            </a>
+        @endcan
 
         <label class="flex shrink-0 items-center gap-2 text-sm text-cosechar-muted">
             <input type="checkbox" wire:model.live="mostrarInactivos" class="rounded border border-cosechar-border">

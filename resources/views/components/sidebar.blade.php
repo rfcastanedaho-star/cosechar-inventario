@@ -1,17 +1,13 @@
 @php
     $navActivos = [
         ['route' => 'dashboard', 'pattern' => 'dashboard', 'icon' => 'dashboard', 'label' => 'Dashboard'],
-        ['route' => 'productos.index', 'pattern' => 'productos.*', 'icon' => 'productos', 'label' => 'Productos'],
+        ['route' => 'productos.index', 'pattern' => ['productos.*', 'categorias.*'], 'icon' => 'productos', 'label' => 'Productos'],
         ['route' => 'movimientos.nuevo', 'pattern' => 'movimientos.*', 'icon' => 'movimientos', 'label' => 'Ajustes de stock'],
         ['route' => 'almacenes.index', 'pattern' => 'almacenes.*', 'icon' => 'almacenes', 'label' => 'Almacenes'],
         ['route' => 'compras.index', 'pattern' => 'compras.*', 'icon' => 'compras', 'label' => 'Compras'],
         ['route' => 'ventas.index', 'pattern' => 'ventas.*', 'icon' => 'ventas', 'label' => 'Ventas'],
         ['route' => 'reportes', 'pattern' => 'reportes', 'icon' => 'reportes', 'label' => 'Reportes'],
     ];
-
-    if (auth()->user()->can('gestionar-categorias')) {
-        $navActivos[] = ['route' => 'categorias.index', 'pattern' => 'categorias.*', 'icon' => 'categorias', 'label' => 'Categorías'];
-    }
 
     if (auth()->user()->can('gestionar-usuarios')) {
         $navActivos[] = ['route' => 'usuarios.index', 'pattern' => 'usuarios.*', 'icon' => 'usuarios', 'label' => 'Usuarios'];
@@ -31,7 +27,7 @@
 
     <nav class="flex flex-col gap-0.5">
         @foreach ($navActivos as $item)
-            @php($activo = request()->routeIs($item['pattern']))
+            @php($activo = request()->routeIs(...(array) $item['pattern']))
             <a
                 href="{{ route($item['route']) }}"
                 class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm {{ $activo ? 'bg-cosechar-cream font-semibold text-cosechar-forest' : 'font-medium text-cosechar-cream/80 hover:bg-white/5' }}"

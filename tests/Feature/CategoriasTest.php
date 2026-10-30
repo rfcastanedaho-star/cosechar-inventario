@@ -44,12 +44,6 @@ class CategoriasTest extends TestCase
         $this->get(route('categorias.index'))->assertRedirect(route('login'));
     }
 
-    public function test_el_menu_muestra_categorias_solo_al_administrador(): void
-    {
-        $this->actingAs($this->admin())->get(route('dashboard'))->assertSee(route('categorias.index'), false);
-        $this->actingAs($this->operador())->get(route('dashboard'))->assertDontSee(route('categorias.index'), false);
-    }
-
     public function test_un_operador_no_puede_abrir_los_componentes(): void
     {
         Livewire::actingAs($this->operador())->test(CategoriaLista::class)->assertForbidden();

@@ -8,9 +8,14 @@
             <h1 class="text-lg font-semibold text-cosechar-ink">Categorías</h1>
             <p class="mt-1 text-sm text-cosechar-muted">Los productos se asignan a una subcategoría (o a un grupo que no tenga subcategorías).</p>
         </div>
-        <a href="{{ route('categorias.nueva') }}" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90">
-            Registrar categoría
-        </a>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('productos.index') }}" class="rounded-md border border-cosechar-border bg-white px-4 py-2 text-sm font-medium text-cosechar-ink hover:bg-cosechar-cream">
+                Volver a productos
+            </a>
+            <a href="{{ route('categorias.nueva') }}" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90">
+                Registrar categoría
+            </a>
+        </div>
     </div>
 
     @if ($error)
