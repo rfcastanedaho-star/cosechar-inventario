@@ -3,12 +3,10 @@
     $hayFiltros = trim($buscar) !== '' || $tipo !== '' || $almacen_id || $motivo !== '' || $desde !== '' || $hasta !== '';
 @endphp
 
-<div class="mx-auto max-w-6xl p-8">
-    <div class="mb-6 flex items-center justify-between">
-        <h1 class="text-lg font-semibold text-cosechar-ink">Historial de movimientos</h1>
-        <a href="{{ route('movimientos.nuevo') }}" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90">
-            Registrar movimiento
-        </a>
+<div>
+    <div class="mb-4">
+        <h2 class="text-base font-semibold text-cosechar-ink">Kardex de movimientos</h2>
+        <p class="mt-1 text-sm text-cosechar-muted">Cada entrada y salida de stock con su motivo y responsable. Para corregir un lote, use Lotes.</p>
     </div>
 
     <div class="mb-4 grid gap-3 rounded-2xl border border-cosechar-border bg-white p-4 sm:grid-cols-2 lg:grid-cols-6">

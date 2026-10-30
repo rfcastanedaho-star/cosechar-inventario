@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Livewire\CompraForm;
-use App\Livewire\MovimientoForm;
 use App\Livewire\ProductoLista;
 use App\Livewire\VentaForm;
 use App\Models\Lote;
@@ -118,16 +117,6 @@ class ProductoActivacionTest extends TestCase
         $nombres = (new ProductoRepository)->buscar('fungicida')->pluck('nombre')->all();
 
         $this->assertSame(['Fungicida Activo'], $nombres);
-    }
-
-    public function test_movimientos_no_deja_elegir_un_producto_inactivo(): void
-    {
-        $inactivo = Producto::factory()->create(['activo' => false]);
-
-        Livewire::actingAs($this->admin())
-            ->test(MovimientoForm::class)
-            ->call('elegirProducto', $inactivo->id)
-            ->assertSet('producto_id', null);
     }
 
     public function test_compras_y_ventas_solo_ofrecen_productos_activos(): void

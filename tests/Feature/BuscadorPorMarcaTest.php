@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Livewire\CompraForm;
-use App\Livewire\MovimientoForm;
 use App\Livewire\ReporteFiltro;
 use App\Livewire\VentaForm;
 use App\Models\Producto;
@@ -55,7 +54,6 @@ class BuscadorPorMarcaTest extends TestCase
     public static function pantallas(): array
     {
         return [
-            'movimientos' => [MovimientoForm::class, 'buscarProducto'],
             'reportes' => [ReporteFiltro::class, 'buscarProducto'],
         ];
     }
@@ -76,16 +74,6 @@ class BuscadorPorMarcaTest extends TestCase
         $this->pantalla($clase)
             ->set($propiedad, 'fung')
             ->assertSee('Fungicida Cobre')
-            ->assertSee('Bayer')
-            ->assertSee('Frasco 250 ml');
-    }
-
-    public function test_el_producto_elegido_en_movimientos_muestra_marca_y_presentacion(): void
-    {
-        $producto = Producto::factory()->create(['nombre' => 'Fungicida Cobre', 'marca' => 'Bayer', 'presentacion' => 'Frasco 250 ml']);
-
-        $this->pantalla(MovimientoForm::class)
-            ->call('elegirProducto', $producto->id)
             ->assertSee('Bayer')
             ->assertSee('Frasco 250 ml');
     }

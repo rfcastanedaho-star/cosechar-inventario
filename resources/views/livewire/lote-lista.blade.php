@@ -15,7 +15,7 @@
             <h1 class="text-lg font-semibold text-cosechar-ink">Lotes</h1>
             <p class="mt-1 text-sm text-cosechar-muted">Controle el vencimiento y corrija las cantidades de cada lote. Los lotes nuevos nacen al registrar una compra.</p>
         </div>
-        <a href="{{ route('movimientos.historial') }}" class="shrink-0 rounded-md border border-cosechar-border bg-white px-4 py-2 text-sm font-medium text-cosechar-ink hover:bg-cosechar-cream">
+        <a href="{{ route('inventario.index', ['tab' => 'kardex']) }}" class="shrink-0 rounded-md border border-cosechar-border bg-white px-4 py-2 text-sm font-medium text-cosechar-ink hover:bg-cosechar-cream">
             Ver kardex
         </a>
     </div>

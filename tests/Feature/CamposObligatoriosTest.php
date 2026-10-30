@@ -7,7 +7,6 @@ use App\Livewire\CambiarPassword;
 use App\Livewire\CategoriaForm;
 use App\Livewire\ClienteForm;
 use App\Livewire\CompraForm;
-use App\Livewire\MovimientoForm;
 use App\Livewire\ProductoForm;
 use App\Livewire\ProveedorForm;
 use App\Livewire\UsuarioForm;
@@ -38,8 +37,6 @@ class CamposObligatoriosTest extends TestCase
             'producto' => [ProductoForm::class, [], ['Código *', 'Nombre *', 'Categoría *', 'Unidad de medida *', 'Stock mínimo *', 'Precio (S/) *', 'Precio costo (S/) *'], ['Stock inicial *', 'Marca *', 'Presentación *', 'Foto del producto *']],
             'compra' => [CompraForm::class, [], ['Nombre del proveedor *', 'Fecha de factura *', 'Producto *', 'N.º de lote *', 'Cantidad *', 'Costo unitario (S/) *'], ['RUC (opcional) *', 'Teléfono (opcional) *', 'Correo (opcional) *', 'Dirección (opcional) *', 'factura (opcional) *']],
             'venta' => [VentaForm::class, [], ['Cliente *', 'Fecha *', 'Producto *', 'Cantidad *', 'Precio unitario (S/) *'], ['Documento (opcional) *', 'comprobante (opcional) *']],
-            'movimiento entrada' => [MovimientoForm::class, ['tipo' => 'entrada'], ['Producto *', 'Lote *', 'Cantidad *'], []],
-            'movimiento salida' => [MovimientoForm::class, ['tipo' => 'salida'], ['Producto *', 'Motivo de la salida *', 'Cantidad *'], []],
             'usuario' => [UsuarioForm::class, [], ['Nombre *', 'Correo *', 'Rol *', 'Contraseña *', 'Repetir contraseña *'], []],
             'categoria' => [CategoriaForm::class, [], ['Nombre *'], ['Grupo *']],
             'almacen' => [AlmacenForm::class, [], ['Nombre *'], ['Dirección *', 'Encargado *']],

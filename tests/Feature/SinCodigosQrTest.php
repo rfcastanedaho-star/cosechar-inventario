@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Livewire\MovimientoForm;
+use App\Livewire\LoteLista;
 use App\Models\Almacen;
 use App\Models\Lote;
 use App\Models\Producto;
@@ -47,7 +47,7 @@ class SinCodigosQrTest extends TestCase
         $this->assertFalse(Schema::hasColumn('lotes', 'codigo_qr'));
     }
 
-    public function test_registrar_una_entrada_ya_no_ofrece_la_etiqueta_qr(): void
+    public function test_ajustar_un_lote_ya_no_ofrece_la_etiqueta_qr(): void
     {
         $usuario = User::factory()->create();
         $almacen = Almacen::factory()->create();
@@ -55,13 +55,11 @@ class SinCodigosQrTest extends TestCase
         $lote = Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $almacen->id, 'cantidad' => 10]);
 
         Livewire::actingAs($usuario)
-            ->test(MovimientoForm::class)
-            ->set('tipo', 'entrada')
-            ->set('producto_id', $producto->id)
-            ->set('almacen_id', $almacen->id)
-            ->set('lote_id', $lote->id)
-            ->set('cantidad', 5)
-            ->call('guardar')
+            ->test(LoteLista::class)
+            ->call('iniciarAjuste', $lote->id, 'entrada')
+            ->set('ajusteCantidad', '5')
+            ->set('ajusteMotivo', 'devolucion')
+            ->call('guardarAjuste')
             ->assertHasNoErrors()
             ->assertDontSee('etiqueta QR');
     }

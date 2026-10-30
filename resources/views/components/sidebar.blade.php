@@ -3,7 +3,7 @@
         ['route' => 'dashboard', 'pattern' => 'dashboard', 'icon' => 'dashboard', 'label' => 'Dashboard'],
         ['route' => 'productos.index', 'pattern' => ['productos.*', 'categorias.*'], 'icon' => 'productos', 'label' => 'Productos'],
         ['route' => 'lotes.index', 'pattern' => 'lotes.*', 'icon' => 'lotes', 'label' => 'Lotes'],
-        ['route' => 'movimientos.nuevo', 'pattern' => 'movimientos.*', 'icon' => 'movimientos', 'label' => 'Ajustes de stock'],
+        ['route' => 'inventario.index', 'pattern' => 'inventario.*', 'icon' => 'inventario', 'label' => 'Inventario'],
         ['route' => 'compras.index', 'pattern' => 'compras.*', 'icon' => 'compras', 'label' => 'Compras'],
         ['route' => 'ventas.index', 'pattern' => 'ventas.*', 'icon' => 'ventas', 'label' => 'Ventas'],
         ['route' => 'reportes', 'pattern' => 'reportes', 'icon' => 'reportes', 'label' => 'Reportes'],

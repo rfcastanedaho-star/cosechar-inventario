@@ -44,23 +44,23 @@ class MovimientoHistorialTest extends TestCase
 
     public function test_exige_haber_iniciado_sesion(): void
     {
-        $this->get(route('movimientos.historial'))->assertRedirect(route('login'));
+        $this->get(route('inventario.index', ['tab' => 'kardex']))->assertRedirect(route('login'));
     }
 
-    public function test_cualquier_usuario_autenticado_ve_el_historial(): void
+    public function test_cualquier_usuario_autenticado_ve_el_kardex_dentro_del_inventario(): void
     {
         $this->actingAs($this->usuario)
-            ->get(route('movimientos.historial'))
+            ->get(route('inventario.index', ['tab' => 'kardex']))
             ->assertOk()
-            ->assertSee('Historial de movimientos');
+            ->assertSee('Kardex de movimientos');
     }
 
-    public function test_la_pantalla_de_registro_enlaza_al_historial(): void
+    public function test_lotes_enlaza_al_kardex(): void
     {
         $this->actingAs($this->usuario)
-            ->get(route('movimientos.nuevo'))
-            ->assertSee(route('movimientos.historial'), false)
-            ->assertSee('Ver historial de movimientos');
+            ->get(route('lotes.index'))
+            ->assertSee(route('inventario.index', ['tab' => 'kardex']), false)
+            ->assertSee('Ver kardex');
     }
 
     public function test_muestra_producto_lote_almacen_tipo_cantidad_y_responsable(): void
