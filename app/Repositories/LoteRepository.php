@@ -47,6 +47,20 @@ class LoteRepository
             ->get();
     }
 
+    /** Lotes automáticos «SIN-LOTE» de un producto que todavía tienen unidades. */
+    public function conStockSinLote(int $productoId): Collection
+    {
+        return Lote::where('producto_id', $productoId)
+            ->where('numero_lote', Lote::SIN_LOTE)
+            ->where('cantidad', '>', 0)
+            ->get();
+    }
+
+    public function existeNumero(int $productoId, string $numeroLote): bool
+    {
+        return Lote::where('producto_id', $productoId)->where('numero_lote', $numeroLote)->exists();
+    }
+
     public function buscarEnAlmacen(int $productoId, int $almacenId, string $numeroLote): ?Lote
     {
         return Lote::where('producto_id', $productoId)

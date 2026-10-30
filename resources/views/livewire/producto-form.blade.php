@@ -177,7 +177,7 @@
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-            @unless ($this->editando)
+            @unless ($this->editando || $this->stockInicialEnPantallita)
                 <div>
                     <label for="stock_inicial" class="mb-1 block text-sm font-medium text-cosechar-ink">Stock inicial <span class="font-normal text-cosechar-muted">(opcional)</span></label>
                     <input
@@ -207,17 +207,105 @@
             </div>
         </div>
 
-        <label class="flex items-center gap-2 text-sm text-cosechar-ink">
-            <input type="checkbox" wire:model.live="maneja_vencimiento" @disabled(! $this->puedeEditarSensibles || $this->venceBloqueado) class="rounded border border-cosechar-border">
-            Maneja fecha de vencimiento
-            @if ($this->venceBloqueado)
-                <span class="text-xs text-cosechar-muted">(no se puede cambiar: el producto ya tiene lotes)</span>
-            @endif
+        <label class="flex items-start gap-3 rounded-xl border border-cosechar-border bg-white p-4">
+            <input type="checkbox" wire:model.live="maneja_vencimiento" @disabled(! $this->puedeEditarSensibles) class="mt-0.5 rounded border border-cosechar-border">
+            <span class="text-sm">
+                <span class="font-medium text-cosechar-ink">Usa lotes <span class="font-normal text-cosechar-muted">(opcional)</span></span>
+                <span class="mt-1 block text-xs text-cosechar-muted">Permite rastrear productos por lote con fechas de vencimiento y control de inventario por lote.</span>
+                <span class="mt-1 block text-xs text-cosechar-muted">
+                    @if ($this->editando)
+                        Con lotes, el producto sale primero por el que vence antes. El N.º de lote y el vencimiento de cada lote se completan en Lotes.
+                    @else
+                        Si no lo marca, el stock se maneja sin lotes.
+                    @endif
+                </span>
+            </span>
         </label>
 
-        @if ($this->tieneStockInicial)
+        @if ($this->activandoLotes)
+            <div>
+                <label for="vencimiento_lote_inicial" class="mb-1 block text-sm font-medium text-cosechar-ink">Fecha de vencimiento del lote inicial <span class="font-normal text-cosechar-muted">(opcional)</span></label>
+                <input type="date" id="vencimiento_lote_inicial" wire:model.blur="vencimiento_inicial" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
+                @error('vencimiento_inicial')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+                <p class="mt-1 text-xs text-cosechar-muted">Al activar lotes en un producto existente, se creará un lote inicial con el stock actual. Si no conoce el vencimiento, déjelo vacío.</p>
+            </div>
+        @endif
+
+        @if ($this->stockInicialEnPantallita && ! $mostrarLotes)
+            <div class="flex items-start justify-between gap-3 rounded-xl border border-cosechar-border bg-white p-4 text-sm">
+                <div class="text-cosechar-ink">
+                    @if ($this->tieneStockInicial)
+                        Lote <span class="font-medium">{{ $numero_lote_inicial }}</span> ·
+                        vence {{ $vencimiento_inicial !== '' ? \Illuminate\Support\Carbon::parse($vencimiento_inicial)->format('d/m/Y') : '—' }} ·
+                        <span class="font-medium">{{ (int) $stock_inicial }} unidades</span>
+                    @else
+                        <span class="text-cosechar-muted">Sin stock inicial: los lotes se irán creando con las compras y se completan en Lotes.</span>
+                    @endif
+                </div>
+                <button type="button" wire:click="$set('mostrarLotes', true)" class="shrink-0 text-xs font-medium text-cosechar-olive underline hover:text-cosechar-forest">Editar lote</button>
+            </div>
+        @endif
+
+        @if ($mostrarLotes)
+            <div class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" wire:keydown.enter.prevent="aplicarLotes">
+                <div role="dialog" aria-modal="true" aria-labelledby="titulo-lotes" class="flex w-full max-w-md flex-col gap-4 rounded-2xl bg-white p-6 shadow-xl">
+                    <div>
+                        <h2 id="titulo-lotes" class="text-base font-semibold text-cosechar-ink">Usa lotes</h2>
+                        <p class="mt-1 text-xs text-cosechar-muted">Indique el primer lote del producto. Es opcional: si todavía no hay mercadería, déjelo vacío y los lotes se crearán con las compras.</p>
+                    </div>
+
+                    <div>
+                        <label for="stock_inicial_lote" class="mb-1 block text-sm font-medium text-cosechar-ink">Stock inicial <span class="font-normal text-cosechar-muted">(opcional)</span></label>
+                        <input type="number" min="0" id="stock_inicial_lote" wire:model.live.debounce.600ms="stock_inicial" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
+                        @error('stock_inicial')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="numero_lote_inicial" class="mb-1 block text-sm font-medium text-cosechar-ink">N.º de lote @if ($this->tieneStockInicial)<x-obligatorio />@endif</label>
+                        <input type="text" id="numero_lote_inicial" wire:model.blur="numero_lote_inicial" maxlength="50" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
+                        @error('numero_lote_inicial')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="vencimiento_inicial" class="mb-1 block text-sm font-medium text-cosechar-ink">Fecha de vencimiento @if ($this->tieneStockInicial)<x-obligatorio />@endif</label>
+                        <input type="date" id="vencimiento_inicial" wire:model.blur="vencimiento_inicial" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
+                        @error('vencimiento_inicial')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    @if ($this->tieneStockInicial && $this->almacenes->count() > 1)
+                        <div>
+                            <label for="almacen_id_lote" class="mb-1 block text-sm font-medium text-cosechar-ink">Almacén del stock inicial <x-obligatorio /></label>
+                            <select id="almacen_id_lote" wire:model.blur="almacen_id" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
+                                <option value="">Seleccione un almacén</option>
+                                @foreach ($this->almacenes as $almacen)
+                                    <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
+                                @endforeach
+                            </select>
+                            @error('almacen_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    @endif
+
+                    <div class="flex justify-end gap-2">
+                        <button type="button" wire:click="cancelarLotes" class="rounded-md border border-cosechar-border bg-white px-4 py-2 text-sm font-medium text-cosechar-ink hover:bg-cosechar-cream">Cancelar</button>
+                        <button type="button" wire:click="aplicarLotes" class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90">Actualizar</button>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if (! $this->stockInicialEnPantallita && $this->tieneStockInicial)
             <div class="flex flex-col gap-4 rounded-xl border border-cosechar-border bg-white p-4">
-                <p class="text-xs text-cosechar-muted">El stock inicial entra como lote «INICIAL», valorizado al precio costo, y queda en el historial de movimientos como saldo inicial.</p>
+                <p class="text-xs text-cosechar-muted">El stock inicial entra como «Sin lote», valorizado al precio costo, y queda en el historial de movimientos como saldo inicial.</p>
 
                 @if ($this->almacenes->count() > 1)
                     <div>
@@ -233,22 +321,12 @@
                         @enderror
                     </div>
                 @endif
-
-                @if ($maneja_vencimiento)
-                    <div>
-                        <label for="vencimiento_inicial" class="mb-1 block text-sm font-medium text-cosechar-ink">Vencimiento del stock inicial <x-obligatorio /></label>
-                        <input type="date" id="vencimiento_inicial" wire:model.blur="vencimiento_inicial" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring disabled:bg-cosechar-cream">
-                        @error('vencimiento_inicial')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-                @endif
             </div>
         @endif
-        @if ($this->editando && ! $this->puedeEditarSensibles)
-            <p class="text-xs text-cosechar-muted">Solo el administrador puede cambiar el código, la marca, la presentación, la categoría, la unidad, el stock mínimo, el precio, el precio costo y el vencimiento.</p>
-        @endif
 
+        @if ($this->editando && ! $this->puedeEditarSensibles)
+            <p class="text-xs text-cosechar-muted">Solo el administrador puede cambiar el código, la marca, la presentación, la categoría, la unidad, el stock mínimo, el precio, el precio costo y si usa lotes.</p>
+        @endif
         <button
             type="submit"
             wire:loading.attr="disabled"

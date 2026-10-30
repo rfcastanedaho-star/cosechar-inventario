@@ -131,7 +131,7 @@ class ProductoCostoYStockInicialTest extends TestCase
         $producto = Producto::where('nombre', 'Hintecx')->firstOrFail();
         $lote = Lote::where('producto_id', $producto->id)->firstOrFail();
 
-        $this->assertSame('INICIAL', $lote->numero_lote);
+        $this->assertSame('SIN-LOTE', $lote->numero_lote);
         $this->assertSame($almacen->id, $lote->almacen_id);
         $this->assertSame(50, $lote->cantidad);
         $this->assertSame('70.00', $lote->costo_unitario);
@@ -162,16 +162,16 @@ class ProductoCostoYStockInicialTest extends TestCase
         $this->nuevo()->set('stock_inicial', '2.5')->call('guardar')->assertHasErrors(['stock_inicial' => 'integer']);
     }
 
-    public function test_un_producto_con_vencimiento_exige_la_fecha_del_stock_inicial(): void
+    public function test_un_producto_que_usa_lotes_exige_numero_y_fecha_del_stock_inicial(): void
     {
         $componente = $this->nuevo()->set('maneja_vencimiento', true)->set('stock_inicial', '20');
 
-        $componente->assertSee('Vencimiento del stock inicial')
+        $componente->assertSee('Fecha de vencimiento')
             ->call('guardar')
-            ->assertHasErrors(['vencimiento_inicial' => 'required']);
+            ->assertHasErrors(['vencimiento_inicial' => 'required', 'numero_lote_inicial' => 'required']);
         $this->assertDatabaseCount('productos', 0);
 
-        $componente->set('vencimiento_inicial', '2027-06-30')->call('guardar')->assertHasNoErrors();
+        $componente->set('numero_lote_inicial', 'L-1')->set('vencimiento_inicial', '2027-06-30')->call('guardar')->assertHasNoErrors();
 
         $lote = Lote::firstOrFail();
         $this->assertSame('2027-06-30', $lote->fecha_vencimiento->toDateString());
@@ -179,12 +179,12 @@ class ProductoCostoYStockInicialTest extends TestCase
 
     public function test_si_no_hay_stock_inicial_no_se_pide_vencimiento(): void
     {
-        $this->nuevo()->set('maneja_vencimiento', true)->assertDontSee('Vencimiento del stock inicial')->call('guardar')->assertHasNoErrors();
+        $this->nuevo()->set('maneja_vencimiento', true)->call('guardar')->assertHasNoErrors();
     }
 
-    public function test_un_producto_sin_vencimiento_no_pide_la_fecha(): void
+    public function test_un_producto_sin_lotes_no_pide_la_fecha(): void
     {
-        $this->nuevo()->set('stock_inicial', '20')->assertDontSee('Vencimiento del stock inicial');
+        $this->nuevo()->set('stock_inicial', '20')->assertDontSee('Fecha de vencimiento');
     }
 
     public function test_con_un_solo_almacen_no_se_pregunta_cual(): void

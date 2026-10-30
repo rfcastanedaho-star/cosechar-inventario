@@ -44,7 +44,7 @@ class AuditoriaEtiquetasTest extends TestCase
             'unidad' => ['unidad_medida', 'Unidad de medida'],
             'stock minimo' => ['stock_minimo', 'Stock mínimo'],
             'precio' => ['precio', 'Precio'],
-            'vencimiento' => ['maneja_vencimiento', 'Maneja vencimiento'],
+            'vencimiento' => ['maneja_vencimiento', 'Usa lotes'],
             'direccion' => ['direccion', 'Dirección'],
             'password' => ['password', 'Contraseña'],
             'desconocido' => ['otro_campo_raro', 'Otro Campo Raro'],

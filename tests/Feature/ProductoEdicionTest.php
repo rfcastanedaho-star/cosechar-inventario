@@ -163,7 +163,7 @@ class ProductoEdicionTest extends TestCase
         $this->assertSame($categoriaOriginal, $producto->categoria_id);
     }
 
-    public function test_si_ya_tiene_lotes_no_se_puede_cambiar_si_maneja_vencimiento(): void
+    public function test_aunque_ya_tenga_lotes_el_administrador_puede_cambiar_si_usa_lotes(): void
     {
         $producto = Producto::factory()->create(['maneja_vencimiento' => false]);
         Lote::factory()->for($producto, 'producto')->create(['cantidad' => 5]);
@@ -174,7 +174,7 @@ class ProductoEdicionTest extends TestCase
             ->call('guardar')
             ->assertHasNoErrors();
 
-        $this->assertFalse($producto->fresh()->maneja_vencimiento);
+        $this->assertTrue($producto->fresh()->maneja_vencimiento);
     }
 
     public function test_sin_lotes_el_administrador_si_puede_cambiar_si_maneja_vencimiento(): void

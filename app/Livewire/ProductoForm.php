@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Almacen;
 use App\Models\Categoria;
+use App\Models\Lote;
 use App\Models\Producto;
 use App\Repositories\ProductoRepository;
 use App\Services\AuditoriaService;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -52,14 +54,25 @@ class ProductoForm extends Component
 
     public string $precio_costo = '';
 
-    /** Solo al registrar: unidades que ya hay en el almacén, con su vencimiento si el producto lo maneja. */
+    /** Solo al registrar: unidades que ya hay en el almacén (en el lote que se indica si el producto usa lotes). */
     public string $stock_inicial = '';
 
     public string $vencimiento_inicial = '';
 
+    /** Solo al registrar con «Usa lotes»: el número del primer lote. */
+    public string $numero_lote_inicial = '';
+
     public ?int $almacen_id = null;
 
+    /** «Usa lotes»: el producto se controla por lotes con vencimiento (FEFO). Si no, tiene un único lote automático. */
     public bool $maneja_vencimiento = false;
+
+    /** Pantallita de «Usa lotes» (N.º de lote, vencimiento y stock inicial). */
+    public bool $mostrarLotes = false;
+
+    /** Al editar: si el producto ya usaba lotes al abrir el formulario. */
+    #[Locked]
+    public bool $usabaLotes = false;
 
     public bool $creado = false;
 
@@ -75,6 +88,7 @@ class ProductoForm extends Component
             $this->precio = (string) $producto->precio;
             $this->precio_costo = $producto->precio_costo !== null ? (string) $producto->precio_costo : '';
             $this->maneja_vencimiento = $producto->maneja_vencimiento;
+            $this->usabaLotes = $producto->maneja_vencimiento;
             $this->marca = $producto->marca ?? '';
             $this->presentacion = $producto->presentacion ?? '';
 
@@ -117,11 +131,71 @@ class ProductoForm extends Component
         return ! $this->editando || Gate::allows('editar-datos-sensibles');
     }
 
-    /** Con lotes registrados, cambiar entre FEFO y FIFO dejaría lotes sin fecha: se bloquea. */
+    /** Al editar un producto que no usaba lotes y se activa «Usa lotes»: su stock actual pasará a un lote inicial. */
     #[Computed]
-    public function venceBloqueado(): bool
+    public function activandoLotes(): bool
     {
-        return $this->editando && Producto::findOrFail($this->productoId)->lotes()->exists();
+        return $this->editando && $this->puedeEditarSensibles && $this->maneja_vencimiento && ! $this->usabaLotes;
+    }
+
+    /** Con «Usa lotes» el stock inicial se escribe en la pantallita, no en el formulario principal. */
+    #[Computed]
+    public function stockInicialEnPantallita(): bool
+    {
+        return ! $this->editando && $this->maneja_vencimiento;
+    }
+
+    /** Con stock inicial y «Usa lotes», el primer lote necesita número y vencimiento. */
+    private function exigeDatosDelLote(): bool
+    {
+        return $this->tieneStockInicial && $this->maneja_vencimiento;
+    }
+
+    /** Reglas de lo que se escribe en la pantallita de lotes. */
+    private function reglasDelLote(): array
+    {
+        return [
+            'stock_inicial' => ['nullable', 'integer', 'min:0'],
+            'numero_lote_inicial' => [Rule::requiredIf($this->exigeDatosDelLote()), 'nullable', 'string', 'max:50', Rule::notIn([Lote::SIN_LOTE])],
+            'vencimiento_inicial' => [Rule::requiredIf($this->exigeDatosDelLote()), 'nullable', 'date'],
+        ];
+    }
+
+    /** Al marcar «Usa lotes» al registrar se abre la pantallita; al desmarcar se cierra y se limpia. */
+    public function updatedManejaVencimiento(): void
+    {
+        if ($this->editando) {
+            return;
+        }
+
+        if ($this->maneja_vencimiento) {
+            $this->mostrarLotes = true;
+
+            return;
+        }
+
+        $this->cerrarYLimpiarLotes();
+    }
+
+    /** «Actualizar»: valida lo escrito en la pantallita y la cierra. */
+    public function aplicarLotes(): void
+    {
+        $this->validate($this->reglasDelLote());
+        $this->mostrarLotes = false;
+    }
+
+    /** «Cancelar»: el producto deja de usar lotes y se descarta lo escrito. */
+    public function cancelarLotes(): void
+    {
+        $this->maneja_vencimiento = false;
+        $this->cerrarYLimpiarLotes();
+    }
+
+    private function cerrarYLimpiarLotes(): void
+    {
+        $this->mostrarLotes = false;
+        $this->reset(['numero_lote_inicial', 'vencimiento_inicial', 'stock_inicial']);
+        $this->resetErrorBag(['numero_lote_inicial', 'vencimiento_inicial', 'stock_inicial']);
     }
 
     protected function rules(): array
@@ -136,11 +210,11 @@ class ProductoForm extends Component
         }
 
         if (! $this->editando) {
-            $reglas += [
-                'stock_inicial' => ['nullable', 'integer', 'min:0'],
-                'vencimiento_inicial' => [Rule::requiredIf($this->tieneStockInicial && $this->maneja_vencimiento), 'nullable', 'date'],
+            $reglas += $this->reglasDelLote() + [
                 'almacen_id' => [Rule::requiredIf($this->tieneStockInicial), 'nullable', Rule::exists('almacenes', 'id')->where('activo', true)],
             ];
+        } else {
+            $reglas['vencimiento_inicial'] = ['nullable', 'date'];
         }
 
         return $reglas + [
@@ -184,7 +258,9 @@ class ProductoForm extends Component
             'precio_costo.numeric' => 'El precio de costo debe ser un número válido.',
             'stock_inicial.integer' => 'El stock inicial debe ser un número entero.',
             'stock_inicial.min' => 'El stock inicial no puede ser negativo.',
-            'vencimiento_inicial.required' => 'Indique cuándo vence el stock inicial.',
+            'vencimiento_inicial.required' => 'Indique cuándo vence el lote.',
+            'numero_lote_inicial.required' => 'Escriba el número del lote.',
+            'numero_lote_inicial.not_in' => 'Ese nombre está reservado para los productos sin lotes; escriba otro número.',
             'almacen_id.required' => 'Seleccione el almacén donde está el stock inicial.',
             'imagen.image' => 'El archivo debe ser una imagen.',
             'imagen.mimes' => 'La foto debe ser JPG, PNG o WebP.',
@@ -215,11 +291,19 @@ class ProductoForm extends Component
         $data = $this->validate();
         unset($data['imagen']);
 
+        $vencimientoDelLoteInicial = ($data['vencimiento_inicial'] ?? '') ?: null;
+        $activaLotes = $this->activandoLotes;
+
         // El stock inicial no es un dato del producto: se registra aparte, como su primer lote.
         $stockInicial = $this->tieneStockInicial
-            ? ['cantidad' => (int) $data['stock_inicial'], 'almacen_id' => (int) $data['almacen_id'], 'fecha_vencimiento' => $data['vencimiento_inicial'] ?: null]
+            ? [
+                'cantidad' => (int) $data['stock_inicial'],
+                'almacen_id' => (int) $data['almacen_id'],
+                'numero_lote' => $this->maneja_vencimiento ? ($data['numero_lote_inicial'] ?: null) : null,
+                'fecha_vencimiento' => $this->maneja_vencimiento ? ($data['vencimiento_inicial'] ?: null) : null,
+            ]
             : null;
-        unset($data['stock_inicial'], $data['vencimiento_inicial'], $data['almacen_id']);
+        unset($data['stock_inicial'], $data['vencimiento_inicial'], $data['numero_lote_inicial'], $data['almacen_id']);
 
         // Los campos opcionales vacíos se guardan como nulos.
         foreach (['marca', 'presentacion'] as $opcional) {
@@ -231,11 +315,11 @@ class ProductoForm extends Component
         if ($this->editando) {
             $producto = Producto::findOrFail($this->productoId);
 
-            if ($this->venceBloqueado) {
-                unset($data['maneja_vencimiento']);
-            }
-
             $auditoria->actualizar($producto, $data, auth()->user());
+
+            if ($activaLotes) {
+                $servicio->convertirEnLotes($producto, $vencimientoDelLoteInicial);
+            }
 
             if ($this->imagen) {
                 $imagenes->guardar($producto, $this->imagen);
@@ -243,6 +327,9 @@ class ProductoForm extends Component
             }
 
             $this->maneja_vencimiento = $producto->fresh()->maneja_vencimiento;
+            $this->usabaLotes = $this->maneja_vencimiento;
+            $this->reset('vencimiento_inicial');
+            unset($this->activandoLotes); // se calculó antes de guardar; hay que recalcularlo
             $this->creado = true;
 
             return;
@@ -254,7 +341,7 @@ class ProductoForm extends Component
             $imagenes->guardar($producto, $this->imagen);
         }
 
-        $this->reset(['codigo', 'nombre', 'marca', 'presentacion', 'categoria_id', 'unidad_medida', 'stock_minimo', 'precio', 'precio_costo', 'stock_inicial', 'vencimiento_inicial', 'maneja_vencimiento', 'imagen']);
+        $this->reset(['codigo', 'nombre', 'marca', 'presentacion', 'categoria_id', 'unidad_medida', 'stock_minimo', 'precio', 'precio_costo', 'stock_inicial', 'vencimiento_inicial', 'numero_lote_inicial', 'maneja_vencimiento', 'mostrarLotes', 'imagen']);
         $this->almacen_id = $this->almacenUnico();
         $this->codigo = $productos->siguienteCodigo();
         $this->creado = true;

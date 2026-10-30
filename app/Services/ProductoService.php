@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Lote;
 use App\Models\Producto;
 use App\Models\User;
 use App\Repositories\LoteRepository;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class ProductoService
 {
-    /** Número del lote que recibe el stock con el que nace el producto. */
+    /** Número del lote en que se convierte el stock existente al activar «Usa lotes». */
     public const LOTE_INICIAL = 'INICIAL';
 
     public function __construct(
@@ -20,12 +21,33 @@ class ProductoService
     ) {}
 
     /**
-     * Registra el producto y, si ya hay mercadería, su stock inicial: un lote «INICIAL» en el
-     * almacén elegido, al precio de costo del producto, con su movimiento de entrada
-     * (saldo inicial). Todo en una transacción: o queda el producto con su stock, o nada.
+     * Al activar «Usa lotes» en un producto que ya tiene mercadería: el stock que estaba en el lote
+     * automático «SIN-LOTE» pasa a ser el lote «INICIAL» (con el vencimiento, si se conoce). No se
+     * mueve stock, así que no hay movimiento: solo el lote cambia de nombre y de fecha.
+     */
+    public function convertirEnLotes(Producto $producto, ?string $fechaVencimiento): void
+    {
+        DB::transaction(function () use ($producto, $fechaVencimiento) {
+            foreach ($this->lotes->conStockSinLote($producto->id) as $lote) {
+                $datos = ['fecha_vencimiento' => $fechaVencimiento];
+
+                if (! $this->lotes->existeNumero($producto->id, self::LOTE_INICIAL)) {
+                    $datos['numero_lote'] = self::LOTE_INICIAL;
+                }
+
+                $lote->update($datos);
+            }
+        });
+    }
+
+    /**
+     * Registra el producto y, si ya hay mercadería, su stock inicial: el lote que se indica (o, si el
+     * producto no usa lotes, el lote automático «SIN-LOTE») en el almacén elegido, al precio de costo
+     * del producto, con su movimiento de entrada (saldo inicial). Todo en una transacción: o queda el
+     * producto con su stock, o nada.
      *
      * @param  array<string, mixed>  $datos
-     * @param  array{cantidad: int, almacen_id: int, fecha_vencimiento: ?string}|null  $stockInicial
+     * @param  array{cantidad: int, almacen_id: int, numero_lote?: ?string, fecha_vencimiento: ?string}|null  $stockInicial
      */
     public function registrar(array $datos, ?array $stockInicial, User $responsable): Producto
     {
@@ -36,7 +58,7 @@ class ProductoService
                 $lote = $this->lotes->create([
                     'producto_id' => $producto->id,
                     'almacen_id' => $stockInicial['almacen_id'],
-                    'numero_lote' => self::LOTE_INICIAL,
+                    'numero_lote' => ($stockInicial['numero_lote'] ?? null) ?: Lote::SIN_LOTE,
                     'fecha_ingreso' => now()->toDateString(),
                     'fecha_vencimiento' => $stockInicial['fecha_vencimiento'] ?: null,
                     'cantidad' => 0,

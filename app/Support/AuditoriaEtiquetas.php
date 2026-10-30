@@ -54,7 +54,7 @@ class AuditoriaEtiquetas
         'codigo_barras' => 'Código de barras',
         'marca' => 'Marca',
         'presentacion' => 'Presentación',
-        'maneja_vencimiento' => 'Maneja vencimiento',
+        'maneja_vencimiento' => 'Usa lotes',
         'direccion' => 'Dirección',
         'telefono' => 'Teléfono',
         'password' => 'Contraseña',
