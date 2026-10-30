@@ -12,6 +12,7 @@ use App\Livewire\ProductoForm;
 use App\Livewire\ProveedorForm;
 use App\Livewire\UsuarioForm;
 use App\Livewire\VentaForm;
+use App\Models\Almacen;
 use App\Models\Cliente;
 use App\Models\Producto;
 use App\Models\Proveedor;
@@ -35,8 +36,8 @@ class CamposObligatoriosTest extends TestCase
     {
         return [
             'producto' => [ProductoForm::class, [], ['Código *', 'Nombre *', 'Categoría *', 'Unidad de medida *', 'Stock mínimo *', 'Precio (S/) *', 'Precio costo (S/) *'], ['Stock inicial *', 'Marca *', 'Presentación *', 'Foto del producto *']],
-            'compra' => [CompraForm::class, [], ['Nombre del proveedor *', 'Almacén destino *', 'Fecha *', 'Producto *', 'N.º de lote *', 'Cantidad *', 'Costo unitario (S/) *'], ['RUC (opcional) *', 'Teléfono (opcional) *', 'comprobante (opcional) *']],
-            'venta' => [VentaForm::class, [], ['Cliente *', 'Almacén de origen *', 'Fecha *', 'Producto *', 'Cantidad *', 'Precio unitario (S/) *'], ['Documento (opcional) *', 'comprobante (opcional) *']],
+            'compra' => [CompraForm::class, [], ['Nombre del proveedor *', 'Fecha *', 'Producto *', 'N.º de lote *', 'Cantidad *', 'Costo unitario (S/) *'], ['RUC (opcional) *', 'Teléfono (opcional) *', 'comprobante (opcional) *']],
+            'venta' => [VentaForm::class, [], ['Cliente *', 'Fecha *', 'Producto *', 'Cantidad *', 'Precio unitario (S/) *'], ['Documento (opcional) *', 'comprobante (opcional) *']],
             'movimiento entrada' => [MovimientoForm::class, ['tipo' => 'entrada'], ['Producto *', 'Lote *', 'Cantidad *'], []],
             'movimiento salida' => [MovimientoForm::class, ['tipo' => 'salida'], ['Producto *', 'Motivo de la salida *', 'Cantidad *'], []],
             'usuario' => [UsuarioForm::class, [], ['Nombre *', 'Correo *', 'Rol *', 'Contraseña *', 'Repetir contraseña *'], []],
@@ -77,6 +78,14 @@ class CamposObligatoriosTest extends TestCase
         foreach ($opcionales as $etiqueta) {
             $this->assertStringNotContainsString($etiqueta, $texto, "No debería llevar asterisco: {$etiqueta}");
         }
+    }
+
+    public function test_con_varios_almacenes_compras_y_ventas_marcan_el_almacen_como_obligatorio(): void
+    {
+        Almacen::factory()->create();
+
+        $this->assertStringContainsString('Almacén destino *', $this->texto(CompraForm::class, []));
+        $this->assertStringContainsString('Almacén de origen *', $this->texto(VentaForm::class, []));
     }
 
     public function test_el_formulario_de_cliente_marca_el_nombre_y_deja_el_resto_como_opcional(): void

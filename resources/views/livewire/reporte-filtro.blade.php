@@ -22,12 +22,14 @@
 
     @if ($tab === 'stock')
         <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
-            <select wire:model.live="almacen_id" class="{{ $campo }}">
-                <option value="">Todos los almacenes</option>
-                @foreach ($this->almacenes as $almacen)
-                    <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
-                @endforeach
-            </select>
+            @unless ($this->almacenes->count() === 1)
+                <select wire:model.live="almacen_id" class="{{ $campo }}">
+                    <option value="">Todos los almacenes</option>
+                    @foreach ($this->almacenes as $almacen)
+                        <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
+                    @endforeach
+                </select>
+            @endunless
             <button type="button" wire:click="limpiarFiltros" class="rounded-md border border-cosechar-border px-3 py-2 text-sm text-cosechar-muted hover:bg-cosechar-cream">Limpiar filtros</button>
         </div>
 
@@ -79,12 +81,14 @@
         @endphp
 
         <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
-            <select wire:model.live="almacen_id" class="{{ $campo }}">
-                <option value="">Todos los almacenes</option>
-                @foreach ($this->almacenes as $almacen)
-                    <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
-                @endforeach
-            </select>
+            @unless ($this->almacenes->count() === 1)
+                <select wire:model.live="almacen_id" class="{{ $campo }}">
+                    <option value="">Todos los almacenes</option>
+                    @foreach ($this->almacenes as $almacen)
+                        <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
+                    @endforeach
+                </select>
+            @endunless
             <button type="button" wire:click="limpiarFiltros" class="rounded-md border border-cosechar-border px-3 py-2 text-sm text-cosechar-muted hover:bg-cosechar-cream">Limpiar filtros</button>
         </div>
 
@@ -269,15 +273,17 @@
                 <label class="mb-1 block text-xs text-cosechar-muted">Hasta</label>
                 <input type="date" wire:model.live="hasta" class="{{ $campo }} w-full">
             </div>
-            <div>
-                <label class="mb-1 block text-xs text-cosechar-muted">Almacén</label>
-                <select wire:model.live="almacen_id" class="{{ $campo }} w-full">
-                    <option value="">Todos los almacenes</option>
-                    @foreach ($this->almacenes as $almacen)
-                        <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
-                    @endforeach
-                </select>
-            </div>
+            @unless ($this->almacenes->count() === 1)
+                <div>
+                    <label class="mb-1 block text-xs text-cosechar-muted">Almacén</label>
+                    <select wire:model.live="almacen_id" class="{{ $campo }} w-full">
+                        <option value="">Todos los almacenes</option>
+                        @foreach ($this->almacenes as $almacen)
+                            <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endunless
             <div class="flex items-end">
                 <button type="button" wire:click="limpiarFiltros" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm text-cosechar-muted hover:bg-cosechar-cream">Limpiar filtros</button>
             </div>

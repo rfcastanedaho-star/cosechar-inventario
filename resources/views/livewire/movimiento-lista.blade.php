@@ -36,15 +36,17 @@
             </select>
         </div>
 
-        <div>
-            <label for="almacen_id" class="mb-1 block text-xs font-medium text-cosechar-muted">Almacén</label>
-            <select id="almacen_id" wire:model.live="almacen_id" class="{{ $campo }}">
-                <option value="">Todos</option>
-                @foreach ($this->almacenes as $almacen)
-                    <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
-                @endforeach
-            </select>
-        </div>
+        @unless ($this->almacenes->count() === 1)
+            <div>
+                <label for="almacen_id" class="mb-1 block text-xs font-medium text-cosechar-muted">Almacén</label>
+                <select id="almacen_id" wire:model.live="almacen_id" class="{{ $campo }}">
+                    <option value="">Todos</option>
+                    @foreach ($this->almacenes as $almacen)
+                        <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
+                    @endforeach
+                </select>
+            </div>
+        @endunless
 
         <div class="grid grid-cols-2 gap-2 sm:col-span-2 lg:col-span-6 lg:max-w-md">
             <div>

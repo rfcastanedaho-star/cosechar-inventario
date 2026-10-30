@@ -88,7 +88,7 @@ class ProductoForm extends Component
     /** Con un solo almacén activo no hay nada que elegir. */
     private function almacenUnico(): ?int
     {
-        return $this->almacenes->count() === 1 ? $this->almacenes->first()->id : null;
+        return Almacen::unicoActivo()?->id;
     }
 
     #[Computed]

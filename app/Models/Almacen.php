@@ -20,6 +20,14 @@ class Almacen extends Model
         'activo' => 'boolean',
     ];
 
+    /** El almacén activo cuando es el único: no hay nada que elegir y las pantallas no lo preguntan. */
+    public static function unicoActivo(): ?self
+    {
+        $activos = static::where('activo', true)->limit(2)->get();
+
+        return $activos->count() === 1 ? $activos->first() : null;
+    }
+
     public function lotes(): HasMany
     {
         return $this->hasMany(Lote::class);

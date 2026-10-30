@@ -97,18 +97,20 @@
         @endunless
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div>
-                <label for="almacen_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Almacén destino <x-obligatorio /></label>
-                <select id="almacen_id" wire:model.blur="almacen_id" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
-                    <option value="">Seleccione un almacén</option>
-                    @foreach ($this->almacenes as $almacen)
-                        <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
-                    @endforeach
-                </select>
-                @error('almacen_id')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
+            @unless ($this->almacenes->count() === 1)
+                <div>
+                    <label for="almacen_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Almacén destino <x-obligatorio /></label>
+                    <select id="almacen_id" wire:model.blur="almacen_id" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
+                        <option value="">Seleccione un almacén</option>
+                        @foreach ($this->almacenes as $almacen)
+                            <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
+                        @endforeach
+                    </select>
+                    @error('almacen_id')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            @endunless
 
             <div>
                 <label for="fecha" class="mb-1 block text-sm font-medium text-cosechar-ink">Fecha <x-obligatorio /></label>

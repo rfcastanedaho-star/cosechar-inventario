@@ -46,6 +46,7 @@ class VentaForm extends Component
     {
         $this->fecha = now()->toDateString();
         $this->lineas = [$this->lineaVacia()];
+        $this->almacen_id = Almacen::unicoActivo()?->id;
     }
 
     /**
@@ -248,7 +249,8 @@ class VentaForm extends Component
             return;
         }
 
-        $this->reset(['cliente_id', 'buscarCliente', 'cliente_nombre', 'cliente_documento', 'almacen_id', 'numero_comprobante']);
+        $this->reset(['cliente_id', 'buscarCliente', 'cliente_nombre', 'cliente_documento', 'numero_comprobante']);
+        $this->almacen_id = Almacen::unicoActivo()?->id;
         $this->lineas = [$this->lineaVacia()];
         $this->busquedaProducto = [];
         $this->fecha = now()->toDateString();

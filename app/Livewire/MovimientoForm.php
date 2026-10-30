@@ -51,9 +51,7 @@ class MovimientoForm extends Component
     /** Con un solo almacén activo no hay nada que elegir: se usa ese. */
     public function mount(): void
     {
-        if ($this->almacenes->count() === 1) {
-            $this->almacen_id = $this->almacenes->first()->id;
-        }
+        $this->almacen_id = Almacen::unicoActivo()?->id;
     }
 
     #[Computed]

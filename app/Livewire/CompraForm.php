@@ -47,6 +47,7 @@ class CompraForm extends Component
     {
         $this->fecha = now()->toDateString();
         $this->lineas = [$this->lineaVacia()];
+        $this->almacen_id = Almacen::unicoActivo()?->id;
     }
 
     /**
@@ -217,7 +218,8 @@ class CompraForm extends Component
             auth()->user(),
         );
 
-        $this->reset(['proveedor_id', 'buscarProveedor', 'proveedor_nombre', 'proveedor_ruc', 'proveedor_telefono', 'almacen_id', 'numero_comprobante']);
+        $this->reset(['proveedor_id', 'buscarProveedor', 'proveedor_nombre', 'proveedor_ruc', 'proveedor_telefono', 'numero_comprobante']);
+        $this->almacen_id = Almacen::unicoActivo()?->id;
         $this->lineas = [$this->lineaVacia()];
         $this->busquedaProducto = [];
         $this->fecha = now()->toDateString();

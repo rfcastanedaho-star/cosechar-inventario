@@ -8,7 +8,8 @@
 --}}
 @php
     $campo = 'w-full rounded-md border border-cosechar-border bg-white px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring';
-    $conAlmacen = $conAlmacen ?? false;
+    // Con un solo almacén no hay nada que filtrar.
+    $conAlmacen = ($conAlmacen ?? false) && ! \App\Models\Almacen::unicoActivo();
     $conFechas = $conFechas ?? false;
 @endphp
 
