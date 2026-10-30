@@ -24,6 +24,8 @@ class ProveedorForm extends Component
 
     public string $telefono = '';
 
+    public string $correo = '';
+
     public string $direccion = '';
 
     public function mount(?Proveedor $proveedor = null): void
@@ -33,6 +35,7 @@ class ProveedorForm extends Component
             $this->nombre = $proveedor->nombre;
             $this->ruc = $proveedor->ruc ?? '';
             $this->telefono = $proveedor->telefono ?? '';
+            $this->correo = $proveedor->correo ?? '';
             $this->direccion = $proveedor->direccion ?? '';
         }
     }
@@ -54,6 +57,7 @@ class ProveedorForm extends Component
     {
         $reglas = [
             'telefono' => ['nullable', 'string', 'max:30'],
+            'correo' => ['nullable', 'email', 'max:150'],
             'direccion' => ['nullable', 'string', 'max:255'],
         ];
 
@@ -89,6 +93,7 @@ class ProveedorForm extends Component
 
         $cambios = [
             'telefono' => $data['telefono'] ?: null,
+            'correo' => $data['correo'] ?: null,
             'direccion' => $data['direccion'] ?: null,
         ];
 

@@ -30,6 +30,10 @@ class CompraForm extends Component
 
     public string $proveedor_telefono = '';
 
+    public string $proveedor_correo = '';
+
+    public string $proveedor_direccion = '';
+
     public ?int $almacen_id = null;
 
     public string $fecha = '';
@@ -42,6 +46,9 @@ class CompraForm extends Component
     public bool $creado = false;
 
     public ?int $compraId = null;
+
+    /** Paso de verificación: se muestra el resumen con el total antes de guardar. */
+    public bool $confirmando = false;
 
     public function mount(): void
     {
@@ -101,6 +108,8 @@ class CompraForm extends Component
         $this->proveedor_nombre = $proveedor->nombre;
         $this->proveedor_ruc = $proveedor->ruc ?? '';
         $this->proveedor_telefono = $proveedor->telefono ?? '';
+        $this->proveedor_correo = $proveedor->correo ?? '';
+        $this->proveedor_direccion = $proveedor->direccion ?? '';
         $this->buscarProveedor = '';
         $this->resetErrorBag(['proveedor_nombre', 'proveedor_ruc']);
     }
@@ -128,7 +137,13 @@ class CompraForm extends Component
 
     public function limpiarProveedor(): void
     {
-        $this->reset(['proveedor_id', 'buscarProveedor', 'proveedor_nombre', 'proveedor_ruc', 'proveedor_telefono']);
+        $this->reset(['proveedor_id', 'buscarProveedor', 'proveedor_nombre', 'proveedor_ruc', 'proveedor_telefono', 'proveedor_correo', 'proveedor_direccion']);
+    }
+
+    /** Cualquier cambio durante la verificación la anula: hay que revisar de nuevo. */
+    public function updated(): void
+    {
+        $this->confirmando = false;
     }
 
     #[Computed]
@@ -158,6 +173,8 @@ class CompraForm extends Component
             'proveedor_nombre' => ['required', 'string', 'max:150'],
             'proveedor_ruc' => ['nullable', 'digits:11'],
             'proveedor_telefono' => ['nullable', 'string', 'max:30'],
+            'proveedor_correo' => ['nullable', 'email', 'max:150'],
+            'proveedor_direccion' => ['nullable', 'string', 'max:255'],
             'almacen_id' => ['required', 'exists:almacenes,id'],
             'fecha' => ['required', 'date'],
             'numero_comprobante' => ['nullable', 'string', 'max:50'],
@@ -186,7 +203,8 @@ class CompraForm extends Component
             'proveedor_nombre.required' => 'Escriba el nombre del proveedor o elija uno registrado.',
             'proveedor_ruc.digits' => 'El RUC debe tener 11 dígitos.',
             'almacen_id.required' => 'Debe seleccionar el almacén destino.',
-            'fecha.required' => 'La fecha es obligatoria.',
+            'proveedor_correo.email' => 'Escriba un correo válido, por ejemplo ventas@proveedor.pe.',
+            'fecha.required' => 'La fecha de la factura es obligatoria.',
             '*.producto_id.required' => 'Debe seleccionar un producto.',
             '*.numero_lote.required' => 'El número de lote es obligatorio.',
             '*.cantidad.required' => 'La cantidad es obligatoria.',
@@ -196,11 +214,31 @@ class CompraForm extends Component
         ];
     }
 
-    public function guardar(CompraService $servicio): void
+    private function limpiarEspacios(): void
     {
         $this->proveedor_nombre = trim($this->proveedor_nombre);
         $this->proveedor_ruc = trim($this->proveedor_ruc);
         $this->proveedor_telefono = trim($this->proveedor_telefono);
+        $this->proveedor_correo = trim($this->proveedor_correo);
+        $this->proveedor_direccion = trim($this->proveedor_direccion);
+    }
+
+    /** Valida todo y pasa al resumen con el total; todavía no se guarda nada. */
+    public function revisar(): void
+    {
+        $this->limpiarEspacios();
+        $this->validate();
+        $this->confirmando = true;
+    }
+
+    public function volverAEditar(): void
+    {
+        $this->confirmando = false;
+    }
+
+    public function guardar(CompraService $servicio): void
+    {
+        $this->limpiarEspacios();
 
         $data = $this->validate();
 
@@ -210,6 +248,8 @@ class CompraForm extends Component
                 'proveedor_nombre' => $data['proveedor_nombre'],
                 'proveedor_ruc' => $data['proveedor_ruc'] ?: null,
                 'proveedor_telefono' => $data['proveedor_telefono'] ?: null,
+                'proveedor_correo' => $data['proveedor_correo'] ?: null,
+                'proveedor_direccion' => $data['proveedor_direccion'] ?: null,
                 'almacen_id' => $data['almacen_id'],
                 'fecha' => $data['fecha'],
                 'numero_comprobante' => $data['numero_comprobante'] ?: null,
@@ -218,7 +258,7 @@ class CompraForm extends Component
             auth()->user(),
         );
 
-        $this->reset(['proveedor_id', 'buscarProveedor', 'proveedor_nombre', 'proveedor_ruc', 'proveedor_telefono', 'numero_comprobante']);
+        $this->reset(['proveedor_id', 'buscarProveedor', 'proveedor_nombre', 'proveedor_ruc', 'proveedor_telefono', 'proveedor_correo', 'proveedor_direccion', 'numero_comprobante', 'confirmando']);
         $this->almacen_id = Almacen::unicoActivo()?->id;
         $this->lineas = [$this->lineaVacia()];
         $this->busquedaProducto = [];

@@ -54,6 +54,19 @@
             </div>
 
             <div>
+                <label for="correo" class="mb-1 block text-sm font-medium text-cosechar-ink">Correo <span class="font-normal text-cosechar-muted">(opcional)</span></label>
+                <input
+                    type="email"
+                    id="correo"
+                    wire:model.blur="correo"
+                    class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
+                >
+                @error('correo')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="col-span-2">
                 <label for="direccion" class="mb-1 block text-sm font-medium text-cosechar-ink">Dirección <span class="font-normal text-cosechar-muted">(opcional)</span></label>
                 <input
                     type="text"

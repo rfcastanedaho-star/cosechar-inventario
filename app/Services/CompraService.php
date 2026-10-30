@@ -22,10 +22,10 @@ class CompraService
      * reutilizando la misma lógica de stock que Movimientos > Entrada.
      *
      * El proveedor viene elegido (proveedor_id) o se escribe (proveedor_nombre, y opcionalmente
-     * proveedor_ruc y proveedor_telefono): en ese caso se registra, o se reutiliza si ya existe,
+     * proveedor_ruc, proveedor_telefono, proveedor_correo y proveedor_direccion): en ese caso se registra, o se reutiliza si ya existe,
      * dentro de la misma transacción que la compra.
      *
-     * @param  array{proveedor_id?: ?int, proveedor_nombre?: ?string, proveedor_ruc?: ?string, proveedor_telefono?: ?string, almacen_id: int, fecha: string, numero_comprobante: ?string}  $cabecera
+     * @param  array{proveedor_id?: ?int, proveedor_nombre?: ?string, proveedor_ruc?: ?string, proveedor_telefono?: ?string, proveedor_correo?: ?string, proveedor_direccion?: ?string, almacen_id: int, fecha: string, numero_comprobante: ?string}  $cabecera
      * @param  array<int, array{producto_id: int, numero_lote: string, fecha_vencimiento: ?string, cantidad: int, costo_unitario: float|string}>  $lineas
      */
     public function registrar(array $cabecera, array $lineas, User $responsable): Compra
@@ -38,6 +38,8 @@ class CompraService
                     $cabecera['proveedor_nombre'],
                     $cabecera['proveedor_ruc'] ?? null,
                     $cabecera['proveedor_telefono'] ?? null,
+                    $cabecera['proveedor_correo'] ?? null,
+                    $cabecera['proveedor_direccion'] ?? null,
                 )->id;
             }
 

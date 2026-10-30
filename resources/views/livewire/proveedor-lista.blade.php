@@ -17,6 +17,7 @@
                     <th class="px-4 py-3">RUC</th>
                     <th class="px-4 py-3">Teléfono</th>
                     <th class="px-4 py-3">Dirección</th>
+                    <th class="px-4 py-3">Correo</th>
                     <th class="px-4 py-3">Estado</th>
                     <th class="px-4 py-3"></th>
                 </tr>
@@ -28,6 +29,7 @@
                         <td class="px-4 py-3 text-cosechar-muted">{{ $proveedor->ruc ?: '—' }}</td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $proveedor->telefono ?: '—' }}</td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $proveedor->direccion ?: '—' }}</td>
+                        <td class="px-4 py-3 text-cosechar-muted">{{ $proveedor->correo ?: '—' }}</td>
                         <td class="px-4 py-3">
                             <span class="rounded-full px-2 py-1 text-xs font-semibold {{ $proveedor->activo ? 'bg-cosechar-olive/15 text-cosechar-olive' : 'bg-cosechar-border text-cosechar-muted' }}">
                                 {{ $proveedor->activo ? 'Activo' : 'Desactivado' }}
@@ -48,7 +50,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-6 text-center text-cosechar-muted">{{ $this->hayFiltros() ? 'No se encontraron proveedores con esos filtros.' : 'No hay proveedores registrados.' }}</td>
+                        <td colspan="7" class="px-4 py-6 text-center text-cosechar-muted">{{ $this->hayFiltros() ? 'No se encontraron proveedores con esos filtros.' : 'No hay proveedores registrados.' }}</td>
                     </tr>
                 @endforelse
             </tbody>

@@ -19,6 +19,7 @@ class ProveedorFactory extends Factory
             'nombre' => $this->faker->unique()->company(),
             'ruc' => $this->faker->unique()->numerify('20#########'),
             'telefono' => $this->faker->phoneNumber(),
+            'correo' => null,
             'direccion' => $this->faker->streetAddress(),
             'activo' => true,
         ];
