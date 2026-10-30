@@ -50,7 +50,7 @@ class VentaService
             foreach ($lineas as $linea) {
                 $producto = Producto::findOrFail($linea['producto_id']);
 
-                $this->movimientos->registrarSalidaEnAlmacen(
+                $salidas = $this->movimientos->registrarSalidaEnAlmacen(
                     $producto,
                     $cabecera['almacen_id'],
                     (int) $linea['cantidad'],
@@ -59,12 +59,17 @@ class VentaService
                     $venta->id,
                 );
 
-                $venta->detalles()->create([
+                $detalle = $venta->detalles()->create([
                     'producto_id' => $producto->id,
                     'cantidad' => $linea['cantidad'],
                     'precio_unitario' => $linea['precio_unitario'],
                     'por_mayor' => (bool) ($linea['por_mayor'] ?? false),
                 ]);
+
+                // Queda anotado de qué lote(s) salió esta línea.
+                foreach ($salidas as $salida) {
+                    $detalle->lotes()->create(['lote_id' => $salida->lote_id, 'cantidad' => $salida->cantidad]);
+                }
 
                 $total += $linea['cantidad'] * $linea['precio_unitario'];
             }

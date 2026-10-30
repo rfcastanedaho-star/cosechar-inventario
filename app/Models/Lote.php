@@ -38,4 +38,10 @@ class Lote extends Model
     {
         return $this->hasMany(StockMovimiento::class);
     }
+
+    /** Líneas de venta que consumieron unidades de este lote. */
+    public function consumosEnVentas(): HasMany
+    {
+        return $this->hasMany(VentaDetalleLote::class);
+    }
 }
