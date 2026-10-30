@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Categoria;
 use App\Models\Producto;
 use App\Repositories\ProductoRepository;
 use App\Services\AuditoriaService;
@@ -30,6 +31,10 @@ class ProductoLista extends Component
     #[Url(as: 'buscar')]
     public string $buscar = '';
 
+    /** Categoría o grupo elegido en el desplegable; un grupo incluye todas sus subcategorías. */
+    #[Url(as: 'categoria')]
+    public ?int $categoria = null;
+
     public bool $mostrarInactivos = false;
 
     public ?string $errorEstado = null;
@@ -48,6 +53,11 @@ class ProductoLista extends Component
             ->when(! $this->mostrarInactivos, fn (Collection $productos) => $productos->filter(
                 fn (Producto $producto) => $producto->activo
             ))
+            ->when($this->categoria !== null, function (Collection $productos) {
+                $ids = Categoria::where('categoria_padre_id', $this->categoria)->pluck('id')->push($this->categoria);
+
+                return $productos->filter(fn (Producto $producto) => $ids->contains($producto->categoria_id));
+            })
             ->when($buscar !== '', fn (Collection $productos) => $productos->filter(
                 fn (Producto $producto) => str_contains(mb_strtolower($producto->nombre), mb_strtolower($buscar))
                     || str_contains(mb_strtolower($producto->codigo), mb_strtolower($buscar))
@@ -56,6 +66,21 @@ class ProductoLista extends Component
             ))
             ->sortBy('nombre')
             ->values();
+    }
+
+    /** Grupos con sus subcategorías, para el desplegable del filtro. */
+    #[Computed]
+    public function categoriasAgrupadas(): Collection
+    {
+        return Categoria::with(['subcategorias' => fn ($query) => $query->orderBy('nombre')])
+            ->whereNull('categoria_padre_id')
+            ->orderBy('nombre')
+            ->get();
+    }
+
+    public function limpiarFiltros(): void
+    {
+        $this->reset(['buscar', 'categoria']);
     }
 
     /** Se ejecuta apenas termina de subirse el archivo elegido desde la fila de un producto. */

@@ -37,19 +37,38 @@
             >
         </div>
 
+        <select
+            wire:model.live="categoria"
+            aria-label="Filtrar por categoría"
+            class="rounded-full border border-cosechar-border bg-white px-4 py-2 text-sm text-cosechar-ink shadow-sm focus:border-cosechar-olive focus:ring"
+        >
+            <option value="">Todas las categorías</option>
+            @foreach ($this->categoriasAgrupadas as $grupo)
+                @if ($grupo->subcategorias->isEmpty())
+                    <option value="{{ $grupo->id }}">{{ $grupo->nombre }}</option>
+                @else
+                    <optgroup label="{{ $grupo->nombre }}">
+                        <option value="{{ $grupo->id }}">Todo {{ $grupo->nombre }}</option>
+                        @foreach ($grupo->subcategorias as $sub)
+                            <option value="{{ $sub->id }}">{{ $sub->nombre }}</option>
+                        @endforeach
+                    </optgroup>
+                @endif
+            @endforeach
+        </select>
+
         <label class="flex shrink-0 items-center gap-2 text-sm text-cosechar-muted">
             <input type="checkbox" wire:model.live="mostrarInactivos" class="rounded border border-cosechar-border">
             Mostrar inactivos
         </label>
 
-        @if (trim($buscar) !== '')
+        @if (trim($buscar) !== '' || $categoria !== null)
             <p class="text-sm text-cosechar-muted">
                 {{ $this->productos->count() }} resultado(s) ·
-                <button type="button" wire:click="$set('buscar', '')" class="font-medium text-cosechar-olive underline">Quitar búsqueda</button>
+                <button type="button" wire:click="limpiarFiltros" class="font-medium text-cosechar-olive underline">Quitar filtros</button>
             </p>
         @endif
     </div>
-
     <div class="overflow-x-auto rounded-2xl border border-cosechar-border bg-white">
         <table class="w-full text-sm">
             <thead class="bg-cosechar-cream text-left text-xs uppercase text-cosechar-muted">
@@ -145,7 +164,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="px-4 py-6 text-center text-cosechar-muted">{{ trim($buscar) !== '' ? 'No se encontraron productos con esa búsqueda.' : 'No hay productos registrados.' }}</td>
+                        <td colspan="9" class="px-4 py-6 text-center text-cosechar-muted">{{ trim($buscar) !== '' || $categoria !== null ? 'No se encontraron productos con esos filtros.' : 'No hay productos registrados.' }}</td>
                     </tr>
                 @endforelse
             </tbody>
