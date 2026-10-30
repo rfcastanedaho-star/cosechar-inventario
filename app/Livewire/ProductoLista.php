@@ -62,7 +62,6 @@ class ProductoLista extends Component
                 fn (Producto $producto) => str_contains(mb_strtolower($producto->nombre), mb_strtolower($buscar))
                     || str_contains(mb_strtolower($producto->codigo), mb_strtolower($buscar))
                     || str_contains(mb_strtolower((string) $producto->marca), mb_strtolower($buscar))
-                    || str_contains(mb_strtolower((string) $producto->codigo_barras), mb_strtolower($buscar))
             ))
             ->sortBy('nombre')
             ->values();

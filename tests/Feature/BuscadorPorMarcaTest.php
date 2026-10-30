@@ -15,7 +15,7 @@ use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
-class BuscadorCodigoBarrasTest extends TestCase
+class BuscadorPorMarcaTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -26,29 +26,12 @@ class BuscadorCodigoBarrasTest extends TestCase
 
     // ---------- Repositorio ----------
 
-    public function test_encuentra_por_codigo_de_barras_completo_o_parcial(): void
-    {
-        Producto::factory()->create(['nombre' => 'Fungicida Cobre', 'codigo_barras' => '7750123456789']);
-        Producto::factory()->create(['nombre' => 'Herbicida Total', 'codigo_barras' => '7750999999999']);
-
-        $this->assertSame(['Fungicida Cobre'], $this->nombres('7750123456789'));
-        $this->assertSame(['Herbicida Total'], $this->nombres('99999'));
-    }
-
     public function test_encuentra_por_marca(): void
     {
         Producto::factory()->create(['nombre' => 'Fungicida Cobre', 'marca' => 'Bayer']);
         Producto::factory()->create(['nombre' => 'Herbicida Total', 'marca' => 'Basf']);
 
         $this->assertSame(['Fungicida Cobre'], $this->nombres('bayer'));
-    }
-
-    public function test_el_codigo_de_barras_exacto_va_primero_aunque_otro_nombre_empiece_igual(): void
-    {
-        Producto::factory()->create(['nombre' => '7750123 Promoción', 'codigo_barras' => null]);
-        Producto::factory()->create(['nombre' => 'Fungicida Cobre', 'codigo_barras' => '7750123']);
-
-        $this->assertSame(['Fungicida Cobre', '7750123 Promoción'], $this->nombres('7750123'));
     }
 
     public function test_el_orden_por_nombre_que_ya_existia_se_mantiene(): void
@@ -59,9 +42,9 @@ class BuscadorCodigoBarrasTest extends TestCase
         $this->assertSame(['Fungicida Cobre', 'Mancozeb Fungicida'], $this->nombres('fung'));
     }
 
-    public function test_los_comodines_siguen_siendo_texto_en_marca_y_barras(): void
+    public function test_los_comodines_siguen_siendo_texto_en_marca(): void
     {
-        Producto::factory()->create(['nombre' => 'Uno', 'marca' => 'Bayer', 'codigo_barras' => '123']);
+        Producto::factory()->create(['nombre' => 'Uno', 'marca' => 'Bayer']);
 
         $this->assertSame([], $this->nombres('%%'));
     }
@@ -83,19 +66,6 @@ class BuscadorCodigoBarrasTest extends TestCase
 
         // En Reportes el buscador de producto está en la pestaña Movimientos.
         return $clase === ReporteFiltro::class ? $componente->set('tab', 'movimientos') : $componente;
-    }
-
-    #[DataProvider('pantallas')]
-    public function test_el_lector_de_barras_elige_el_producto_con_enter(string $clase, string $propiedad): void
-    {
-        $producto = Producto::factory()->create(['nombre' => 'Fungicida Cobre', 'codigo_barras' => '7750123456789']);
-        Producto::factory()->create(['nombre' => 'Otro producto', 'codigo_barras' => '7750999999999']);
-
-        $componente = $this->pantalla($clase)->set($propiedad, '7750123456789');
-
-        $clase === MovimientoForm::class ? $componente->call('elegirPrimero') : $componente->call('elegirProducto', $producto->id);
-
-        $componente->assertSet('producto_id', $producto->id);
     }
 
     #[DataProvider('pantallas')]
@@ -130,12 +100,12 @@ class BuscadorCodigoBarrasTest extends TestCase
     }
 
     #[DataProvider('formulariosConLineas')]
-    public function test_en_compras_y_ventas_se_busca_por_barras_y_se_ve_la_marca(string $clase): void
+    public function test_en_compras_y_ventas_se_busca_por_marca_y_se_ve_la_presentacion(string $clase): void
     {
-        $producto = Producto::factory()->create(['nombre' => 'Fungicida Cobre', 'marca' => 'Bayer', 'presentacion' => '250 ml', 'codigo_barras' => '7750123456789']);
+        $producto = Producto::factory()->create(['nombre' => 'Fungicida Cobre', 'marca' => 'Bayer', 'presentacion' => '250 ml']);
 
         $this->pantalla($clase)
-            ->set('busquedaProducto.0', '7750123456789')
+            ->set('busquedaProducto.0', 'bayer')
             ->assertSee('Fungicida Cobre')
             ->assertSee('Bayer')
             ->call('elegirPrimeroLinea', 0)

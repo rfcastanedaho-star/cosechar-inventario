@@ -23,7 +23,7 @@ class ProductoForm extends Component
 
     /** Campos que identifican o valorizan al producto: al editar, solo el administrador los cambia. */
     private const CAMPOS_SENSIBLES = [
-        'codigo', 'codigo_barras', 'marca', 'presentacion', 'categoria_id', 'unidad_medida',
+        'codigo', 'marca', 'presentacion', 'categoria_id', 'unidad_medida',
         'stock_minimo', 'precio', 'precio_mayor', 'cantidad_mayor', 'maneja_vencimiento',
     ];
 
@@ -33,8 +33,6 @@ class ProductoForm extends Component
     public $imagen = null;
 
     public string $codigo = '';
-
-    public string $codigo_barras = '';
 
     public string $nombre = '';
 
@@ -70,7 +68,6 @@ class ProductoForm extends Component
             $this->stock_minimo = $producto->stock_minimo;
             $this->precio = (string) $producto->precio;
             $this->maneja_vencimiento = $producto->maneja_vencimiento;
-            $this->codigo_barras = $producto->codigo_barras ?? '';
             $this->marca = $producto->marca ?? '';
             $this->presentacion = $producto->presentacion ?? '';
             $this->precio_mayor = $producto->precio_mayor !== null ? (string) $producto->precio_mayor : '';
@@ -131,10 +128,6 @@ class ProductoForm extends Component
             'unidad_medida' => ['required', 'in:saco,kg,litro,galon,unidad'],
             'stock_minimo' => ['required', 'integer', 'min:0'],
             'precio' => ['required', 'numeric', 'min:0'],
-            'codigo_barras' => [
-                'nullable', 'string', 'max:50', 'regex:/^[A-Za-z0-9\-]+$/',
-                Rule::unique('productos', 'codigo_barras')->ignore($this->productoId),
-            ],
             'marca' => ['nullable', 'string', 'max:100'],
             'presentacion' => ['nullable', 'string', 'max:100'],
             'precio_mayor' => ['nullable', 'numeric', 'min:0', 'lte:precio', 'required_with:cantidad_mayor'],
@@ -155,8 +148,6 @@ class ProductoForm extends Component
             'stock_minimo.required' => 'El stock mínimo es obligatorio.',
             'precio.required' => 'El precio es obligatorio.',
             'precio.numeric' => 'El precio debe ser un número válido.',
-            'codigo_barras.unique' => 'Ya existe un producto con este código de barras.',
-            'codigo_barras.regex' => 'El código de barras solo puede tener letras, números y guiones.',
             'precio_mayor.lte' => 'El precio por mayor no puede ser mayor que el precio normal.',
             'precio_mayor.required_with' => 'Escriba el precio por mayor.',
             'cantidad_mayor.required_with' => 'Escriba desde cuántas unidades se aplica el precio por mayor.',
@@ -192,7 +183,7 @@ class ProductoForm extends Component
         unset($data['imagen']);
 
         // Los campos opcionales vacíos se guardan como nulos.
-        foreach (['codigo_barras', 'marca', 'presentacion', 'precio_mayor', 'cantidad_mayor'] as $opcional) {
+        foreach (['marca', 'presentacion', 'precio_mayor', 'cantidad_mayor'] as $opcional) {
             if (array_key_exists($opcional, $data) && ($data[$opcional] === '' || $data[$opcional] === null)) {
                 $data[$opcional] = null;
             }
@@ -224,7 +215,7 @@ class ProductoForm extends Component
             $imagenes->guardar($producto, $this->imagen);
         }
 
-        $this->reset(['codigo', 'codigo_barras', 'nombre', 'marca', 'presentacion', 'categoria_id', 'unidad_medida', 'stock_minimo', 'precio', 'precio_mayor', 'cantidad_mayor', 'maneja_vencimiento', 'imagen']);
+        $this->reset(['codigo', 'nombre', 'marca', 'presentacion', 'categoria_id', 'unidad_medida', 'stock_minimo', 'precio', 'precio_mayor', 'cantidad_mayor', 'maneja_vencimiento', 'imagen']);
         $this->codigo = $productos->siguienteCodigo();
         $this->creado = true;
     }

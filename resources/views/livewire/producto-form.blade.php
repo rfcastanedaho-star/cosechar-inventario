@@ -59,21 +59,6 @@
         </div>
 
         <div>
-            <label for="codigo_barras" class="mb-1 block text-sm font-medium text-cosechar-ink">Código de barras <span class="font-normal text-cosechar-muted">(opcional)</span></label>
-            <input
-                type="text"
-                id="codigo_barras"
-                wire:model.blur="codigo_barras" @disabled(! $this->puedeEditarSensibles)
-                autocomplete="off"
-                class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring disabled:bg-cosechar-cream"
-            >
-            <p class="mt-1 text-xs text-cosechar-muted">Con un lector, basta pasar el producto para encontrarlo en Ventas, Compras y Ajustes de stock.</p>
-            @error('codigo_barras')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-
-        <div>
             <label for="nombre" class="mb-1 block text-sm font-medium text-cosechar-ink">Nombre <x-obligatorio /></label>
             <input
                 type="text"
@@ -233,7 +218,7 @@
         </label>
 
         @if ($this->editando && ! $this->puedeEditarSensibles)
-            <p class="text-xs text-cosechar-muted">Solo el administrador puede cambiar el código, el código de barras, la marca, la presentación, la categoría, la unidad, el stock mínimo, los precios y el vencimiento.</p>
+            <p class="text-xs text-cosechar-muted">Solo el administrador puede cambiar el código, la marca, la presentación, la categoría, la unidad, el stock mínimo, los precios y el vencimiento.</p>
         @endif
 
         <button

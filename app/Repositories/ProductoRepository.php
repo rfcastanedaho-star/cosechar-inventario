@@ -57,7 +57,7 @@ class ProductoRepository
     }
 
     /**
-     * Productos cuyo nombre, código, código de barras o marca contienen el texto escrito, para el
+     * Productos cuyo nombre, código o marca contienen el texto escrito, para el
      * buscador por iniciales: primero los que empiezan igual, luego el resto.
      * Los comodines de LIKE (% y _) se buscan como texto literal.
      */
@@ -78,11 +78,10 @@ class ProductoRepository
             ->where(fn ($q) => $q
                 ->whereRaw("nombre LIKE ? ESCAPE '!'", [$contiene])
                 ->orWhereRaw("codigo LIKE ? ESCAPE '!'", [$contiene])
-                ->orWhereRaw("codigo_barras LIKE ? ESCAPE '!'", [$contiene])
                 ->orWhereRaw("marca LIKE ? ESCAPE '!'", [$contiene]))
             ->orderByRaw(
-                "CASE WHEN codigo_barras = ? THEN 0 WHEN nombre LIKE ? ESCAPE '!' THEN 1 WHEN codigo LIKE ? ESCAPE '!' OR codigo_barras LIKE ? ESCAPE '!' THEN 2 ELSE 3 END",
-                [$termino, $empieza, $empieza, $empieza],
+                "CASE WHEN nombre LIKE ? ESCAPE '!' THEN 1 WHEN codigo LIKE ? ESCAPE '!' THEN 2 ELSE 3 END",
+                [$empieza, $empieza],
             )
             ->orderBy('nombre')
             ->limit($limite)

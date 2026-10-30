@@ -44,10 +44,9 @@ class ProductoCamposNuevosTest extends TestCase
 
     // ---------- Registro ----------
 
-    public function test_registra_codigo_de_barras_marca_presentacion_y_precio_por_mayor(): void
+    public function test_registra_marca_presentacion_y_precio_por_mayor(): void
     {
         $this->nuevo()
-            ->set('codigo_barras', '7750123456789')
             ->set('marca', 'Bayer')
             ->set('presentacion', 'Frasco 250 ml')
             ->set('precio_mayor', '16.50')
@@ -56,7 +55,6 @@ class ProductoCamposNuevosTest extends TestCase
             ->assertHasNoErrors();
 
         $producto = Producto::where('codigo', 'NUE-1')->firstOrFail();
-        $this->assertSame('7750123456789', $producto->codigo_barras);
         $this->assertSame('Bayer', $producto->marca);
         $this->assertSame('Frasco 250 ml', $producto->presentacion);
         $this->assertSame('16.50', $producto->precio_mayor);
@@ -68,27 +66,14 @@ class ProductoCamposNuevosTest extends TestCase
         $this->nuevo()->call('guardar')->assertHasNoErrors();
 
         $producto = Producto::where('codigo', 'NUE-1')->firstOrFail();
-        $this->assertNull($producto->codigo_barras);
         $this->assertNull($producto->marca);
         $this->assertNull($producto->presentacion);
         $this->assertNull($producto->precio_mayor);
         $this->assertNull($producto->cantidad_mayor);
     }
 
-    public function test_el_codigo_de_barras_no_se_repite_pero_varios_pueden_no_tenerlo(): void
-    {
-        Producto::factory()->create(['codigo_barras' => '7750123456789']);
-
-        $this->nuevo()->set('codigo_barras', '7750123456789')->call('guardar')->assertHasErrors(['codigo_barras' => 'unique']);
-
-        Producto::factory()->create(['codigo_barras' => null]);
-        $this->nuevo()->call('guardar')->assertHasNoErrors();
-    }
-
     public function test_valida_el_formato_y_la_longitud_de_los_campos_nuevos(): void
     {
-        $this->nuevo()->set('codigo_barras', 'con espacios!')->call('guardar')->assertHasErrors(['codigo_barras']);
-        $this->nuevo()->set('codigo_barras', str_repeat('1', 51))->call('guardar')->assertHasErrors(['codigo_barras' => 'max']);
         $this->nuevo()->set('marca', str_repeat('a', 101))->call('guardar')->assertHasErrors(['marca' => 'max']);
         $this->nuevo()->set('presentacion', str_repeat('a', 101))->call('guardar')->assertHasErrors(['presentacion' => 'max']);
     }
@@ -174,7 +159,6 @@ class ProductoCamposNuevosTest extends TestCase
             ->assertSet('marca', 'Marca Vieja')
             ->set('marca', 'Bayer')
             ->set('presentacion', '1 litro')
-            ->set('codigo_barras', '7750000000017')
             ->set('precio_mayor', '15')
             ->set('cantidad_mayor', '6')
             ->call('guardar')
@@ -183,7 +167,6 @@ class ProductoCamposNuevosTest extends TestCase
         $producto->refresh();
         $this->assertSame('Bayer', $producto->marca);
         $this->assertSame('1 litro', $producto->presentacion);
-        $this->assertSame('7750000000017', $producto->codigo_barras);
         $this->assertSame('15.00', $producto->precio_mayor);
         $this->assertSame(6, $producto->cantidad_mayor);
         $this->assertDatabaseHas('auditoria_cambios', [
@@ -200,7 +183,6 @@ class ProductoCamposNuevosTest extends TestCase
             ->test(ProductoForm::class, ['producto' => $producto])
             ->set('marca', 'Manipulada')
             ->set('presentacion', 'Manipulada')
-            ->set('codigo_barras', '999')
             ->set('precio_mayor', '1')
             ->set('cantidad_mayor', '2')
             ->call('guardar')
@@ -209,19 +191,8 @@ class ProductoCamposNuevosTest extends TestCase
         $producto->refresh();
         $this->assertSame('Original', $producto->marca);
         $this->assertNull($producto->presentacion);
-        $this->assertNull($producto->codigo_barras);
         $this->assertSame('15.00', $producto->precio_mayor);
         $this->assertSame(6, $producto->cantidad_mayor);
-    }
-
-    public function test_el_formulario_de_edicion_conserva_el_codigo_de_barras_propio(): void
-    {
-        $producto = Producto::factory()->create(['codigo_barras' => '7750123456789']);
-
-        Livewire::actingAs($this->admin())
-            ->test(ProductoForm::class, ['producto' => $producto])
-            ->call('guardar')
-            ->assertHasNoErrors();
     }
 
     // ---------- Auditoría ----------
@@ -249,14 +220,14 @@ class ProductoCamposNuevosTest extends TestCase
             ->assertSee('Frasco 250 ml');
     }
 
-    public function test_la_lista_busca_tambien_por_marca_y_por_codigo_de_barras(): void
+    public function test_la_lista_busca_tambien_por_marca(): void
     {
-        Producto::factory()->create(['nombre' => 'Fungicida Cobre', 'marca' => 'Bayer', 'codigo_barras' => '7750123456789']);
-        Producto::factory()->create(['nombre' => 'Herbicida Total', 'marca' => 'Basf', 'codigo_barras' => '7750999999999']);
+        Producto::factory()->create(['nombre' => 'Fungicida Cobre', 'marca' => 'Bayer']);
+        Producto::factory()->create(['nombre' => 'Herbicida Total', 'marca' => 'Basf']);
 
         $lista = Livewire::actingAs($this->admin())->test(ProductoLista::class);
 
         $lista->set('buscar', 'bayer')->assertSee('Fungicida Cobre')->assertDontSee('Herbicida Total');
-        $lista->set('buscar', '7750999')->assertSee('Herbicida Total')->assertDontSee('Fungicida Cobre');
+        $lista->set('buscar', 'basf')->assertSee('Herbicida Total')->assertDontSee('Fungicida Cobre');
     }
 }
