@@ -28,7 +28,6 @@ class CompraFormTest extends TestCase
             ->set('almacen_id', $almacen->id)
             ->set('fecha', '2026-09-20')
             ->set('lineas.0.producto_id', $producto->id)
-            ->set('lineas.0.numero_lote', 'LOTE-X1')
             ->set('lineas.0.cantidad', 20)
             ->set('lineas.0.costo_unitario', 10)
             ->call('guardar')
@@ -43,7 +42,7 @@ class CompraFormTest extends TestCase
         $this->assertDatabaseHas('lotes', [
             'producto_id' => $producto->id,
             'almacen_id' => $almacen->id,
-            'numero_lote' => 'LOTE-X1',
+            'numero_lote' => 'SIN-LOTE',
             'cantidad' => 20,
         ]);
     }
@@ -84,25 +83,6 @@ class CompraFormTest extends TestCase
         $this->assertCount(1, $component->get('lineas'));
     }
 
-    public function test_la_fecha_de_vencimiento_es_obligatoria_si_el_producto_la_maneja(): void
-    {
-        $usuario = User::factory()->create();
-        $proveedor = Proveedor::factory()->create();
-        $almacen = Almacen::factory()->create();
-        $producto = Producto::factory()->create(['maneja_vencimiento' => true]);
-
-        Livewire::actingAs($usuario)
-            ->test(CompraForm::class)
-            ->call('elegirProveedor', $proveedor->id)
-            ->set('almacen_id', $almacen->id)
-            ->set('lineas.0.producto_id', $producto->id)
-            ->set('lineas.0.numero_lote', 'LOTE-X1')
-            ->set('lineas.0.cantidad', 10)
-            ->set('lineas.0.costo_unitario', 5)
-            ->call('guardar')
-            ->assertHasErrors(['lineas.0.fecha_vencimiento' => 'required']);
-    }
-
     public function test_el_total_suma_varias_lineas(): void
     {
         $usuario = User::factory()->create();
@@ -116,12 +96,10 @@ class CompraFormTest extends TestCase
             ->call('elegirProveedor', $proveedor->id)
             ->set('almacen_id', $almacen->id)
             ->set('lineas.0.producto_id', $productoA->id)
-            ->set('lineas.0.numero_lote', 'A1')
             ->set('lineas.0.cantidad', 10)
             ->set('lineas.0.costo_unitario', 5)
             ->call('agregarLinea')
             ->set('lineas.1.producto_id', $productoB->id)
-            ->set('lineas.1.numero_lote', 'B1')
             ->set('lineas.1.cantidad', 4)
             ->set('lineas.1.costo_unitario', 25)
             ->call('guardar')

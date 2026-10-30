@@ -87,7 +87,7 @@
                             <span class="font-medium text-cosechar-ink">{{ $movimiento->lote->producto->nombre }}</span>
                             <span class="block text-xs text-cosechar-muted">{{ $movimiento->lote->producto->codigo }}</span>
                         </td>
-                        <td class="px-4 py-3 text-cosechar-muted">{{ $movimiento->lote->numero_lote }}</td>
+                        <td class="px-4 py-3 text-cosechar-muted">{{ $movimiento->lote->etiqueta }}</td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $movimiento->lote->almacen?->nombre ?? '—' }}</td>
                         <td class="px-4 py-3">
                             @if ($movimiento->tipo === 'entrada')

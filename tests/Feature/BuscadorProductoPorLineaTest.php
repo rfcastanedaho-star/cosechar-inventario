@@ -185,13 +185,12 @@ class BuscadorProductoPorLineaTest extends TestCase
             ->call('elegirPrimeroLinea', 0)
             ->call('elegirProveedor', Proveedor::factory()->create()->id)
             ->set('almacen_id', Almacen::factory()->create()->id)
-            ->set('lineas.0.numero_lote', 'L-BUSCADOR')
             ->set('lineas.0.cantidad', 12)
             ->set('lineas.0.costo_unitario', '8.50')
             ->call('guardar')
             ->assertHasNoErrors();
 
-        $this->assertDatabaseHas('lotes', ['producto_id' => $producto->id, 'numero_lote' => 'L-BUSCADOR', 'cantidad' => 12]);
+        $this->assertDatabaseHas('lotes', ['producto_id' => $producto->id, 'numero_lote' => 'SIN-LOTE', 'cantidad' => 12]);
     }
 
     public function test_se_puede_registrar_una_venta_eligiendo_el_producto_con_el_buscador(): void

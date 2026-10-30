@@ -43,7 +43,7 @@
             @foreach ($compra->detalles as $detalle)
                 <tr>
                     <td>{{ $detalle->lote->producto->codigo }} — {{ $detalle->lote->producto->nombre }}</td>
-                    <td>{{ $detalle->lote->numero_lote }}</td>
+                    <td>{{ $detalle->lote->etiqueta }}</td>
                     <td>{{ $detalle->lote->fecha_vencimiento?->format('d/m/Y') ?? 'No aplica' }}</td>
                     <td class="num">{{ $detalle->cantidad }}</td>
                     <td class="num">S/ {{ number_format($detalle->costo_unitario, 2) }}</td>

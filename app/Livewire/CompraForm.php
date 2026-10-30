@@ -40,7 +40,7 @@ class CompraForm extends Component
 
     public string $numero_comprobante = '';
 
-    /** @var array<int, array{producto_id: ?int, numero_lote: string, fecha_vencimiento: string, cantidad: int, costo_unitario: string}> */
+    /** @var array<int, array{producto_id: ?int, cantidad: int, costo_unitario: string}> */
     public array $lineas = [];
 
     public bool $creado = false;
@@ -58,11 +58,11 @@ class CompraForm extends Component
     }
 
     /**
-     * @return array{producto_id: ?int, numero_lote: string, fecha_vencimiento: string, cantidad: int, costo_unitario: string}
+     * @return array{producto_id: ?int, cantidad: int, costo_unitario: string}
      */
     private function lineaVacia(): array
     {
-        return ['producto_id' => null, 'numero_lote' => '', 'fecha_vencimiento' => '', 'cantidad' => 1, 'costo_unitario' => ''];
+        return ['producto_id' => null, 'cantidad' => 1, 'costo_unitario' => ''];
     }
 
     public function agregarLinea(): void
@@ -182,16 +182,9 @@ class CompraForm extends Component
         ];
 
         foreach ($this->lineas as $indice => $linea) {
-            $producto = ! empty($linea['producto_id']) ? Producto::find($linea['producto_id']) : null;
-
             $reglas["lineas.{$indice}.producto_id"] = ['required', 'exists:productos,id'];
-            $reglas["lineas.{$indice}.numero_lote"] = ['required', 'string', 'max:50'];
             $reglas["lineas.{$indice}.cantidad"] = ['required', 'integer', 'min:1'];
             $reglas["lineas.{$indice}.costo_unitario"] = ['required', 'numeric', 'min:0'];
-            $reglas["lineas.{$indice}.fecha_vencimiento"] = [
-                $producto?->maneja_vencimiento ? 'required' : 'nullable',
-                'date',
-            ];
         }
 
         return $reglas;
@@ -206,11 +199,9 @@ class CompraForm extends Component
             'proveedor_correo.email' => 'Escriba un correo válido, por ejemplo ventas@proveedor.pe.',
             'fecha.required' => 'La fecha de la factura es obligatoria.',
             '*.producto_id.required' => 'Debe seleccionar un producto.',
-            '*.numero_lote.required' => 'El número de lote es obligatorio.',
             '*.cantidad.required' => 'La cantidad es obligatoria.',
             '*.cantidad.min' => 'La cantidad debe ser mayor a cero.',
             '*.costo_unitario.required' => 'El costo unitario es obligatorio.',
-            '*.fecha_vencimiento.required' => 'Este producto maneja vencimiento: la fecha es obligatoria.',
         ];
     }
 

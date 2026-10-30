@@ -117,7 +117,7 @@
                                 <td colspan="10" class="px-4 py-4">
                                     @forelse ($producto->lotes as $lote)
                                         <p class="text-sm text-cosechar-ink">
-                                            Lote <span class="font-medium">{{ $lote->numero_lote }}</span> ·
+                                            Lote <span class="font-medium">{{ $lote->etiqueta }}</span> ·
                                             vence {{ $lote->fecha_vencimiento?->format('d/m/Y') ?? 'No aplica' }} ·
                                             <span class="font-medium">{{ $lote->cantidad }}</span> unidades
                                         </p>

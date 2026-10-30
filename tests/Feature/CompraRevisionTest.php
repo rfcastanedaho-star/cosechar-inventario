@@ -40,8 +40,7 @@ class CompraRevisionTest extends TestCase
             ->set('proveedor_nombre', 'Agro Andina SAC')
             ->call('elegirProductoLinea', 0, $producto->id)
             ->set('lineas.0.cantidad', 4)
-            ->set('lineas.0.costo_unitario', '5.50')
-            ->set('lineas.0.numero_lote', 'L-001');
+            ->set('lineas.0.costo_unitario', '5.50');
     }
 
     // ---------- Campos del proveedor y de la factura ----------
@@ -52,7 +51,7 @@ class CompraRevisionTest extends TestCase
 
         $this->assertStringContainsString('Registrar compra', $texto);
 
-        $orden = ['Nombre del proveedor *', 'Teléfono', 'Correo', 'Dirección', 'N.º de factura', 'Fecha de factura *', 'Productos comprados', 'Producto *', 'Cantidad *', 'Costo unitario (S/) *', 'N.º de lote *', 'Vencimiento (si aplica)'];
+        $orden = ['Nombre del proveedor *', 'Teléfono', 'Correo', 'Dirección', 'N.º de factura', 'Fecha de factura *', 'Productos comprados', 'Producto *', 'Cantidad *', 'Costo unitario (S/) *'];
         $posicion = -1;
 
         foreach ($orden as $etiqueta) {
@@ -160,7 +159,6 @@ class CompraRevisionTest extends TestCase
             ->assertSet('confirmando', true)
             ->assertSee('Verifique la compra')
             ->assertSee('Fungicida Cobre')
-            ->assertSee('L-001')
             ->assertSee('S/ 22.00')
             ->assertSee('Agregar compra')
             ->assertSee('Volver a editar');
@@ -179,7 +177,6 @@ class CompraRevisionTest extends TestCase
             ->call('elegirProductoLinea', 1, $otro->id)
             ->set('lineas.1.cantidad', 10)
             ->set('lineas.1.costo_unitario', '3')
-            ->set('lineas.1.numero_lote', 'L-002')
             ->call('revisar')
             ->assertSee('Urea Agricola')
             ->assertSee('S/ 52.00');
@@ -211,12 +208,12 @@ class CompraRevisionTest extends TestCase
             ->assertHasErrors(['proveedor_nombre' => 'required', 'lineas.0.producto_id' => 'required']);
     }
 
-    public function test_el_producto_con_vencimiento_lo_exige_antes_de_revisar(): void
+    public function test_el_producto_con_lotes_ya_no_pide_vencimiento_en_la_compra(): void
     {
         $this->compra($this->producto(['maneja_vencimiento' => true]))
             ->call('revisar')
-            ->assertSet('confirmando', false)
-            ->assertHasErrors(['lineas.0.fecha_vencimiento' => 'required']);
+            ->assertSet('confirmando', true)
+            ->assertHasNoErrors();
     }
 
     public function test_volver_a_editar_conserva_lo_escrito(): void

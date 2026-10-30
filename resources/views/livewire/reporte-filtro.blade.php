@@ -62,7 +62,7 @@
                             <td class="px-4 py-3">{{ $lote->producto->codigo }} — {{ $lote->producto->nombre }}</td>
                             <td class="px-4 py-3 text-cosechar-muted">{{ $lote->producto->categoria->nombre }}</td>
                             <td class="px-4 py-3 text-cosechar-muted">{{ $lote->almacen?->nombre ?? 'Sin almacén' }}</td>
-                            <td class="px-4 py-3 text-cosechar-muted">{{ $lote->numero_lote }}</td>
+                            <td class="px-4 py-3 text-cosechar-muted">{{ $lote->etiqueta }}</td>
                             <td class="px-4 py-3 text-cosechar-muted">{{ $lote->fecha_vencimiento?->format('d/m/Y') ?? 'No aplica' }}</td>
                             <td class="px-4 py-3">{{ $lote->cantidad }} {{ $lote->producto->unidad_medida }}</td>
                             <td class="px-4 py-3 text-cosechar-muted">{{ $lote->producto->stock_minimo }}</td>
@@ -238,7 +238,7 @@
                         <tr>
                             <td class="px-4 py-3 text-cosechar-muted">{{ $movimiento->fecha->format('d/m/Y H:i') }}</td>
                             <td class="px-4 py-3">{{ $movimiento->lote->producto->nombre }}</td>
-                            <td class="px-4 py-3 text-cosechar-muted">{{ $movimiento->lote->numero_lote }}</td>
+                            <td class="px-4 py-3 text-cosechar-muted">{{ $movimiento->lote->etiqueta }}</td>
                             <td class="px-4 py-3">
                                 <span class="rounded-full px-2 py-0.5 text-xs font-medium {{ $movimiento->tipo === 'entrada' ? 'bg-cosechar-olive/15 text-cosechar-olive' : 'bg-[#F3E0DC] text-cosechar-danger' }}">
                                     {{ ucfirst($movimiento->tipo) }}

@@ -37,6 +37,15 @@ class Lote extends Model
     /** Un lote está «por vencer» cuando vence dentro de este número de días. */
     public const DIAS_POR_VENCER = 30;
 
+    /** Número del lote automático de los productos que no usan lotes: toda su existencia vive en uno solo. */
+    public const SIN_LOTE = 'SIN-LOTE';
+
+    /** Lo que se muestra como número de lote: el automático se lee «Sin lote». */
+    protected function etiqueta(): Attribute
+    {
+        return Attribute::get(fn () => $this->numero_lote === self::SIN_LOTE ? 'Sin lote' : $this->numero_lote);
+    }
+
     /** Sin unidades = agotado; con unidades, según su fecha de vencimiento (sin fecha = vigente). */
     protected function estado(): Attribute
     {

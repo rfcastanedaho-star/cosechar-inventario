@@ -61,7 +61,7 @@ class CompraServiceTest extends TestCase
         $lote = $compra->detalles->first()->lote;
         $this->assertSame(50, $lote->fresh()->cantidad);
         $this->assertSame($almacen->id, $lote->almacen_id);
-        $this->assertSame('LOTE-A1', $lote->numero_lote);
+        $this->assertSame('SIN-LOTE', $lote->numero_lote);
     }
 
     public function test_calcula_el_total_sumando_varias_lineas(): void

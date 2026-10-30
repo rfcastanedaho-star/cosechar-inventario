@@ -50,7 +50,7 @@
                 <div>
                     <h2 class="text-sm font-semibold text-cosechar-ink">{{ $ajusteTipo === 'entrada' ? 'Aumentar lote' : 'Reducir lote' }}</h2>
                     <p class="text-sm text-cosechar-muted">
-                        <x-producto-etiqueta :producto="$loteAjuste->producto" /> · Lote <span class="font-medium text-cosechar-ink">{{ $loteAjuste->numero_lote }}</span> · Disponible: <span class="font-medium text-cosechar-ink">{{ $loteAjuste->cantidad }}</span>
+                        <x-producto-etiqueta :producto="$loteAjuste->producto" /> · Lote <span class="font-medium text-cosechar-ink">{{ $loteAjuste->etiqueta }}</span> · Disponible: <span class="font-medium text-cosechar-ink">{{ $loteAjuste->cantidad }}</span>
                     </p>
                 </div>
                 <button type="button" wire:click="cancelarAjuste" class="text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">Cancelar</button>
@@ -116,7 +116,7 @@
                 @forelse ($this->lotes as $lote)
                     <tr wire:key="lote-{{ $lote->id }}" class="{{ $lote->estado === 'agotado' ? 'bg-cosechar-cream/60 text-cosechar-muted' : '' }}">
                         <td class="px-4 py-3 font-medium text-cosechar-ink"><x-producto-etiqueta :producto="$lote->producto" /></td>
-                        <td class="px-4 py-3 text-cosechar-ink">{{ $lote->numero_lote }}</td>
+                        <td class="px-4 py-3 text-cosechar-ink">{{ $lote->etiqueta }}</td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $lote->fecha_vencimiento?->format('d/m/Y') ?? 'No aplica' }}</td>
                         <td class="px-4 py-3 text-right font-medium text-cosechar-ink">{{ $lote->cantidad }}</td>
                         @if ($conCosto)
@@ -127,8 +127,8 @@
                             <span class="rounded-full px-2 py-1 text-xs font-semibold {{ $insignias[$lote->estado] }}">{{ \App\Models\Lote::ESTADOS[$lote->estado] }}</span>
                         </td>
                         <td class="whitespace-nowrap px-4 py-3 text-right">
-                            <button type="button" wire:click="iniciarAjuste({{ $lote->id }}, 'salida')" aria-label="Reducir lote {{ $lote->numero_lote }}" title="Reducir" class="rounded-md border border-cosechar-border px-2.5 py-1 text-sm font-medium text-cosechar-danger hover:bg-cosechar-cream">−</button>
-                            <button type="button" wire:click="iniciarAjuste({{ $lote->id }}, 'entrada')" aria-label="Aumentar lote {{ $lote->numero_lote }}" title="Aumentar" class="rounded-md border border-cosechar-border px-2.5 py-1 text-sm font-medium text-cosechar-olive hover:bg-cosechar-cream">+</button>
+                            <button type="button" wire:click="iniciarAjuste({{ $lote->id }}, 'salida')" aria-label="Reducir lote {{ $lote->etiqueta }}" title="Reducir" class="rounded-md border border-cosechar-border px-2.5 py-1 text-sm font-medium text-cosechar-danger hover:bg-cosechar-cream">−</button>
+                            <button type="button" wire:click="iniciarAjuste({{ $lote->id }}, 'entrada')" aria-label="Aumentar lote {{ $lote->etiqueta }}" title="Aumentar" class="rounded-md border border-cosechar-border px-2.5 py-1 text-sm font-medium text-cosechar-olive hover:bg-cosechar-cream">+</button>
                             <button type="button" wire:click="verDetalle({{ $lote->id }})" class="ml-2 text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">{{ $detalleId === $lote->id ? 'Ocultar' : 'Detalle' }}</button>
                         </td>
                     </tr>

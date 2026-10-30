@@ -13,7 +13,6 @@ use App\Livewire\UsuarioForm;
 use App\Livewire\VentaForm;
 use App\Models\Almacen;
 use App\Models\Cliente;
-use App\Models\Producto;
 use App\Models\Proveedor;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,7 +34,7 @@ class CamposObligatoriosTest extends TestCase
     {
         return [
             'producto' => [ProductoForm::class, [], ['Código *', 'Nombre *', 'Categoría *', 'Unidad de medida *', 'Stock mínimo *', 'Precio (S/) *', 'Precio costo (S/) *'], ['Stock inicial *', 'Marca *', 'Presentación *', 'Foto del producto *']],
-            'compra' => [CompraForm::class, [], ['Nombre del proveedor *', 'Fecha de factura *', 'Producto *', 'N.º de lote *', 'Cantidad *', 'Costo unitario (S/) *'], ['RUC (opcional) *', 'Teléfono (opcional) *', 'Correo (opcional) *', 'Dirección (opcional) *', 'factura (opcional) *']],
+            'compra' => [CompraForm::class, [], ['Nombre del proveedor *', 'Fecha de factura *', 'Producto *', 'Cantidad *', 'Costo unitario (S/) *'], ['N.º de lote', 'Vencimiento', 'RUC (opcional) *', 'Teléfono (opcional) *', 'Correo (opcional) *', 'Dirección (opcional) *', 'factura (opcional) *']],
             'venta' => [VentaForm::class, [], ['Cliente *', 'Fecha *', 'Producto *', 'Cantidad *', 'Precio unitario (S/) *'], ['Documento (opcional) *', 'comprobante (opcional) *']],
             'usuario' => [UsuarioForm::class, [], ['Nombre *', 'Correo *', 'Rol *', 'Contraseña *', 'Repetir contraseña *'], []],
             'categoria' => [CategoriaForm::class, [], ['Nombre *'], ['Grupo *']],
@@ -103,24 +102,6 @@ class CamposObligatoriosTest extends TestCase
         $this->assertStringContainsString('Nombre / Razón social *', $texto);
         $this->assertStringContainsString('RUC (opcional)', $texto);
         $this->assertStringNotContainsString('(opcional) *', $texto);
-    }
-
-    public function test_en_compras_el_vencimiento_solo_es_obligatorio_para_productos_que_lo_manejan(): void
-    {
-        $vence = Producto::factory()->create(['maneja_vencimiento' => true]);
-        $noVence = Producto::factory()->create(['maneja_vencimiento' => false]);
-
-        $componente = Livewire::actingAs(User::factory()->create())->test(CompraForm::class);
-
-        $normalizar = fn (string $html) => preg_replace('/\s+/u', ' ', strip_tags($html));
-
-        $this->assertStringContainsString('Vencimiento (si aplica)', $normalizar($componente->html()));
-
-        $componente->call('elegirProductoLinea', 0, $vence->id);
-        $this->assertStringContainsString('Vencimiento *', $normalizar($componente->html()));
-
-        $componente->call('limpiarProductoLinea', 0)->call('elegirProductoLinea', 0, $noVence->id);
-        $this->assertStringContainsString('Vencimiento (si aplica)', $normalizar($componente->html()));
     }
 
     public function test_la_pantalla_de_edicion_de_usuario_marca_tambien_la_nueva_contrasena(): void

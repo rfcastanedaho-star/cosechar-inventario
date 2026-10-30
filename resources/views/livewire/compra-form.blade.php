@@ -70,8 +70,6 @@
                             <th class="px-4 py-3">Producto</th>
                             <th class="px-4 py-3 text-right">Cantidad</th>
                             <th class="px-4 py-3 text-right">Costo unitario</th>
-                            <th class="px-4 py-3">N.º de lote</th>
-                            <th class="px-4 py-3">Vencimiento</th>
                             <th class="px-4 py-3 text-right">Subtotal</th>
                         </tr>
                     </thead>
@@ -85,8 +83,6 @@
                                 </td>
                                 <td class="px-4 py-3 text-right text-cosechar-ink">{{ $linea['cantidad'] }}</td>
                                 <td class="px-4 py-3 text-right text-cosechar-ink">S/ {{ number_format((float) $linea['costo_unitario'], 2) }}</td>
-                                <td class="px-4 py-3 text-cosechar-ink">{{ $linea['numero_lote'] }}</td>
-                                <td class="px-4 py-3 text-cosechar-muted">{{ $linea['fecha_vencimiento'] ? \Illuminate\Support\Carbon::parse($linea['fecha_vencimiento'])->format('d/m/Y') : '—' }}</td>
                                 <td class="px-4 py-3 text-right font-medium text-cosechar-ink">S/ {{ number_format((float) $linea['cantidad'] * (float) $linea['costo_unitario'], 2) }}</td>
                             </tr>
                         @endforeach
@@ -252,7 +248,7 @@
 
                 @foreach ($lineas as $indice => $linea)
                     <div wire:key="linea-{{ $indice }}" class="grid grid-cols-1 gap-3 rounded-xl border border-cosechar-border p-4 sm:grid-cols-12 sm:items-start">
-                        <div class="sm:col-span-3">
+                        <div class="sm:col-span-7">
                             <label class="mb-1 block text-xs font-medium text-cosechar-muted">Producto <x-obligatorio /></label>
                             @if ($productoLinea = $this->productoDeLinea($indice))
                                 <div class="flex items-center justify-between gap-2 rounded-md border border-cosechar-border bg-white px-2 py-1.5 text-sm">
@@ -304,22 +300,6 @@
                             <label class="mb-1 block text-xs font-medium text-cosechar-muted">Costo unitario (S/) <x-obligatorio /></label>
                             <input type="number" step="0.01" min="0" wire:model.blur="lineas.{{ $indice }}.costo_unitario" class="w-full rounded-md border border-cosechar-border px-2 py-1.5 text-sm">
                             @error("lineas.{$indice}.costo_unitario")
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div class="sm:col-span-2">
-                            <label class="mb-1 block text-xs font-medium text-cosechar-muted">N.º de lote <x-obligatorio /></label>
-                            <input type="text" wire:model.blur="lineas.{{ $indice }}.numero_lote" class="w-full rounded-md border border-cosechar-border px-2 py-1.5 text-sm">
-                            @error("lineas.{$indice}.numero_lote")
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div class="sm:col-span-2">
-                            <label class="mb-1 block text-xs font-medium text-cosechar-muted">Vencimiento @if ($this->productoDeLinea($indice)?->maneja_vencimiento)<x-obligatorio />@else<span class="font-normal text-cosechar-muted">(si aplica)</span>@endif</label>
-                            <input type="date" wire:model.blur="lineas.{{ $indice }}.fecha_vencimiento" class="w-full rounded-md border border-cosechar-border px-2 py-1.5 text-sm">
-                            @error("lineas.{$indice}.fecha_vencimiento")
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
                         </div>

@@ -34,7 +34,7 @@
                 <tr>
                     <td>{{ $movimiento->fecha->format('d/m/Y H:i') }}</td>
                     <td>{{ $movimiento->lote->producto->nombre }}</td>
-                    <td>{{ $movimiento->lote->numero_lote }}</td>
+                    <td>{{ $movimiento->lote->etiqueta }}</td>
                     <td class="{{ $movimiento->tipo }}">{{ ucfirst($movimiento->tipo) }}</td>
                     <td>{{ $movimiento->cantidad }}</td>
                     <td>{{ $movimiento->motivo ?? '—' }}</td>

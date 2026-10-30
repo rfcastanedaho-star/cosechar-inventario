@@ -30,7 +30,6 @@ class CompraProveedorAutomaticoTest extends TestCase
         return $componente
             ->set('almacen_id', Almacen::factory()->create()->id)
             ->call('elegirProductoLinea', 0, $producto->id)
-            ->set('lineas.0.numero_lote', 'L-'.uniqid())
             ->set('lineas.0.cantidad', 3)
             ->set('lineas.0.costo_unitario', '4');
     }

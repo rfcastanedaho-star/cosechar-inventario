@@ -152,7 +152,6 @@ class CompraBuscadorProveedorTest extends TestCase
             ->call('elegirPrimerProveedor')
             ->set('almacen_id', Almacen::factory()->create()->id)
             ->call('elegirProductoLinea', 0, $producto->id)
-            ->set('lineas.0.numero_lote', 'L-PROVEEDOR')
             ->set('lineas.0.cantidad', 8)
             ->set('lineas.0.costo_unitario', '4.50')
             ->call('guardar')

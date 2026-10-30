@@ -35,7 +35,7 @@
                     <td>{{ $lote->producto->codigo }} — {{ $lote->producto->nombre }}</td>
                     <td>{{ $lote->producto->categoria->nombre }}</td>
                     <td>{{ $lote->almacen?->nombre ?? 'Sin almacén' }}</td>
-                    <td>{{ $lote->numero_lote }}</td>
+                    <td>{{ $lote->etiqueta }}</td>
                     <td>{{ $lote->fecha_vencimiento?->format('d/m/Y') ?? 'No aplica' }}</td>
                     <td>{{ $lote->cantidad }}</td>
                     <td>{{ $lote->producto->stock_minimo }}</td>
