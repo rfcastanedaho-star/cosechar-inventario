@@ -26,15 +26,17 @@ class CorregirProveedorYClienteDesdeHistorialTest extends TestCase
 
     // ---------- Menú ----------
 
-    public function test_el_menu_ya_no_lista_proveedores_ni_clientes(): void
+    public function test_el_menu_lista_proveedores_y_clientes_junto_a_compras_y_ventas(): void
     {
         $this->actingAs($this->usuario())
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSee(route('compras.index'), false)
-            ->assertSee(route('ventas.index'), false)
-            ->assertDontSee(route('proveedores.index'), false)
-            ->assertDontSee(route('clientes.index'), false);
+            ->assertSeeInOrder([
+                route('proveedores.index'),
+                route('compras.index'),
+                route('ventas.index'),
+                route('clientes.index'),
+            ], false);
     }
 
     // ---------- Enlaces desde los historiales ----------

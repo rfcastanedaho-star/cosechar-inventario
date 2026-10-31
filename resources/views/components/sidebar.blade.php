@@ -4,8 +4,10 @@
         ['route' => 'productos.index', 'pattern' => ['productos.*', 'categorias.*'], 'icon' => 'productos', 'label' => 'Productos'],
         ['route' => 'lotes.index', 'pattern' => 'lotes.*', 'icon' => 'lotes', 'label' => 'Lotes'],
         ['route' => 'inventario.index', 'pattern' => 'inventario.*', 'icon' => 'inventario', 'label' => 'Inventario'],
+        ['route' => 'proveedores.index', 'pattern' => 'proveedores.*', 'icon' => 'proveedores', 'label' => 'Proveedores'],
         ['route' => 'compras.index', 'pattern' => 'compras.*', 'icon' => 'compras', 'label' => 'Compras'],
         ['route' => 'ventas.index', 'pattern' => 'ventas.*', 'icon' => 'ventas', 'label' => 'Ventas'],
+        ['route' => 'clientes.index', 'pattern' => 'clientes.*', 'icon' => 'clientes', 'label' => 'Clientes'],
         ['route' => 'reportes', 'pattern' => 'reportes', 'icon' => 'reportes', 'label' => 'Reportes'],
     ];
 
