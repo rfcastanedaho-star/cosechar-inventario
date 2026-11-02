@@ -57,7 +57,7 @@ class BuscadorProductoPorLineaTest extends TestCase
 
         $this->formulario($clase)
             ->assertDontSee('Fungicida Cobre')
-            ->assertSee('Escriba el nombre o el código');
+            ->assertSee('Escriba las iniciales del nombre o el código');
     }
 
     #[DataProvider('formularios')]
@@ -106,7 +106,7 @@ class BuscadorProductoPorLineaTest extends TestCase
             ->call('elegirProductoLinea', 0, $producto->id)
             ->call('limpiarProductoLinea', 0)
             ->assertSet('lineas.0.producto_id', null)
-            ->assertSee('Escriba el nombre o el código');
+            ->assertSee('Escriba las iniciales del nombre o el código');
     }
 
     #[DataProvider('formularios')]
@@ -211,5 +211,36 @@ class BuscadorProductoPorLineaTest extends TestCase
             ->assertSet('busquedaProducto', []);
 
         $this->assertSame(23, $lote->fresh()->cantidad);
+    }
+
+    #[DataProvider('formularios')]
+    public function test_la_flechita_abre_la_lista_con_todos_los_productos_en_orden_alfabetico(string $clase): void
+    {
+        Producto::factory()->create(['nombre' => 'Urea Agricola']);
+        Producto::factory()->create(['nombre' => 'Abono Foliar']);
+        Producto::factory()->create(['nombre' => 'Producto Retirado', 'activo' => false]);
+
+        $componente = $this->formulario($clase)
+            ->assertDontSee('Abono Foliar')
+            ->call('alternarListaProducto', 0)
+            ->assertSet('listaProducto.0', true)
+            ->assertSee('Abono Foliar')
+            ->assertSee('Urea Agricola')
+            ->assertDontSee('Producto Retirado');
+
+        $this->assertSame(['Abono Foliar', 'Urea Agricola'], $componente->instance()->productosSugeridos(0)->pluck('nombre')->all());
+
+        $componente->call('alternarListaProducto', 0)->assertSet('listaProducto.0', false);
+    }
+
+    #[DataProvider('formularios')]
+    public function test_al_elegir_un_producto_se_cierra_la_lista_de_esa_linea(string $clase): void
+    {
+        $producto = Producto::factory()->create();
+
+        $this->formulario($clase)
+            ->call('alternarListaProducto', 0)
+            ->call('elegirProductoLinea', 0, $producto->id)
+            ->assertSet('listaProducto.0', false);
     }
 }

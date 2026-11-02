@@ -93,4 +93,34 @@ class ReporteBuscadorProductoTest extends TestCase
             ->call('elegirProducto', 99999)
             ->assertSet('producto_id', null);
     }
+
+    public function test_la_flechita_abre_la_lista_de_todos_los_productos_incluidos_los_inactivos(): void
+    {
+        Producto::factory()->create(['nombre' => 'Urea Agricola']);
+        Producto::factory()->create(['nombre' => 'Abono Foliar']);
+        Producto::factory()->create(['nombre' => 'Producto Retirado', 'activo' => false]);
+
+        $componente = $this->formulario()
+            ->assertDontSee('Abono Foliar')
+            ->call('alternarListaProducto')
+            ->assertSet('listaProducto', true)
+            ->assertSee('Abono Foliar')
+            ->assertSee('Producto Retirado');
+
+        $this->assertSame(
+            ['Abono Foliar', 'Producto Retirado', 'Urea Agricola'],
+            $componente->instance()->productosSugeridos->pluck('nombre')->all(),
+        );
+    }
+
+    public function test_al_elegir_un_producto_del_filtro_se_cierra_la_lista(): void
+    {
+        $producto = Producto::factory()->create();
+
+        $this->formulario()
+            ->call('alternarListaProducto')
+            ->call('elegirProducto', $producto->id)
+            ->assertSet('listaProducto', false)
+            ->assertSet('producto_id', $producto->id);
+    }
 }

@@ -88,6 +88,23 @@ class ProductoRepository
             ->get();
     }
 
+    /**
+     * Lista desplegable de los formularios: con el campo vacío ofrece todos los productos en orden
+     * alfabético (hasta $limiteTodos); con texto, los que coinciden ({@see buscar}).
+     */
+    public function sugerir(string $termino, int $limite = 8, bool $soloActivos = true, int $limiteTodos = 30): Collection
+    {
+        if (trim($termino) !== '') {
+            return $this->buscar($termino, $limite, $soloActivos);
+        }
+
+        return Producto::query()
+            ->when($soloActivos, fn ($q) => $q->where('activo', true))
+            ->orderBy('nombre')
+            ->limit($limiteTodos)
+            ->get();
+    }
+
     public function conStockActualPorId(int $id): ?Producto
     {
         return Producto::withSum('lotes as stock_actual', 'cantidad')->find($id);

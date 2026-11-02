@@ -27,6 +27,9 @@ class ReporteFiltro extends Component
     /** Texto del buscador de producto (nombre o código). */
     public string $buscarProducto = '';
 
+    /** La lista desplegable de productos está abierta (flechita o foco en el campo). */
+    public bool $listaProducto = false;
+
     public string $tipo = '';
 
     public string $desde = '';
@@ -45,9 +48,11 @@ class ReporteFiltro extends Component
     #[Computed]
     public function productosSugeridos(): Collection
     {
-        return $this->producto_id
-            ? new Collection
-            : app(ProductoRepository::class)->buscar($this->buscarProducto, soloActivos: false);
+        if ($this->producto_id || (! $this->listaProducto && trim($this->buscarProducto) === '')) {
+            return new Collection;
+        }
+
+        return app(ProductoRepository::class)->sugerir($this->buscarProducto, soloActivos: false);
     }
 
     public function elegirProducto(int $id): void
@@ -58,11 +63,17 @@ class ReporteFiltro extends Component
 
         $this->producto_id = $id;
         $this->buscarProducto = '';
+        $this->listaProducto = false;
+    }
+
+    public function alternarListaProducto(): void
+    {
+        $this->listaProducto = ! $this->listaProducto;
     }
 
     public function limpiarProducto(): void
     {
-        $this->reset(['producto_id', 'buscarProducto']);
+        $this->reset(['producto_id', 'buscarProducto', 'listaProducto']);
     }
 
     #[Computed]
@@ -130,7 +141,7 @@ class ReporteFiltro extends Component
 
     public function limpiarFiltros(): void
     {
-        $this->reset(['fecha', 'producto_id', 'buscarProducto', 'tipo', 'desde', 'hasta', 'almacen_id']);
+        $this->reset(['fecha', 'producto_id', 'buscarProducto', 'listaProducto', 'tipo', 'desde', 'hasta', 'almacen_id']);
     }
 
     public function render()

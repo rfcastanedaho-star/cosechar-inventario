@@ -253,6 +253,7 @@ class VentaForm extends Component
         $this->almacen_id = Almacen::unicoActivo()?->id;
         $this->lineas = [$this->lineaVacia()];
         $this->busquedaProducto = [];
+        $this->listaProducto = [];
         $this->fecha = now()->toDateString();
         $this->ventaId = $venta->id;
         $this->creado = true;

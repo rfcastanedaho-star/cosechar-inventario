@@ -174,31 +174,17 @@
                         <button type="button" wire:click="limpiarProducto" class="shrink-0 text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">Cambiar</button>
                     </div>
                 @else
-                    <input
-                        type="search"
-                        wire:model.live.debounce.250ms="buscarProducto"
-                        placeholder="Todos los productos (escriba para buscar)"
-                        autocomplete="off"
-                        class="{{ $campo }}"
-                    >
-
-                    @if (trim($buscarProducto) !== '')
-                        <ul class="mt-1 max-h-56 overflow-auto rounded-md border border-cosechar-border bg-white shadow-sm">
-                            @forelse ($this->productosSugeridos as $sugerido)
-                                <li>
-                                    <button
-                                        type="button"
-                                        wire:click="elegirProducto({{ $sugerido->id }})"
-                                        class="block w-full px-3 py-2 text-left text-sm text-cosechar-ink hover:bg-cosechar-cream"
-                                    >
-                                        <x-producto-etiqueta :producto="$sugerido" />
-                                    </button>
-                                </li>
-                            @empty
-                                <li class="px-3 py-2 text-sm text-cosechar-muted">No se encontró ningún producto con ese nombre o código.</li>
-                            @endforelse
-                        </ul>
-                    @endif
+                    <x-selector-producto
+                        buscar="buscarProducto"
+                        :texto="$buscarProducto"
+                        ruta-abierto="listaProducto"
+                        alternar="alternarListaProducto"
+                        elegir="elegirProducto("
+                        :sugeridos="$this->productosSugeridos"
+                        placeholder="Todos los productos (iniciales del nombre o abra la lista)"
+                        :clase-input="$campo"
+                        tipo="search"
+                    />
                 @endif
             </div>
 

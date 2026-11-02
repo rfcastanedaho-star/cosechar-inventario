@@ -16,10 +16,25 @@ trait BuscaProductoPorLinea
     /** @var array<int, string> */
     public array $busquedaProducto = [];
 
+    /** Líneas cuya lista desplegable de productos está abierta (flechita o foco en el campo). @var array<int, bool> */
+    public array $listaProducto = [];
+
     /** @return Collection<int, Producto> */
     public function productosSugeridos(int $indice): Collection
     {
-        return app(ProductoRepository::class)->buscar($this->busquedaProducto[$indice] ?? '');
+        $texto = $this->busquedaProducto[$indice] ?? '';
+
+        // Sin texto, la lista solo se muestra si se abrió con la flechita: entonces ofrece todos, por orden alfabético.
+        if (trim($texto) === '' && ! ($this->listaProducto[$indice] ?? false)) {
+            return new Collection;
+        }
+
+        return app(ProductoRepository::class)->sugerir($texto);
+    }
+
+    public function alternarListaProducto(int $indice): void
+    {
+        $this->listaProducto[$indice] = ! ($this->listaProducto[$indice] ?? false);
     }
 
     public function productoDeLinea(int $indice): ?Producto
@@ -43,6 +58,7 @@ trait BuscaProductoPorLinea
 
         $this->lineas[$indice]['producto_id'] = $producto->id;
         $this->busquedaProducto[$indice] = '';
+        $this->listaProducto[$indice] = false;
         $this->resetErrorBag("lineas.{$indice}.producto_id");
         $this->alElegirProducto($indice, $producto);
     }
@@ -64,6 +80,7 @@ trait BuscaProductoPorLinea
         }
 
         $this->busquedaProducto[$indice] = '';
+        $this->listaProducto[$indice] = false;
     }
 
     /** Mantiene los textos de búsqueda alineados con las líneas cuando se quita una. */
@@ -71,6 +88,7 @@ trait BuscaProductoPorLinea
     {
         unset($this->busquedaProducto[$indice]);
         $this->busquedaProducto = array_values($this->busquedaProducto);
+        $this->listaProducto = [];
     }
 
     /** Gancho para que cada formulario complete datos al elegir el producto. */
