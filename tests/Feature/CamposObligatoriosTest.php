@@ -34,7 +34,7 @@ class CamposObligatoriosTest extends TestCase
     {
         return [
             'producto' => [ProductoForm::class, [], ['Código *', 'Nombre *', 'Categoría *', 'Unidad de medida *', 'Stock mínimo *', 'Precio (S/) *', 'Precio costo (S/) *'], ['Stock inicial *', 'Marca *', 'Presentación *', 'Foto del producto *']],
-            'compra' => [CompraForm::class, [], ['Nombre del proveedor *', 'Fecha de factura *', 'Producto *', 'Cantidad *', 'Costo unitario (S/) *'], ['N.º de lote', 'Vencimiento', 'RUC (opcional) *', 'Teléfono (opcional) *', 'Correo (opcional) *', 'Dirección (opcional) *', 'factura (opcional) *']],
+            'compra' => [CompraForm::class, [], ['Proveedor *', 'Fecha de factura *', 'Producto *', 'Cantidad *', 'Costo unitario (S/) *'], ['N.º de lote', 'Vencimiento', 'RUC (opcional) *', 'Teléfono (opcional) *', 'Correo (opcional) *', 'Dirección (opcional) *', 'factura (opcional) *']],
             'venta' => [VentaForm::class, [], ['Cliente *', 'Fecha *', 'Producto *', 'Cantidad *', 'Precio unitario (S/) *'], ['Documento (opcional) *', 'comprobante (opcional) *']],
             'usuario' => [UsuarioForm::class, [], ['Nombre *', 'Correo *', 'Rol *', 'Contraseña *', 'Repetir contraseña *'], []],
             'categoria' => [CategoriaForm::class, [], ['Nombre *'], ['Grupo *']],

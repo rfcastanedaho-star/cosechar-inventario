@@ -53,10 +53,9 @@ class CompraFormTest extends TestCase
 
         Livewire::actingAs($usuario)
             ->test(CompraForm::class)
-            ->set('proveedor_nombre', '')
             ->set('almacen_id', null)
             ->call('guardar')
-            ->assertHasErrors(['proveedor_nombre' => 'required', 'almacen_id' => 'required']);
+            ->assertHasErrors(['proveedor_id' => 'required', 'almacen_id' => 'required']);
     }
 
     public function test_puede_agregar_y_quitar_lineas(): void

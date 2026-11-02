@@ -43,13 +43,13 @@ class CompraBuscadorProveedorTest extends TestCase
             ->assertSee('20123456789');
     }
 
-    public function test_sin_texto_no_hay_sugerencias_y_se_invita_a_escribir(): void
+    public function test_sin_texto_ni_lista_abierta_no_hay_sugerencias_y_se_invita_a_escribir(): void
     {
         Proveedor::factory()->create(['nombre' => 'Rural Semillas']);
 
         $this->formulario()
             ->assertDontSee('Rural Semillas')
-            ->assertSee('Escriba el nombre o el RUC del proveedor');
+            ->assertSee('Escriba las iniciales del nombre o el RUC');
     }
 
     public function test_avisa_cuando_no_hay_coincidencias(): void
@@ -58,7 +58,8 @@ class CompraBuscadorProveedorTest extends TestCase
 
         $this->formulario()
             ->set('buscarProveedor', 'zzz')
-            ->assertSee('No se encontró ningún proveedor');
+            ->assertSee('No hay ningún proveedor registrado que coincida')
+            ->assertSeeHtml(route('proveedores.nuevo', ['desde' => 'compra']));
     }
 
     public function test_muestra_como_maximo_ocho_sugerencias(): void
@@ -114,7 +115,7 @@ class CompraBuscadorProveedorTest extends TestCase
             ->call('elegirProveedor', $proveedor->id)
             ->call('limpiarProveedor')
             ->assertSet('proveedor_id', null)
-            ->assertSee('Escriba el nombre o el RUC del proveedor');
+            ->assertSee('Escriba las iniciales del nombre o el RUC');
     }
 
     public function test_no_se_puede_elegir_un_proveedor_desactivado_ni_inexistente(): void
@@ -167,6 +168,6 @@ class CompraBuscadorProveedorTest extends TestCase
         $this->formulario()
             ->set('almacen_id', Almacen::factory()->create()->id)
             ->call('guardar')
-            ->assertHasErrors(['proveedor_nombre' => 'required']);
+            ->assertHasErrors(['proveedor_id' => 'required']);
     }
 }

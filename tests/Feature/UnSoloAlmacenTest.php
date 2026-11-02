@@ -9,8 +9,10 @@ use App\Livewire\ReporteFiltro;
 use App\Livewire\VentaForm;
 use App\Livewire\VentaLista;
 use App\Models\Almacen;
+use App\Models\Cliente;
 use App\Models\Lote;
 use App\Models\Producto;
+use App\Models\Proveedor;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -59,7 +61,7 @@ class UnSoloAlmacenTest extends TestCase
             ->test(CompraForm::class)
             ->assertSet('almacen_id', $almacen->id)
             ->assertDontSee('Seleccione un almacén')
-            ->set('proveedor_nombre', 'Agro Andina SAC')
+            ->call('elegirProveedor', Proveedor::factory()->create(['nombre' => 'Agro Andina SAC'])->id)
             ->call('elegirProductoLinea', 0, $producto->id)
             ->set('lineas.0.numero_lote', 'L-1')
             ->set('lineas.0.cantidad', 4)
@@ -80,7 +82,7 @@ class UnSoloAlmacenTest extends TestCase
             ->test(VentaForm::class)
             ->assertSet('almacen_id', $almacen->id)
             ->assertDontSee('Seleccione un almacén')
-            ->set('cliente_nombre', 'Ana Pérez')
+            ->call('elegirCliente', Cliente::factory()->create(['nombre' => 'Ana Pérez'])->id)
             ->call('elegirProductoLinea', 0, $producto->id)
             ->call('guardar')
             ->assertHasNoErrors();
@@ -104,7 +106,7 @@ class UnSoloAlmacenTest extends TestCase
 
         Livewire::actingAs($this->usuario())
             ->test(CompraForm::class)
-            ->set('proveedor_nombre', 'Agro Andina SAC')
+            ->call('elegirProveedor', Proveedor::factory()->create(['nombre' => 'Agro Andina SAC'])->id)
             ->call('elegirProductoLinea', 0, $producto->id)
             ->set('lineas.0.numero_lote', 'L-1')
             ->set('lineas.0.costo_unitario', '5')

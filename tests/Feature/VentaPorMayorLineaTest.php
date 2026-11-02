@@ -6,6 +6,7 @@ use App\Livewire\ProductoForm;
 use App\Livewire\VentaForm;
 use App\Livewire\VentaLista;
 use App\Models\Almacen;
+use App\Models\Cliente;
 use App\Models\Lote;
 use App\Models\Producto;
 use App\Models\User;
@@ -102,7 +103,7 @@ class VentaPorMayorLineaTest extends TestCase
         Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $almacen->id, 'cantidad' => 100]);
 
         $this->venta()
-            ->set('cliente_nombre', 'Agricola San Isidro')
+            ->call('elegirCliente', Cliente::factory()->create(['nombre' => 'Agricola San Isidro'])->id)
             ->set('almacen_id', $almacen->id)
             ->call('elegirProductoLinea', 0, $producto->id)
             ->set('lineas.0.por_mayor', true)
@@ -116,7 +117,7 @@ class VentaPorMayorLineaTest extends TestCase
     public function test_el_precio_por_mayor_es_obligatorio_si_se_marca_la_casilla(): void
     {
         $this->venta()
-            ->set('cliente_nombre', 'Agricola San Isidro')
+            ->call('elegirCliente', Cliente::factory()->create(['nombre' => 'Agricola San Isidro'])->id)
             ->call('elegirProductoLinea', 0, $this->producto()->id)
             ->set('lineas.0.por_mayor', true)
             ->call('guardar')
@@ -133,7 +134,7 @@ class VentaPorMayorLineaTest extends TestCase
         }
 
         $this->venta()
-            ->set('cliente_nombre', 'Agricola San Isidro')
+            ->call('elegirCliente', Cliente::factory()->create(['nombre' => 'Agricola San Isidro'])->id)
             ->set('almacen_id', $almacen->id)
             ->call('agregarLinea')
             ->call('elegirProductoLinea', 0, $mayor->id)
@@ -174,7 +175,7 @@ class VentaPorMayorLineaTest extends TestCase
         Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $almacen->id, 'cantidad' => 100]);
 
         $this->venta()
-            ->set('cliente_nombre', 'Agricola San Isidro')
+            ->call('elegirCliente', Cliente::factory()->create(['nombre' => 'Agricola San Isidro'])->id)
             ->set('almacen_id', $almacen->id)
             ->call('elegirProductoLinea', 0, $producto->id)
             ->set('lineas.0.por_mayor', true)

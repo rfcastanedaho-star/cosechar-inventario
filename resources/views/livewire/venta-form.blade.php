@@ -26,70 +26,31 @@
 
     <form wire:submit="guardar" class="flex flex-col gap-6">
         <div class="rounded-xl border border-cosechar-border bg-white p-4">
-            <label for="buscar_cliente" class="mb-1 block text-sm font-medium text-cosechar-ink">Buscar cliente registrado <span class="font-normal text-cosechar-muted">(opcional)</span></label>
-
-            @if ($cliente_id)
-                <div class="flex items-center justify-between gap-2 rounded-md border border-cosechar-border bg-cosechar-cream px-3 py-2 text-sm">
-                    <span class="min-w-0 truncate text-cosechar-ink">
-                        <span class="mr-2 rounded-full bg-cosechar-olive/15 px-2 py-0.5 text-[11px] font-semibold text-cosechar-olive">Cliente registrado</span>
-                        {{ $cliente_nombre }}@if ($cliente_documento) · {{ $cliente_documento }}@endif
-                    </span>
-                    <button type="button" wire:click="limpiarCliente" class="shrink-0 text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">Cambiar</button>
-                </div>
-            @else
-                <input
-                    type="text"
-                    id="buscar_cliente"
-                    wire:model.live.debounce.250ms="buscarCliente"
-                    wire:keydown.enter.prevent="elegirPrimerCliente"
-                    placeholder="Escriba el nombre, el DNI/RUC o el teléfono"
-                    autocomplete="off"
-                    class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
-                >
-
-                @if (trim($buscarCliente) !== '')
-                    <ul class="mt-1 max-h-60 overflow-auto rounded-md border border-cosechar-border bg-white shadow-sm">
-                        @forelse ($this->clientesSugeridos as $sugerido)
-                            <li>
-                                <button
-                                    type="button"
-                                    wire:click="elegirCliente({{ $sugerido->id }})"
-                                    class="block w-full px-3 py-2 text-left text-sm text-cosechar-ink hover:bg-cosechar-cream"
-                                >
-                                    {{ $sugerido->nombre }}
-                                    @if ($sugerido->documento)
-                                        <span class="text-xs text-cosechar-muted">· {{ $sugerido->documento }}</span>
-                                    @endif
-                                </button>
-                            </li>
-                        @empty
-                            <li class="px-3 py-2 text-sm text-cosechar-muted">No se encontró ningún cliente registrado. Puede escribir sus datos abajo.</li>
-                        @endforelse
-                    </ul>
-                @endif
-            @endif
+            <x-selector-registrado
+                id="cliente"
+                etiqueta="Cliente"
+                prop-buscar="buscarCliente"
+                :texto-buscar="$buscarCliente"
+                prop-abierto="listaClientes"
+                prop-error="cliente_id"
+                :seleccionado="$this->clienteSeleccionado"
+                :sugeridos="$this->clientesSugeridos"
+                elegir="elegirCliente"
+                limpiar="limpiarCliente"
+                alternar="alternarListaClientes"
+                placeholder="Escriba las iniciales del nombre, el DNI/RUC o el teléfono, o abra la lista"
+                campo-doc="documento"
+                etiqueta-doc="Doc."
+                :nueva-ruta="route('clientes.nuevo', ['desde' => 'venta'])"
+                nuevo-texto="Registrar cliente nuevo"
+                vacio="No hay ningún cliente registrado que coincida."
+            />
+            @unless ($cliente_id)
+                <p class="mt-2 text-xs text-cosechar-muted">Solo se pueden elegir clientes ya registrados. ¿No está? <a href="{{ route('clientes.nuevo', ['desde' => 'venta']) }}" class="font-medium text-cosechar-forest underline hover:text-cosechar-ink">Regístrelo en Clientes</a>.</p>
+            @endunless
         </div>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div>
-                <label for="cliente_nombre" class="mb-1 block text-sm font-medium text-cosechar-ink">Cliente <x-obligatorio /></label>
-                <input type="text" id="cliente_nombre" wire:model.blur="cliente_nombre" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
-                @error('cliente_nombre')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
-                <label for="cliente_documento" class="mb-1 block text-sm font-medium text-cosechar-ink">Documento (opcional)</label>
-                <input type="text" id="cliente_documento" wire:model.blur="cliente_documento" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
-                @error('cliente_documento')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-                @unless ($cliente_id)
-                    <p class="mt-1 text-xs text-cosechar-muted">Si escribe el documento, el cliente se registra solo al guardar la venta.</p>
-                @endunless
-            </div>
-
             @unless ($this->almacenes->count() === 1)
                 <div>
                     <label for="almacen_id" class="mb-1 block text-sm font-medium text-cosechar-ink">Almacén de origen <x-obligatorio /></label>

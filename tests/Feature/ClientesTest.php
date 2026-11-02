@@ -88,29 +88,68 @@ class ClientesTest extends TestCase
         $lista->assertSee('Mostrando 1–15 de 20');
     }
 
-    // ---------- Formulario (solo edición: los clientes se registran al vender) ----------
+    // ---------- Formulario (registrar y editar) ----------
 
     private function formulario(?User $usuario = null, array $parametros = []): Testable
     {
         return Livewire::actingAs($usuario ?? $this->operador())->test(ClienteForm::class, $parametros);
     }
 
-    public function test_ya_no_existe_una_pantalla_para_registrar_clientes_a_mano(): void
+    public function test_la_pantalla_para_registrar_clientes_existe_en_el_menu(): void
     {
-        $this->assertFalse(Route::has('clientes.nuevo'));
+        $this->assertTrue(Route::has('clientes.nuevo'));
 
-        $this->actingAs($this->admin())->get('/clientes/nuevo')->assertNotFound();
+        $this->actingAs($this->admin())->get('/clientes/nuevo')->assertOk()->assertSee('Registrar cliente');
     }
 
-    public function test_la_lista_no_ofrece_registrar_clientes_pero_si_editarlos(): void
+    public function test_la_lista_ofrece_registrar_clientes_y_editarlos(): void
     {
         $cliente = Cliente::factory()->create();
 
         Livewire::actingAs($this->admin())
             ->test(ClienteLista::class)
-            ->assertDontSee('Registrar cliente')
+            ->assertSee('Registrar cliente')
+            ->assertSeeHtml(route('clientes.nuevo'))
             ->assertSeeHtml(route('clientes.editar', $cliente))
-            ->assertSee('al registrar una venta');
+            ->assertSee('en Ventas solo se elige entre los registrados');
+    }
+
+    public function test_se_registra_un_cliente_nuevo_desde_su_formulario(): void
+    {
+        $this->formulario($this->operador())
+            ->set('nombre', '  Ana Pérez ')
+            ->set('documento', '12345678')
+            ->set('telefono', '900111222')
+            ->call('guardar')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('clientes.index'));
+
+        $cliente = Cliente::where('documento', '12345678')->firstOrFail();
+        $this->assertSame('Ana Pérez', $cliente->nombre);
+        $this->assertSame('900111222', $cliente->telefono);
+        $this->assertTrue($cliente->activo);
+    }
+
+    public function test_para_registrar_solo_el_nombre_es_obligatorio_y_el_documento_no_se_repite(): void
+    {
+        Cliente::factory()->create(['documento' => '12345678']);
+
+        $this->formulario()->call('guardar')->assertHasErrors(['nombre' => 'required']);
+        $this->formulario()->set('nombre', 'Otro')->set('documento', '12345678')->call('guardar')->assertHasErrors(['documento' => 'unique']);
+        $this->formulario()->set('nombre', 'Otro')->set('documento', 'doc raro!')->call('guardar')->assertHasErrors(['documento']);
+
+        $this->formulario()->set('nombre', 'Sin documento')->call('guardar')->assertHasNoErrors();
+        $this->assertNull(Cliente::where('nombre', 'Sin documento')->firstOrFail()->documento);
+    }
+
+    public function test_al_registrar_desde_ventas_se_vuelve_al_formulario_de_venta(): void
+    {
+        Livewire::actingAs($this->operador())
+            ->withQueryParams(['desde' => 'venta'])
+            ->test(ClienteForm::class)
+            ->set('nombre', 'Ana Pérez')
+            ->call('guardar')
+            ->assertRedirect(route('ventas.index'));
     }
 
     public function test_valida_nombre_y_formato_del_documento_al_editar(): void
@@ -192,11 +231,31 @@ class ClientesTest extends TestCase
         $this->assertSame('Ana Pérez', AuditoriaEtiquetas::registro(Cliente::factory()->make(['nombre' => 'Ana Pérez'])));
     }
 
-    // ---------- Ventas ----------
+    // ---------- Ventas: el cliente solo se elige entre los registrados ----------
 
     private function venta(): Testable
     {
         return Livewire::actingAs(User::factory()->create())->test(VentaForm::class);
+    }
+
+    /** Venta de una unidad a un cliente ya elegido; devuelve el componente para seguir probando. */
+    private function venderA(?int $clienteId): Testable
+    {
+        $almacen = Almacen::first() ?? Almacen::factory()->create();
+        $producto = Producto::factory()->create(['maneja_vencimiento' => false, 'precio' => 10]);
+        Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $almacen->id, 'cantidad' => 50]);
+
+        $componente = $this->venta();
+
+        if ($clienteId) {
+            $componente->call('elegirCliente', $clienteId);
+        }
+
+        return $componente
+            ->set('almacen_id', $almacen->id)
+            ->call('elegirProductoLinea', 0, $producto->id)
+            ->set('lineas.0.cantidad', 1)
+            ->call('guardar');
     }
 
     public function test_la_venta_sugiere_clientes_registrados_por_nombre_o_documento(): void
@@ -214,18 +273,36 @@ class ClientesTest extends TestCase
             ->assertSee('Luis Gómez');
     }
 
-    public function test_elegir_un_cliente_rellena_nombre_y_documento(): void
+    public function test_la_flechita_abre_la_lista_con_todos_los_clientes_en_orden_alfabetico(): void
+    {
+        Cliente::factory()->create(['nombre' => 'Zoila Vega']);
+        Cliente::factory()->create(['nombre' => 'Ana Pérez']);
+        Cliente::factory()->create(['nombre' => 'Retirado', 'activo' => false]);
+
+        $componente = $this->venta()
+            ->assertDontSee('Ana Pérez')
+            ->call('alternarListaClientes')
+            ->assertSet('listaClientes', true)
+            ->assertSee('Ana Pérez')
+            ->assertSee('Zoila Vega')
+            ->assertDontSee('Retirado');
+
+        $this->assertSame(['Ana Pérez', 'Zoila Vega'], $componente->instance()->clientesSugeridos->pluck('nombre')->all());
+    }
+
+    public function test_elegir_un_cliente_lo_deja_seleccionado_y_cierra_la_lista(): void
     {
         $cliente = Cliente::factory()->create(['nombre' => 'Ana Pérez', 'documento' => '12345678']);
 
         $this->venta()
+            ->call('alternarListaClientes')
             ->set('buscarCliente', 'ana')
             ->call('elegirCliente', $cliente->id)
             ->assertSet('cliente_id', $cliente->id)
-            ->assertSet('cliente_nombre', 'Ana Pérez')
-            ->assertSet('cliente_documento', '12345678')
             ->assertSet('buscarCliente', '')
-            ->assertSee('Cliente registrado');
+            ->assertSet('listaClientes', false)
+            ->assertSee('Ana Pérez')
+            ->assertSee('Registrado');
     }
 
     public function test_enter_elige_el_primer_cliente_y_sin_coincidencias_no_hace_nada(): void
@@ -234,6 +311,14 @@ class ClientesTest extends TestCase
 
         $this->venta()->set('buscarCliente', 'ana')->call('elegirPrimerCliente')->assertSet('cliente_id', $primero->id);
         $this->venta()->set('buscarCliente', 'zzz')->call('elegirPrimerCliente')->assertSet('cliente_id', null);
+    }
+
+    public function test_sin_coincidencias_manda_a_registrar_el_cliente_en_clientes(): void
+    {
+        $this->venta()
+            ->set('buscarCliente', 'zzz')
+            ->assertSee('No hay ningún cliente registrado que coincida')
+            ->assertSeeHtml(route('clientes.nuevo', ['desde' => 'venta']));
     }
 
     public function test_no_se_puede_elegir_un_cliente_desactivado_ni_inexistente(): void
@@ -247,22 +332,7 @@ class ClientesTest extends TestCase
             ->assertSet('cliente_id', null);
     }
 
-    public function test_si_se_edita_a_mano_el_nombre_o_el_documento_deja_de_ser_cliente_registrado(): void
-    {
-        $cliente = Cliente::factory()->create(['nombre' => 'Ana Pérez', 'documento' => '12345678']);
-
-        $this->venta()
-            ->call('elegirCliente', $cliente->id)
-            ->set('cliente_nombre', 'Otra persona')
-            ->assertSet('cliente_id', null);
-
-        $this->venta()
-            ->call('elegirCliente', $cliente->id)
-            ->set('cliente_documento', '00000000')
-            ->assertSet('cliente_id', null);
-    }
-
-    public function test_limpiar_cliente_vacia_todo(): void
+    public function test_limpiar_cliente_vuelve_al_campo_de_busqueda(): void
     {
         $cliente = Cliente::factory()->create();
 
@@ -270,28 +340,20 @@ class ClientesTest extends TestCase
             ->call('elegirCliente', $cliente->id)
             ->call('limpiarCliente')
             ->assertSet('cliente_id', null)
-            ->assertSet('cliente_nombre', '')
-            ->assertSet('cliente_documento', '');
+            ->assertSet('buscarCliente', '')
+            ->assertSet('listaClientes', false);
     }
 
     public function test_la_venta_guarda_el_cliente_registrado_y_conserva_su_nombre_en_la_venta(): void
     {
-        $almacen = Almacen::factory()->create();
-        $producto = Producto::factory()->create(['maneja_vencimiento' => false, 'precio' => 10]);
-        Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $almacen->id, 'cantidad' => 30]);
         $cliente = Cliente::factory()->create(['nombre' => 'Ana Pérez', 'documento' => '12345678']);
 
-        $this->venta()
-            ->call('elegirCliente', $cliente->id)
-            ->set('almacen_id', $almacen->id)
-            ->call('elegirProductoLinea', 0, $producto->id)
-            ->set('lineas.0.cantidad', 2)
-            ->call('guardar')
-            ->assertHasNoErrors();
+        $this->venderA($cliente->id)->assertHasNoErrors();
 
         $venta = Venta::latest('id')->firstOrFail();
         $this->assertSame($cliente->id, $venta->cliente_id);
         $this->assertSame('Ana Pérez', $venta->cliente_nombre);
+        $this->assertSame('12345678', $venta->cliente_documento);
 
         // Si el cliente cambia de nombre después, la venta guarda cómo se llamaba entonces.
         $cliente->update(['nombre' => 'Ana Pérez de Gómez']);
@@ -299,145 +361,29 @@ class ClientesTest extends TestCase
         $this->assertSame('Ana Pérez de Gómez', $venta->fresh()->cliente->nombre);
     }
 
-    public function test_se_puede_vender_a_alguien_no_registrado_como_antes(): void
+    public function test_sin_cliente_elegido_la_venta_no_se_guarda_y_no_se_crea_ningun_cliente(): void
     {
-        $almacen = Almacen::factory()->create();
-        $producto = Producto::factory()->create(['maneja_vencimiento' => false, 'precio' => 10]);
-        Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $almacen->id, 'cantidad' => 30]);
+        $this->venderA(null)->assertHasErrors(['cliente_id' => 'required']);
 
-        $this->venta()
-            ->set('cliente_nombre', 'Cliente de paso')
-            ->set('almacen_id', $almacen->id)
-            ->call('elegirProductoLinea', 0, $producto->id)
-            ->set('lineas.0.cantidad', 1)
-            ->call('guardar')
-            ->assertHasNoErrors();
-
-        $venta = Venta::latest('id')->firstOrFail();
-        $this->assertNull($venta->cliente_id);
-        $this->assertSame('Cliente de paso', $venta->cliente_nombre);
+        $this->assertDatabaseCount('ventas', 0);
+        $this->assertDatabaseCount('clientes', 0);
     }
 
     public function test_tras_guardar_la_venta_se_limpia_el_cliente_elegido(): void
     {
-        $almacen = Almacen::factory()->create();
-        $producto = Producto::factory()->create(['maneja_vencimiento' => false, 'precio' => 10]);
-        Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $almacen->id, 'cantidad' => 30]);
         $cliente = Cliente::factory()->create();
 
-        $this->venta()
-            ->call('elegirCliente', $cliente->id)
-            ->set('almacen_id', $almacen->id)
-            ->call('elegirProductoLinea', 0, $producto->id)
-            ->set('lineas.0.cantidad', 1)
-            ->call('guardar')
+        $this->venderA($cliente->id)
             ->assertSet('cliente_id', null)
-            ->assertSet('cliente_nombre', '');
+            ->assertSet('buscarCliente', '');
     }
 
-    // ---------- Registro automático al vender (opción B) ----------
-
-    private function venderA(string $nombre, ?string $documento, ?int $clienteId = null): void
-    {
-        $almacen = Almacen::first() ?? Almacen::factory()->create();
-        $producto = Producto::factory()->create(['maneja_vencimiento' => false, 'precio' => 10]);
-        Lote::factory()->for($producto, 'producto')->create(['almacen_id' => $almacen->id, 'cantidad' => 50]);
-
-        $componente = $this->venta();
-
-        if ($clienteId) {
-            $componente->call('elegirCliente', $clienteId);
-        } else {
-            $componente->set('cliente_nombre', $nombre)->set('cliente_documento', $documento ?? '');
-        }
-
-        $componente
-            ->set('almacen_id', $almacen->id)
-            ->call('elegirProductoLinea', 0, $producto->id)
-            ->set('lineas.0.cantidad', 1)
-            ->call('guardar')
-            ->assertHasNoErrors();
-    }
-
-    public function test_vender_a_alguien_nuevo_con_documento_lo_registra_automaticamente(): void
-    {
-        $this->venderA('Juan Quispe', '45678912');
-
-        $cliente = Cliente::where('documento', '45678912')->firstOrFail();
-        $this->assertSame('Juan Quispe', $cliente->nombre);
-        $this->assertTrue($cliente->activo);
-        $this->assertSame($cliente->id, Venta::latest('id')->firstOrFail()->cliente_id);
-    }
-
-    public function test_si_el_documento_ya_existe_se_reutiliza_el_cliente_sin_duplicarlo(): void
-    {
-        $existente = Cliente::factory()->create(['nombre' => 'Juan Quispe Mamani', 'documento' => '45678912']);
-
-        $this->venderA('Juan Quispe', '45678912');
-
-        $this->assertSame(1, Cliente::where('documento', '45678912')->count());
-        $venta = Venta::latest('id')->firstOrFail();
-        $this->assertSame($existente->id, $venta->cliente_id);
-        // la venta conserva lo que se escribió y el cliente no se pisa
-        $this->assertSame('Juan Quispe', $venta->cliente_nombre);
-        $this->assertSame('Juan Quispe Mamani', $existente->fresh()->nombre);
-    }
-
-    public function test_sin_documento_no_se_crea_ningun_cliente(): void
-    {
-        $this->venderA('Cliente de paso', null);
-
-        $this->assertDatabaseCount('clientes', 0);
-        $this->assertNull(Venta::latest('id')->firstOrFail()->cliente_id);
-    }
-
-    public function test_un_cliente_elegido_de_la_lista_no_se_vuelve_a_crear(): void
-    {
-        $cliente = Cliente::factory()->create(['nombre' => 'Ana Pérez', 'documento' => '12345678']);
-
-        $this->venderA('', null, $cliente->id);
-
-        $this->assertDatabaseCount('clientes', 1);
-        $this->assertSame($cliente->id, Venta::latest('id')->firstOrFail()->cliente_id);
-    }
-
-    public function test_el_documento_se_limpia_de_espacios_antes_de_buscar_o_crear(): void
-    {
-        Cliente::factory()->create(['documento' => '45678912']);
-
-        $this->venderA('Juan', '  45678912 ');
-
-        $this->assertSame(1, Cliente::where('documento', '45678912')->count());
-    }
-
-    public function test_un_cliente_desactivado_con_ese_documento_se_reutiliza_sin_reactivarlo(): void
-    {
-        $inactivo = Cliente::factory()->create(['documento' => '45678912', 'activo' => false]);
-
-        $this->venderA('Juan', '45678912');
-
-        $this->assertFalse($inactivo->fresh()->activo);
-        $this->assertSame($inactivo->id, Venta::latest('id')->firstOrFail()->cliente_id);
-        $this->assertSame(1, Cliente::count());
-    }
-
-    public function test_el_documento_de_la_venta_solo_admite_letras_numeros_y_guiones(): void
-    {
-        $almacen = Almacen::factory()->create();
-
-        $this->venta()
-            ->set('cliente_nombre', 'Juan')
-            ->set('cliente_documento', 'doc raro!')
-            ->set('almacen_id', $almacen->id)
-            ->call('guardar')
-            ->assertHasErrors(['cliente_documento']);
-    }
-
-    public function test_la_pantalla_de_ventas_explica_el_registro_automatico_y_ya_no_manda_a_registrar_aparte(): void
+    public function test_la_pantalla_de_ventas_pide_elegir_el_cliente_y_manda_a_registrarlo_en_clientes(): void
     {
         Livewire::actingAs($this->operador())
             ->test(VentaForm::class)
-            ->assertDontSee('Registrar cliente nuevo')
-            ->assertSee('se registra solo');
+            ->assertSee('Solo se pueden elegir clientes ya registrados')
+            ->assertSeeHtml(route('clientes.nuevo', ['desde' => 'venta']))
+            ->assertDontSee('se registra solo');
     }
 }

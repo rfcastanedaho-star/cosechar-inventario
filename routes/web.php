@@ -62,8 +62,10 @@ Route::middleware(['auth', 'activo'])->group(function () {
     Route::get('/almacenes/{almacen}/editar', AlmacenForm::class)->name('almacenes.editar');
     Route::get('/proveedores', ProveedorLista::class)->name('proveedores.index');
     Route::redirect('/proveedores/historial', '/proveedores');
+    Route::get('/proveedores/nuevo', ProveedorForm::class)->name('proveedores.nuevo');
     Route::get('/proveedores/{proveedor}/editar', ProveedorForm::class)->name('proveedores.editar');
     Route::get('/clientes', ClienteLista::class)->name('clientes.index');
+    Route::get('/clientes/nuevo', ClienteForm::class)->name('clientes.nuevo');
     Route::get('/clientes/{cliente}/editar', ClienteForm::class)->name('clientes.editar');
     Route::get('/compras', CompraForm::class)->name('compras.index');
     Route::get('/compras/historial', CompraLista::class)->name('compras.historial');

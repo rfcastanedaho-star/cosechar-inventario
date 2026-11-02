@@ -7,6 +7,7 @@ use App\Livewire\CompraLista;
 use App\Livewire\VentaForm;
 use App\Livewire\VentaLista;
 use App\Models\Almacen;
+use App\Models\Cliente;
 use App\Models\Compra;
 use App\Models\CompraDetalle;
 use App\Models\Lote;
@@ -222,7 +223,7 @@ class ComprobantesTest extends TestCase
         $componente = Livewire::actingAs(User::factory()->create())
             ->test(VentaForm::class)
             ->call('elegirProductoLinea', 0, $producto->id)
-            ->set('cliente_nombre', 'Ana Pérez')
+            ->call('elegirCliente', Cliente::factory()->create(['nombre' => 'Ana Pérez'])->id)
             ->set('almacen_id', $almacen->id)
             ->set('lineas.0.cantidad', 2)
             ->call('guardar')

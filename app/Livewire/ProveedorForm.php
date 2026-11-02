@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Livewire\Concerns\VuelveAlHistorial;
 use App\Models\Proveedor;
+use App\Repositories\ProveedorRepository;
 use App\Services\AuditoriaService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -62,7 +63,7 @@ class ProveedorForm extends Component
         ];
 
         if ($this->puedeEditarIdentidad) {
-            $reglas['nombre'] = ['required', 'string', 'max:150'];
+            $reglas['nombre'] = ['required', 'string', 'max:150', Rule::unique('proveedores', 'nombre')->ignore($this->proveedorId)];
             $reglas['ruc'] = ['nullable', 'digits:11', Rule::unique('proveedores', 'ruc')->ignore($this->proveedorId)];
         }
 
@@ -73,6 +74,7 @@ class ProveedorForm extends Component
     {
         return [
             'nombre.required' => 'El nombre es obligatorio.',
+            'nombre.unique' => 'Ya existe un proveedor registrado con este nombre.',
             'ruc.digits' => 'El RUC debe tener 11 dígitos.',
             'ruc.unique' => 'Ya existe un proveedor registrado con este RUC.',
         ];
@@ -89,7 +91,24 @@ class ProveedorForm extends Component
 
     public function guardar(AuditoriaService $auditoria)
     {
+        $this->nombre = trim($this->nombre);
+        $this->ruc = trim($this->ruc);
+
         $data = $this->validate();
+
+        if (! $this->editando) {
+            $proveedor = app(ProveedorRepository::class)->create([
+                'nombre' => $data['nombre'],
+                'ruc' => $data['ruc'] ?: null,
+                'telefono' => $data['telefono'] ?: null,
+                'correo' => $data['correo'] ?: null,
+                'direccion' => $data['direccion'] ?: null,
+                'activo' => true,
+            ]);
+
+            return redirect()->route($this->retorno['ruta'])
+                ->with('ok', "Proveedor «{$proveedor->nombre}» registrado.");
+        }
 
         $cambios = [
             'telefono' => $data['telefono'] ?: null,

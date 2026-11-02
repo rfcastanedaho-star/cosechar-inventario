@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Livewire\Concerns\VuelveAlHistorial;
 use App\Models\Cliente;
+use App\Repositories\ClienteRepository;
 use App\Services\AuditoriaService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -26,14 +27,16 @@ class ClienteForm extends Component
 
     public string $direccion = '';
 
-    /** Los clientes se registran solos al vender; esta pantalla solo corrige sus datos. */
-    public function mount(Cliente $cliente): void
+    /** Sin cliente en la ruta registra uno nuevo; con cliente corrige sus datos. */
+    public function mount(?Cliente $cliente = null): void
     {
-        $this->clienteId = $cliente->id;
-        $this->nombre = $cliente->nombre;
-        $this->documento = $cliente->documento ?? '';
-        $this->telefono = $cliente->telefono ?? '';
-        $this->direccion = $cliente->direccion ?? '';
+        if ($cliente?->exists) {
+            $this->clienteId = $cliente->id;
+            $this->nombre = $cliente->nombre;
+            $this->documento = $cliente->documento ?? '';
+            $this->telefono = $cliente->telefono ?? '';
+            $this->direccion = $cliente->direccion ?? '';
+        }
     }
 
     #[Computed]
@@ -88,7 +91,23 @@ class ClienteForm extends Component
 
     public function guardar(AuditoriaService $auditoria)
     {
+        $this->nombre = trim($this->nombre);
+        $this->documento = trim($this->documento);
+
         $data = $this->validate();
+
+        if (! $this->editando) {
+            $cliente = app(ClienteRepository::class)->create([
+                'nombre' => $data['nombre'],
+                'documento' => $data['documento'] ?: null,
+                'telefono' => $data['telefono'] ?: null,
+                'direccion' => $data['direccion'] ?: null,
+                'activo' => true,
+            ]);
+
+            return redirect()->route($this->retorno['ruta'])
+                ->with('ok', "Cliente «{$cliente->nombre}» registrado.");
+        }
 
         $datos = [
             'telefono' => $data['telefono'] ?: null,

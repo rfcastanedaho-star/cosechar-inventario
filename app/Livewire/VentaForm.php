@@ -19,15 +19,14 @@ class VentaForm extends Component
 {
     use BuscaProductoPorLinea;
 
-    /** Cliente registrado elegido; null si se vende a alguien no registrado. */
+    /** Cliente registrado elegido: la venta solo se hace a clientes registrados en Clientes. */
     public ?int $cliente_id = null;
 
-    /** Texto del buscador de clientes registrados (nombre, documento o teléfono). */
+    /** Texto escrito en el campo Cliente (nombre, documento o teléfono) para filtrar los registrados. */
     public string $buscarCliente = '';
 
-    public string $cliente_nombre = '';
-
-    public string $cliente_documento = '';
+    /** La lista desplegable de clientes está abierta (flechita o foco en el campo). */
+    public bool $listaClientes = false;
 
     public ?int $almacen_id = null;
 
@@ -73,31 +72,44 @@ class VentaForm extends Component
         $this->quitarBusquedaDeLinea($indice);
     }
 
-    /** Sugerencias del buscador mientras no haya un cliente registrado elegido. */
+    #[Computed]
+    public function clienteSeleccionado(): ?Cliente
+    {
+        return $this->cliente_id ? Cliente::find($this->cliente_id) : null;
+    }
+
+    /**
+     * Lista desplegable del campo Cliente: sin texto, todos los registrados en orden alfabético;
+     * con texto, los que coinciden. Solo si la lista está abierta o hay texto.
+     */
     #[Computed]
     public function clientesSugeridos(): Collection
     {
-        return $this->cliente_id
-            ? new Collection
-            : app(ClienteRepository::class)->buscar($this->buscarCliente);
+        if ($this->cliente_id || (! $this->listaClientes && trim($this->buscarCliente) === '')) {
+            return new Collection;
+        }
+
+        return app(ClienteRepository::class)->sugerir($this->buscarCliente);
+    }
+
+    public function alternarListaClientes(): void
+    {
+        $this->listaClientes = ! $this->listaClientes;
     }
 
     public function elegirCliente(int $id): void
     {
-        $cliente = Cliente::where('activo', true)->find($id);
-
-        if (! $cliente) {
+        if (! Cliente::where('activo', true)->whereKey($id)->exists()) {
             return;
         }
 
-        $this->cliente_id = $cliente->id;
-        $this->cliente_nombre = $cliente->nombre;
-        $this->cliente_documento = $cliente->documento ?? '';
+        $this->cliente_id = $id;
         $this->buscarCliente = '';
-        $this->resetErrorBag('cliente_nombre');
+        $this->listaClientes = false;
+        $this->resetErrorBag('cliente_id');
     }
 
-    /** Enter en el buscador: elige el primer cliente sugerido. */
+    /** Enter en el campo: elige el primer cliente de la lista. */
     public function elegirPrimerCliente(): void
     {
         $primero = $this->clientesSugeridos->first();
@@ -109,18 +121,7 @@ class VentaForm extends Component
 
     public function limpiarCliente(): void
     {
-        $this->reset(['cliente_id', 'cliente_nombre', 'cliente_documento', 'buscarCliente']);
-    }
-
-    /** Si se cambia a mano el nombre o el documento, ya no es el cliente registrado. */
-    public function updatedClienteNombre(): void
-    {
-        $this->cliente_id = null;
-    }
-
-    public function updatedClienteDocumento(): void
-    {
-        $this->cliente_id = null;
+        $this->reset(['cliente_id', 'buscarCliente', 'listaClientes']);
     }
 
     /** Al elegir el producto se propone su precio normal, sin pisar uno escrito a mano. */
@@ -185,13 +186,12 @@ class VentaForm extends Component
     protected function rules(): array
     {
         $reglas = [
-            'cliente_nombre' => ['required', 'string', 'max:150'],
-            'cliente_documento' => ['nullable', 'string', 'max:20', 'regex:/^[A-Za-z0-9\-]+$/'],
+
             'almacen_id' => ['required', 'exists:almacenes,id'],
             'fecha' => ['required', 'date'],
             'numero_comprobante' => ['nullable', 'string', 'max:50'],
             'lineas' => ['required', 'array', 'min:1'],
-            'cliente_id' => ['nullable', 'exists:clientes,id'],
+            'cliente_id' => ['required', 'exists:clientes,id'],
         ];
 
         foreach ($this->lineas as $indice => $linea) {
@@ -212,7 +212,8 @@ class VentaForm extends Component
     protected function messages(): array
     {
         return [
-            'cliente_nombre.required' => 'El nombre del cliente es obligatorio.',
+            'cliente_id.required' => 'Elija un cliente registrado. Si no está en la lista, regístrelo primero en Clientes.',
+            'cliente_id.exists' => 'Elija un cliente registrado.',
             'almacen_id.required' => 'Debe seleccionar el almacén de origen.',
             'fecha.required' => 'La fecha es obligatoria.',
             '*.producto_id.required' => 'Debe seleccionar un producto.',
@@ -225,17 +226,16 @@ class VentaForm extends Component
 
     public function guardar(VentaService $servicio): void
     {
-        $this->cliente_nombre = trim($this->cliente_nombre);
-        $this->cliente_documento = trim($this->cliente_documento);
-
         $data = $this->validate();
+
+        $cliente = Cliente::findOrFail($data['cliente_id']);
 
         try {
             $venta = $servicio->registrar(
                 [
-                    'cliente_id' => $data['cliente_id'] ?? null,
-                    'cliente_nombre' => $data['cliente_nombre'],
-                    'cliente_documento' => $data['cliente_documento'] ?: null,
+                    'cliente_id' => $cliente->id,
+                    'cliente_nombre' => $cliente->nombre,
+                    'cliente_documento' => $cliente->documento,
                     'almacen_id' => $data['almacen_id'],
                     'fecha' => $data['fecha'],
                     'numero_comprobante' => $data['numero_comprobante'] ?: null,
@@ -249,7 +249,7 @@ class VentaForm extends Component
             return;
         }
 
-        $this->reset(['cliente_id', 'buscarCliente', 'cliente_nombre', 'cliente_documento', 'numero_comprobante']);
+        $this->reset(['cliente_id', 'buscarCliente', 'listaClientes', 'numero_comprobante']);
         $this->almacen_id = Almacen::unicoActivo()?->id;
         $this->lineas = [$this->lineaVacia()];
         $this->busquedaProducto = [];

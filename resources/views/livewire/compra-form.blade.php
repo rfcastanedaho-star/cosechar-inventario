@@ -29,23 +29,23 @@
             <dl class="grid grid-cols-1 gap-x-6 gap-y-3 rounded-xl border border-cosechar-border bg-white p-4 text-sm sm:grid-cols-2">
                 <div>
                     <dt class="text-xs font-medium text-cosechar-muted">Proveedor</dt>
-                    <dd class="text-cosechar-ink">{{ $proveedor_nombre }}</dd>
+                    <dd class="text-cosechar-ink">{{ $this->proveedorSeleccionado?->nombre }}</dd>
                 </div>
                 <div>
                     <dt class="text-xs font-medium text-cosechar-muted">RUC</dt>
-                    <dd class="text-cosechar-ink">{{ $proveedor_ruc ?: '—' }}</dd>
+                    <dd class="text-cosechar-ink">{{ $this->proveedorSeleccionado?->ruc ?: '—' }}</dd>
                 </div>
                 <div>
                     <dt class="text-xs font-medium text-cosechar-muted">Teléfono</dt>
-                    <dd class="text-cosechar-ink">{{ $proveedor_telefono ?: '—' }}</dd>
+                    <dd class="text-cosechar-ink">{{ $this->proveedorSeleccionado?->telefono ?: '—' }}</dd>
                 </div>
                 <div>
                     <dt class="text-xs font-medium text-cosechar-muted">Correo</dt>
-                    <dd class="text-cosechar-ink">{{ $proveedor_correo ?: '—' }}</dd>
+                    <dd class="text-cosechar-ink">{{ $this->proveedorSeleccionado?->correo ?: '—' }}</dd>
                 </div>
                 <div class="sm:col-span-2">
                     <dt class="text-xs font-medium text-cosechar-muted">Dirección</dt>
-                    <dd class="text-cosechar-ink">{{ $proveedor_direccion ?: '—' }}</dd>
+                    <dd class="text-cosechar-ink">{{ $this->proveedorSeleccionado?->direccion ?: '—' }}</dd>
                 </div>
                 <div>
                     <dt class="text-xs font-medium text-cosechar-muted">N.º de factura</dt>
@@ -120,95 +120,37 @@
 
         <form wire:submit="revisar" class="flex flex-col gap-6">
             <div class="rounded-xl border border-cosechar-border bg-white p-4">
-                <label for="buscar_proveedor" class="mb-1 block text-sm font-medium text-cosechar-ink">Buscar proveedor registrado <span class="font-normal text-cosechar-muted">(opcional)</span></label>
-
-                @if ($this->proveedorSeleccionado)
-                    <div class="flex items-center justify-between gap-2 rounded-md border border-cosechar-border bg-cosechar-cream px-3 py-2 text-sm">
-                        <span class="min-w-0 truncate text-cosechar-ink">
-                            <span class="mr-2 rounded-full bg-cosechar-olive/15 px-2 py-0.5 text-[11px] font-semibold text-cosechar-olive">Proveedor registrado</span>
-                            {{ $this->proveedorSeleccionado->nombre }}@if ($this->proveedorSeleccionado->ruc) · RUC {{ $this->proveedorSeleccionado->ruc }}@endif
-                        </span>
-                        <button type="button" wire:click="limpiarProveedor" class="shrink-0 text-xs font-medium text-cosechar-muted underline hover:text-cosechar-ink">Cambiar</button>
-                    </div>
-                @else
-                    <input
-                        type="text"
-                        id="buscar_proveedor"
-                        wire:model.live.debounce.250ms="buscarProveedor"
-                        wire:keydown.enter.prevent="elegirPrimerProveedor"
-                        placeholder="Escriba el nombre o el RUC del proveedor"
-                        autocomplete="off"
-                        class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
-                    >
-
-                    @if (trim($buscarProveedor) !== '')
-                        <ul class="mt-1 max-h-60 overflow-auto rounded-md border border-cosechar-border bg-white shadow-sm">
-                            @forelse ($this->proveedoresSugeridos as $sugerido)
-                                <li>
-                                    <button
-                                        type="button"
-                                        wire:click="elegirProveedor({{ $sugerido->id }})"
-                                        class="block w-full px-3 py-2 text-left text-sm text-cosechar-ink hover:bg-cosechar-cream"
-                                    >
-                                        {{ $sugerido->nombre }}
-                                        @if ($sugerido->ruc)
-                                            <span class="text-xs text-cosechar-muted">· RUC {{ $sugerido->ruc }}</span>
-                                        @endif
-                                    </button>
-                                </li>
-                            @empty
-                                <li class="px-3 py-2 text-sm text-cosechar-muted">No se encontró ningún proveedor registrado. Puede escribir sus datos abajo.</li>
-                            @endforelse
-                        </ul>
+                <x-selector-registrado
+                    id="proveedor"
+                    etiqueta="Proveedor"
+                    prop-buscar="buscarProveedor"
+                    :texto-buscar="$buscarProveedor"
+                    prop-abierto="listaProveedores"
+                    prop-error="proveedor_id"
+                    :seleccionado="$this->proveedorSeleccionado"
+                    :sugeridos="$this->proveedoresSugeridos"
+                    elegir="elegirProveedor"
+                    limpiar="limpiarProveedor"
+                    alternar="alternarListaProveedores"
+                    placeholder="Escriba las iniciales del nombre o el RUC, o abra la lista"
+                    campo-doc="ruc"
+                    etiqueta-doc="RUC"
+                    :nueva-ruta="route('proveedores.nuevo', ['desde' => 'compra'])"
+                    nuevo-texto="Registrar proveedor nuevo"
+                    vacio="No hay ningún proveedor registrado que coincida."
+                >
+                    @if ($this->proveedorSeleccionado)
+                        <p class="mt-2 text-xs text-cosechar-muted">
+                            Teléfono: {{ $this->proveedorSeleccionado->telefono ?: '—' }}
+                            · Correo: {{ $this->proveedorSeleccionado->correo ?: '—' }}
+                            · Dirección: {{ $this->proveedorSeleccionado->direccion ?: '—' }}
+                        </p>
                     @endif
-                @endif
+                </x-selector-registrado>
+                @unless ($proveedor_id)
+                    <p class="mt-2 text-xs text-cosechar-muted">Solo se pueden elegir proveedores ya registrados. ¿No está? <a href="{{ route('proveedores.nuevo', ['desde' => 'compra']) }}" class="font-medium text-cosechar-forest underline hover:text-cosechar-ink">Regístrelo en Proveedores</a>.</p>
+                @endunless
             </div>
-
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                    <label for="proveedor_nombre" class="mb-1 block text-sm font-medium text-cosechar-ink">Nombre del proveedor <x-obligatorio /></label>
-                    <input type="text" id="proveedor_nombre" wire:model.blur="proveedor_nombre" autocomplete="off" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
-                    @error('proveedor_nombre')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <label for="proveedor_ruc" class="mb-1 block text-sm font-medium text-cosechar-ink">RUC <span class="font-normal text-cosechar-muted">(opcional)</span></label>
-                    <input type="text" id="proveedor_ruc" wire:model.blur="proveedor_ruc" inputmode="numeric" autocomplete="off" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
-                    @error('proveedor_ruc')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <label for="proveedor_telefono" class="mb-1 block text-sm font-medium text-cosechar-ink">Teléfono <span class="font-normal text-cosechar-muted">(opcional)</span></label>
-                    <input type="text" id="proveedor_telefono" wire:model.blur="proveedor_telefono" autocomplete="off" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
-                    @error('proveedor_telefono')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <label for="proveedor_correo" class="mb-1 block text-sm font-medium text-cosechar-ink">Correo <span class="font-normal text-cosechar-muted">(opcional)</span></label>
-                    <input type="email" id="proveedor_correo" wire:model.blur="proveedor_correo" autocomplete="off" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
-                    @error('proveedor_correo')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="sm:col-span-2">
-                    <label for="proveedor_direccion" class="mb-1 block text-sm font-medium text-cosechar-ink">Dirección <span class="font-normal text-cosechar-muted">(opcional)</span></label>
-                    <input type="text" id="proveedor_direccion" wire:model.blur="proveedor_direccion" autocomplete="off" class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring">
-                    @error('proveedor_direccion')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
-
-            @unless ($proveedor_id)
-                <p class="-mt-3 text-xs text-cosechar-muted">Si el proveedor no está registrado, escriba aquí sus datos: se registra solo al guardar la compra.</p>
-            @endunless
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 @unless ($this->almacenes->count() === 1)

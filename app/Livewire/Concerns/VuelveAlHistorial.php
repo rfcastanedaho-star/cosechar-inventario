@@ -22,6 +22,9 @@ trait VuelveAlHistorial
         return match ($this->desde) {
             'compras' => ['ruta' => 'compras.historial', 'etiqueta' => 'Volver al historial de compras'],
             'ventas' => ['ruta' => 'ventas.historial', 'etiqueta' => 'Volver al historial de ventas'],
+            // Al registrar uno nuevo desde el formulario de compra o de venta, se vuelve a ese formulario.
+            'compra' => ['ruta' => 'compras.index', 'etiqueta' => 'Volver a registrar compra'],
+            'venta' => ['ruta' => 'ventas.index', 'etiqueta' => 'Volver a registrar venta'],
             default => ['ruta' => $this->rutaDirectorio(), 'etiqueta' => $this->etiquetaDirectorio()],
         };
     }

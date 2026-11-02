@@ -36,16 +36,17 @@ class ProveedorListaTest extends TestCase
             ->get(route('proveedores.index'))
             ->assertOk()
             ->assertSee('Proveedores')
-            ->assertSee('se registran solos al registrar una compra')
+            ->assertSee('en Compras solo se elige entre los registrados')
             ->assertSee(route('proveedores.editar', $proveedor), false)
-            ->assertDontSee('Registrar proveedor');
+            ->assertSee('Registrar proveedor')
+            ->assertSee(route('proveedores.nuevo'), false);
     }
 
-    public function test_ya_no_existe_una_pantalla_para_registrar_proveedores_a_mano(): void
+    public function test_la_pantalla_para_registrar_proveedores_existe_en_el_menu(): void
     {
-        $this->assertFalse(Route::has('proveedores.nuevo'));
+        $this->assertTrue(Route::has('proveedores.nuevo'));
 
-        $this->actingAs(User::factory()->create())->get('/proveedores/nuevo')->assertNotFound();
+        $this->actingAs(User::factory()->create())->get('/proveedores/nuevo')->assertOk()->assertSee('Registrar proveedor');
     }
 
     public function test_la_direccion_antigua_del_historial_lleva_al_directorio(): void

@@ -7,6 +7,7 @@ use App\Models\Almacen;
 use App\Models\Compra;
 use App\Models\Lote;
 use App\Models\Producto;
+use App\Models\Proveedor;
 use App\Models\User;
 use App\Services\CompraService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,7 +62,7 @@ class CompraSinLoteTest extends TestCase
 
         Livewire::actingAs($this->usuario)
             ->test(CompraForm::class)
-            ->set('proveedor_nombre', 'Agro Sur')
+            ->call('elegirProveedor', Proveedor::factory()->create(['nombre' => 'Agro Sur'])->id)
             ->set('lineas.0.producto_id', $producto->id)
             ->set('lineas.0.cantidad', 12)
             ->set('lineas.0.costo_unitario', 4)

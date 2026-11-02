@@ -1,6 +1,6 @@
 <div class="mx-auto max-w-xl p-8">
     <div class="mb-6 flex items-center justify-between gap-3">
-        <h1 class="text-lg font-semibold text-cosechar-ink">Editar proveedor</h1>
+        <h1 class="text-lg font-semibold text-cosechar-ink">{{ $this->editando ? 'Editar proveedor' : 'Registrar proveedor' }}</h1>
         <a href="{{ route($this->retorno['ruta']) }}" class="rounded-md border border-cosechar-border bg-white px-4 py-2 text-sm font-medium text-cosechar-ink hover:bg-cosechar-cream">
             {{ $this->retorno['etiqueta'] }}
         </a>
@@ -87,7 +87,7 @@
                 wire:target="guardar"
                 class="rounded-md bg-cosechar-forest px-4 py-2 text-sm font-medium text-white hover:bg-cosechar-forest/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-                <span wire:loading.remove wire:target="guardar">Guardar cambios</span>
+                <span wire:loading.remove wire:target="guardar">{{ $this->editando ? 'Guardar cambios' : 'Registrar proveedor' }}</span>
                 <span wire:loading wire:target="guardar">Guardando...</span>
             </button>
         </div>

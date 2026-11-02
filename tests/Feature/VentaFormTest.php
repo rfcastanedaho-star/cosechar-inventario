@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\VentaForm;
 use App\Models\Almacen;
+use App\Models\Cliente;
 use App\Models\Lote;
 use App\Models\Producto;
 use App\Models\User;
@@ -24,7 +25,7 @@ class VentaFormTest extends TestCase
 
         Livewire::actingAs($usuario)
             ->test(VentaForm::class)
-            ->set('cliente_nombre', 'María López')
+            ->call('elegirCliente', Cliente::factory()->create(['nombre' => 'María López'])->id)
             ->set('almacen_id', $almacen->id)
             ->set('fecha', '2026-09-20')
             ->set('lineas.0.producto_id', $producto->id)
@@ -48,10 +49,9 @@ class VentaFormTest extends TestCase
 
         Livewire::actingAs($usuario)
             ->test(VentaForm::class)
-            ->set('cliente_nombre', '')
             ->set('almacen_id', null)
             ->call('guardar')
-            ->assertHasErrors(['cliente_nombre' => 'required', 'almacen_id' => 'required']);
+            ->assertHasErrors(['cliente_id' => 'required', 'almacen_id' => 'required']);
     }
 
     public function test_no_permite_vender_mas_stock_del_disponible_en_el_almacen(): void
@@ -63,7 +63,7 @@ class VentaFormTest extends TestCase
 
         Livewire::actingAs($usuario)
             ->test(VentaForm::class)
-            ->set('cliente_nombre', 'Cliente X')
+            ->call('elegirCliente', Cliente::factory()->create(['nombre' => 'Cliente X'])->id)
             ->set('almacen_id', $almacen->id)
             ->set('lineas.0.producto_id', $producto->id)
             ->set('lineas.0.cantidad', 50)

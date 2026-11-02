@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Livewire\CompraForm;
 use App\Livewire\VentaForm;
 use App\Models\Almacen;
+use App\Models\Cliente;
 use App\Models\Lote;
 use App\Models\Producto;
 use App\Models\Proveedor;
@@ -202,7 +203,7 @@ class BuscadorProductoPorLineaTest extends TestCase
         $this->formulario(VentaForm::class)
             ->set('busquedaProducto.0', 'fung')
             ->call('elegirPrimeroLinea', 0)
-            ->set('cliente_nombre', 'Ana Pérez')
+            ->call('elegirCliente', Cliente::factory()->create(['nombre' => 'Ana Pérez'])->id)
             ->set('almacen_id', $almacen->id)
             ->set('lineas.0.cantidad', 7)
             ->call('guardar')

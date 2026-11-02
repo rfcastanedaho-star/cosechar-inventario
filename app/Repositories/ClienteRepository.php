@@ -43,6 +43,19 @@ class ClienteRepository
     }
 
     /**
+     * Lista desplegable de Ventas: con el campo vacío ofrece todos los clientes activos en
+     * orden alfabético (hasta $limiteTodos); con texto, los que coinciden ({@see buscar}).
+     */
+    public function sugerir(string $termino, int $limite = 8, int $limiteTodos = 30): Collection
+    {
+        if (trim($termino) !== '') {
+            return $this->buscar($termino, $limite);
+        }
+
+        return Cliente::where('activo', true)->orderBy('nombre')->limit($limiteTodos)->get();
+    }
+
+    /**
      * Listado paginado en orden alfabético.
      *
      * @param  array{buscar?: ?string, estado?: ?string}  $filtros  estado: activo | inactivo

@@ -30,6 +30,12 @@ class CompraRevisionTest extends TestCase
         return Producto::factory()->create(['maneja_vencimiento' => false, ...$datos]);
     }
 
+    private function proveedor(): Proveedor
+    {
+        return Proveedor::where('nombre', 'Agro Andina SAC')->first()
+            ?? Proveedor::factory()->create(['nombre' => 'Agro Andina SAC', 'telefono' => '987654321', 'correo' => 'ventas@agroandina.pe', 'direccion' => 'Av. Larco 123']);
+    }
+
     /** Formulario con una línea completa: 4 unidades a S/ 5.50 = S/ 22.00. */
     private function compra(?Producto $producto = null): Testable
     {
@@ -37,7 +43,7 @@ class CompraRevisionTest extends TestCase
 
         return Livewire::actingAs($this->admin())
             ->test(CompraForm::class)
-            ->set('proveedor_nombre', 'Agro Andina SAC')
+            ->call('elegirProveedor', $this->proveedor()->id)
             ->call('elegirProductoLinea', 0, $producto->id)
             ->set('lineas.0.cantidad', 4)
             ->set('lineas.0.costo_unitario', '5.50');
@@ -51,7 +57,7 @@ class CompraRevisionTest extends TestCase
 
         $this->assertStringContainsString('Registrar compra', $texto);
 
-        $orden = ['Nombre del proveedor *', 'Teléfono', 'Correo', 'Dirección', 'N.º de factura', 'Fecha de factura *', 'Productos comprados', 'Producto *', 'Cantidad *', 'Costo unitario (S/) *'];
+        $orden = ['Proveedor *', 'N.º de factura', 'Fecha de factura *', 'Productos comprados', 'Producto *', 'Cantidad *', 'Costo unitario (S/) *'];
         $posicion = -1;
 
         foreach ($orden as $etiqueta) {
@@ -74,37 +80,15 @@ class CompraRevisionTest extends TestCase
         $this->assertTrue(Schema::hasColumn('proveedores', 'correo'));
     }
 
-    public function test_el_correo_y_la_direccion_se_guardan_con_el_proveedor_nuevo(): void
-    {
-        $this->compra()
-            ->set('proveedor_correo', 'ventas@agroandina.pe')
-            ->set('proveedor_direccion', 'Av. Larco 123, Trujillo')
-            ->call('guardar')
-            ->assertHasNoErrors();
-
-        $proveedor = Proveedor::where('nombre', 'Agro Andina SAC')->firstOrFail();
-        $this->assertSame('ventas@agroandina.pe', $proveedor->correo);
-        $this->assertSame('Av. Larco 123, Trujillo', $proveedor->direccion);
-    }
-
-    public function test_el_correo_debe_ser_valido_y_los_dos_campos_son_opcionales(): void
-    {
-        $this->compra()->set('proveedor_correo', 'no-es-correo')->call('guardar')->assertHasErrors(['proveedor_correo' => 'email']);
-        $this->assertDatabaseCount('compras', 0);
-
-        $this->compra()->call('guardar')->assertHasNoErrors();
-        $this->assertNull(Proveedor::firstOrFail()->correo);
-    }
-
-    public function test_al_elegir_un_proveedor_registrado_se_rellenan_correo_y_direccion(): void
+    public function test_al_elegir_un_proveedor_registrado_se_muestran_correo_y_direccion(): void
     {
         $proveedor = Proveedor::factory()->create(['nombre' => 'Rural Semillas', 'correo' => 'rural@semillas.pe', 'direccion' => 'Jr. Lima 45']);
 
         Livewire::actingAs($this->admin())
             ->test(CompraForm::class)
             ->call('elegirProveedor', $proveedor->id)
-            ->assertSet('proveedor_correo', 'rural@semillas.pe')
-            ->assertSet('proveedor_direccion', 'Jr. Lima 45');
+            ->assertSee('rural@semillas.pe')
+            ->assertSee('Jr. Lima 45');
     }
 
     public function test_el_repositorio_completa_correo_y_direccion_solo_si_estaban_vacios(): void
@@ -165,7 +149,7 @@ class CompraRevisionTest extends TestCase
 
         $this->assertDatabaseCount('compras', 0);
         $this->assertDatabaseCount('lotes', 0);
-        $this->assertDatabaseCount('proveedores', 0);
+        $this->assertDatabaseCount('proveedores', 1);
     }
 
     public function test_la_revision_suma_varias_lineas(): void
@@ -185,9 +169,6 @@ class CompraRevisionTest extends TestCase
     public function test_la_revision_muestra_los_datos_del_proveedor_y_la_factura(): void
     {
         $this->compra()
-            ->set('proveedor_telefono', '987654321')
-            ->set('proveedor_correo', 'ventas@agroandina.pe')
-            ->set('proveedor_direccion', 'Av. Larco 123')
             ->set('numero_comprobante', 'F001-000123')
             ->set('fecha', '2026-10-05')
             ->call('revisar')
@@ -205,7 +186,7 @@ class CompraRevisionTest extends TestCase
             ->test(CompraForm::class)
             ->call('revisar')
             ->assertSet('confirmando', false)
-            ->assertHasErrors(['proveedor_nombre' => 'required', 'lineas.0.producto_id' => 'required']);
+            ->assertHasErrors(['proveedor_id' => 'required', 'lineas.0.producto_id' => 'required']);
     }
 
     public function test_el_producto_con_lotes_ya_no_pide_vencimiento_en_la_compra(): void
@@ -222,7 +203,7 @@ class CompraRevisionTest extends TestCase
             ->call('revisar')
             ->call('volverAEditar')
             ->assertSet('confirmando', false)
-            ->assertSet('proveedor_nombre', 'Agro Andina SAC')
+            ->assertSet('proveedor_id', $this->proveedor()->id)
             ->assertSet('lineas.0.cantidad', 4)
             ->assertSet('lineas.0.costo_unitario', '5.50')
             ->assertDontSee('Verifique la compra');
@@ -238,9 +219,7 @@ class CompraRevisionTest extends TestCase
             ->assertHasNoErrors()
             ->assertSet('confirmando', false)
             ->assertSet('creado', true)
-            ->assertSet('proveedor_nombre', '')
-            ->assertSet('proveedor_correo', '')
-            ->assertSet('proveedor_direccion', '');
+            ->assertSet('proveedor_id', null);
 
         $compra = Compra::firstOrFail();
         $this->assertSame('22.00', $compra->total);

@@ -68,6 +68,19 @@ class ProveedorRepository
     }
 
     /**
+     * Lista desplegable de Compras: con el campo vacío ofrece todos los proveedores activos en
+     * orden alfabético (hasta $limiteTodos); con texto, los que coinciden ({@see buscar}).
+     */
+    public function sugerir(string $termino, int $limite = 8, int $limiteTodos = 30): Collection
+    {
+        if (trim($termino) !== '') {
+            return $this->buscar($termino, $limite);
+        }
+
+        return Proveedor::where('activo', true)->orderBy('nombre')->limit($limiteTodos)->get();
+    }
+
+    /**
      * Proveedor para una compra: el que ya existe (aunque esté desactivado) o uno nuevo.
      * Con RUC se busca por RUC; si no existe y hay un proveedor del mismo nombre sin RUC,
      * se completa ese en vez de duplicarlo. Sin RUC se busca por el mismo nombre.

@@ -20,19 +20,11 @@ class CompraForm extends Component
 
     public ?int $proveedor_id = null;
 
-    /** Texto del buscador de proveedor (nombre o RUC). */
+    /** Texto escrito en el campo Proveedor (nombre o RUC) para filtrar los registrados. */
     public string $buscarProveedor = '';
 
-    /** Datos del proveedor: se rellenan al elegir uno registrado o se escriben para registrarlo al guardar. */
-    public string $proveedor_nombre = '';
-
-    public string $proveedor_ruc = '';
-
-    public string $proveedor_telefono = '';
-
-    public string $proveedor_correo = '';
-
-    public string $proveedor_direccion = '';
+    /** La lista desplegable de proveedores está abierta (flechita o foco en el campo). */
+    public bool $listaProveedores = false;
 
     public ?int $almacen_id = null;
 
@@ -87,13 +79,23 @@ class CompraForm extends Component
         return $this->proveedor_id ? Proveedor::find($this->proveedor_id) : null;
     }
 
-    /** Sugerencias del buscador mientras no haya un proveedor elegido. */
+    /**
+     * Lista desplegable del campo Proveedor: sin texto, todos los registrados en orden alfabético;
+     * con texto, los que empiezan o contienen lo escrito. Solo si la lista está abierta o hay texto.
+     */
     #[Computed]
     public function proveedoresSugeridos(): Collection
     {
-        return $this->proveedor_id
-            ? new Collection
-            : app(ProveedorRepository::class)->buscar($this->buscarProveedor);
+        if ($this->proveedor_id || (! $this->listaProveedores && trim($this->buscarProveedor) === '')) {
+            return new Collection;
+        }
+
+        return app(ProveedorRepository::class)->sugerir($this->buscarProveedor);
+    }
+
+    public function alternarListaProveedores(): void
+    {
+        $this->listaProveedores = ! $this->listaProveedores;
     }
 
     public function elegirProveedor(int $id): void
@@ -102,27 +104,10 @@ class CompraForm extends Component
             return;
         }
 
-        $proveedor = Proveedor::findOrFail($id);
-
-        $this->proveedor_id = $proveedor->id;
-        $this->proveedor_nombre = $proveedor->nombre;
-        $this->proveedor_ruc = $proveedor->ruc ?? '';
-        $this->proveedor_telefono = $proveedor->telefono ?? '';
-        $this->proveedor_correo = $proveedor->correo ?? '';
-        $this->proveedor_direccion = $proveedor->direccion ?? '';
+        $this->proveedor_id = $id;
         $this->buscarProveedor = '';
-        $this->resetErrorBag(['proveedor_nombre', 'proveedor_ruc']);
-    }
-
-    /** Si se cambia a mano el nombre o el RUC, ya no es el proveedor registrado: se tratará como uno por registrar. */
-    public function updatedProveedorNombre(): void
-    {
-        $this->proveedor_id = null;
-    }
-
-    public function updatedProveedorRuc(): void
-    {
-        $this->proveedor_id = null;
+        $this->listaProveedores = false;
+        $this->resetErrorBag('proveedor_id');
     }
 
     /** Enter en el buscador: elige la primera sugerencia. */
@@ -137,7 +122,7 @@ class CompraForm extends Component
 
     public function limpiarProveedor(): void
     {
-        $this->reset(['proveedor_id', 'buscarProveedor', 'proveedor_nombre', 'proveedor_ruc', 'proveedor_telefono', 'proveedor_correo', 'proveedor_direccion']);
+        $this->reset(['proveedor_id', 'buscarProveedor', 'listaProveedores']);
     }
 
     /** Cualquier cambio durante la verificación la anula: hay que revisar de nuevo. */
@@ -169,12 +154,7 @@ class CompraForm extends Component
     protected function rules(): array
     {
         $reglas = [
-            'proveedor_id' => ['nullable', 'exists:proveedores,id'],
-            'proveedor_nombre' => ['required', 'string', 'max:150'],
-            'proveedor_ruc' => ['nullable', 'digits:11'],
-            'proveedor_telefono' => ['nullable', 'string', 'max:30'],
-            'proveedor_correo' => ['nullable', 'email', 'max:150'],
-            'proveedor_direccion' => ['nullable', 'string', 'max:255'],
+            'proveedor_id' => ['required', 'exists:proveedores,id'],
             'almacen_id' => ['required', 'exists:almacenes,id'],
             'fecha' => ['required', 'date'],
             'numero_comprobante' => ['nullable', 'string', 'max:50'],
@@ -193,10 +173,9 @@ class CompraForm extends Component
     protected function messages(): array
     {
         return [
-            'proveedor_nombre.required' => 'Escriba el nombre del proveedor o elija uno registrado.',
-            'proveedor_ruc.digits' => 'El RUC debe tener 11 dígitos.',
+            'proveedor_id.required' => 'Elija un proveedor registrado. Si no está en la lista, regístrelo primero en Proveedores.',
+            'proveedor_id.exists' => 'Elija un proveedor registrado.',
             'almacen_id.required' => 'Debe seleccionar el almacén destino.',
-            'proveedor_correo.email' => 'Escriba un correo válido, por ejemplo ventas@proveedor.pe.',
             'fecha.required' => 'La fecha de la factura es obligatoria.',
             '*.producto_id.required' => 'Debe seleccionar un producto.',
             '*.cantidad.required' => 'La cantidad es obligatoria.',
@@ -205,19 +184,9 @@ class CompraForm extends Component
         ];
     }
 
-    private function limpiarEspacios(): void
-    {
-        $this->proveedor_nombre = trim($this->proveedor_nombre);
-        $this->proveedor_ruc = trim($this->proveedor_ruc);
-        $this->proveedor_telefono = trim($this->proveedor_telefono);
-        $this->proveedor_correo = trim($this->proveedor_correo);
-        $this->proveedor_direccion = trim($this->proveedor_direccion);
-    }
-
     /** Valida todo y pasa al resumen con el total; todavía no se guarda nada. */
     public function revisar(): void
     {
-        $this->limpiarEspacios();
         $this->validate();
         $this->confirmando = true;
     }
@@ -229,18 +198,11 @@ class CompraForm extends Component
 
     public function guardar(CompraService $servicio): void
     {
-        $this->limpiarEspacios();
-
         $data = $this->validate();
 
         $compra = $servicio->registrar(
             [
-                'proveedor_id' => $data['proveedor_id'] ?? null,
-                'proveedor_nombre' => $data['proveedor_nombre'],
-                'proveedor_ruc' => $data['proveedor_ruc'] ?: null,
-                'proveedor_telefono' => $data['proveedor_telefono'] ?: null,
-                'proveedor_correo' => $data['proveedor_correo'] ?: null,
-                'proveedor_direccion' => $data['proveedor_direccion'] ?: null,
+                'proveedor_id' => $data['proveedor_id'],
                 'almacen_id' => $data['almacen_id'],
                 'fecha' => $data['fecha'],
                 'numero_comprobante' => $data['numero_comprobante'] ?: null,
@@ -249,7 +211,7 @@ class CompraForm extends Component
             auth()->user(),
         );
 
-        $this->reset(['proveedor_id', 'buscarProveedor', 'proveedor_nombre', 'proveedor_ruc', 'proveedor_telefono', 'proveedor_correo', 'proveedor_direccion', 'numero_comprobante', 'confirmando']);
+        $this->reset(['proveedor_id', 'buscarProveedor', 'listaProveedores', 'numero_comprobante', 'confirmando']);
         $this->almacen_id = Almacen::unicoActivo()?->id;
         $this->lineas = [$this->lineaVacia()];
         $this->busquedaProducto = [];
