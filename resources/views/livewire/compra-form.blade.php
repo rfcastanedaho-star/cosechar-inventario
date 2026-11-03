@@ -79,6 +79,11 @@
                                 <td class="px-4 py-3 text-cosechar-ink">
                                     @if ($productoLinea = $this->productoDeLinea($indice))
                                         <x-producto-etiqueta :producto="$productoLinea" />
+                                        @if ($this->lineaUsaLote($indice))
+                                            <span class="block text-xs text-cosechar-muted">
+                                                Lote {{ $linea['numero_lote'] }} · vence {{ \Illuminate\Support\Carbon::parse($linea['fecha_vencimiento'])->format('d/m/Y') }}@if (trim($linea['nota'])) · {{ $linea['nota'] }}@endif
+                                            </span>
+                                        @endif
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-right text-cosechar-ink">{{ $linea['cantidad'] }}</td>
@@ -239,7 +244,37 @@
                                 Quitar
                             </button>
                         </div>
-                    </div>
+                        @if ($this->lineaUsaLote($indice))
+                            <div class="rounded-lg border border-cosechar-olive/30 bg-cosechar-cream/60 p-3 sm:col-span-12">
+                                <p class="mb-2 text-xs font-semibold text-cosechar-ink">📦 Información del lote</p>
+                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-cosechar-muted">N.º de lote <x-obligatorio /></label>
+                                        <input type="text" maxlength="50" wire:model.blur="lineas.{{ $indice }}.numero_lote" autocomplete="off" class="w-full rounded-md border border-cosechar-border bg-white px-2 py-1.5 text-sm">
+                                        @error("lineas.{$indice}.numero_lote")
+                                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-cosechar-muted">Fecha de vencimiento <x-obligatorio /></label>
+                                        <input type="date" wire:model.blur="lineas.{{ $indice }}.fecha_vencimiento" class="w-full rounded-md border border-cosechar-border bg-white px-2 py-1.5 text-sm">
+                                        @error("lineas.{$indice}.fecha_vencimiento")
+                                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-cosechar-muted">Nota <span class="font-normal">(opcional)</span></label>
+                                        <input type="text" maxlength="255" wire:model.blur="lineas.{{ $indice }}.nota" autocomplete="off" class="w-full rounded-md border border-cosechar-border bg-white px-2 py-1.5 text-sm">
+                                        @error("lineas.{$indice}.nota")
+                                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                </div>
+                                @if ($loteExistente = $this->loteExistenteDeLinea($indice))
+                                    <p class="mt-2 text-xs text-cosechar-muted">Este lote ya existe ({{ $loteExistente->cantidad }} unidades): las unidades de esta compra se sumarán a él.</p>
+                                @endif
+                            </div>
+                        @endif                    </div>
                 @endforeach
 
                 <button

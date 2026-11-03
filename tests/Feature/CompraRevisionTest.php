@@ -189,9 +189,14 @@ class CompraRevisionTest extends TestCase
             ->assertHasErrors(['proveedor_id' => 'required', 'lineas.0.producto_id' => 'required']);
     }
 
-    public function test_el_producto_con_lotes_ya_no_pide_vencimiento_en_la_compra(): void
+    public function test_el_producto_con_lotes_pide_su_informacion_de_lote_antes_de_revisar(): void
     {
         $this->compra($this->producto(['maneja_vencimiento' => true]))
+            ->call('revisar')
+            ->assertSet('confirmando', false)
+            ->assertHasErrors(['lineas.0.numero_lote' => 'required', 'lineas.0.fecha_vencimiento' => 'required'])
+            ->set('lineas.0.numero_lote', 'L-2026-01')
+            ->set('lineas.0.fecha_vencimiento', now()->addYear()->toDateString())
             ->call('revisar')
             ->assertSet('confirmando', true)
             ->assertHasNoErrors();

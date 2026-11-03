@@ -124,7 +124,7 @@
                         </td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $producto->codigo }}</td>
                         <td class="px-4 py-3 font-medium text-cosechar-ink">
-                            {{ $producto->nombre }}
+                            {{ $producto->nombre }}@if ($producto->maneja_vencimiento)<span class="ml-1" title="Usa lotes" aria-label="Usa lotes">📦</span>@endif
                             @if ($producto->marca || $producto->presentacion)
                                 <span class="block text-xs font-normal text-cosechar-muted">{{ collect([$producto->marca, $producto->presentacion])->filter()->join(' · ') }}</span>
                             @endif

@@ -191,6 +191,9 @@
                         <tr wire:key="detalle-{{ $lote->id }}" class="bg-cosechar-cream/40">
                             <td colspan="{{ $conCosto ? 8 : 7 }}" class="px-4 py-4">
                                 @php($totales = $this->totalesDelLote)
+                                @if ($lote->nota)
+                                    <p class="mb-3 rounded-md border border-cosechar-border bg-white px-3 py-2 text-sm text-cosechar-ink"><span class="font-medium">Nota del lote:</span> {{ $lote->nota }}</p>
+                                @endif
                                 <div class="mb-4 grid gap-3 sm:grid-cols-2">
                                     <div class="rounded-xl border border-cosechar-border bg-white p-3">
                                         <p class="text-xs font-medium text-cosechar-muted">Vendido</p>

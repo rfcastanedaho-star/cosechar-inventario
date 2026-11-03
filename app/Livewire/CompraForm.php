@@ -4,11 +4,15 @@ namespace App\Livewire;
 
 use App\Livewire\Concerns\BuscaProductoPorLinea;
 use App\Models\Almacen;
+use App\Models\Lote;
 use App\Models\Producto;
 use App\Models\Proveedor;
+use App\Repositories\LoteRepository;
 use App\Repositories\ProveedorRepository;
 use App\Services\CompraService;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -32,7 +36,7 @@ class CompraForm extends Component
 
     public string $numero_comprobante = '';
 
-    /** @var array<int, array{producto_id: ?int, cantidad: int, costo_unitario: string}> */
+    /** @var array<int, array{producto_id: ?int, cantidad: int, costo_unitario: string, numero_lote: string, fecha_vencimiento: string, nota: string}> */
     public array $lineas = [];
 
     public bool $creado = false;
@@ -50,11 +54,38 @@ class CompraForm extends Component
     }
 
     /**
-     * @return array{producto_id: ?int, cantidad: int, costo_unitario: string}
+     * @return array{producto_id: ?int, cantidad: int, costo_unitario: string, numero_lote: string, fecha_vencimiento: string, nota: string}
      */
     private function lineaVacia(): array
     {
-        return ['producto_id' => null, 'cantidad' => 1, 'costo_unitario' => ''];
+        return ['producto_id' => null, 'cantidad' => 1, 'costo_unitario' => '', 'numero_lote' => '', 'fecha_vencimiento' => '', 'nota' => ''];
+    }
+
+    /** Al cambiar de producto se borra la información del lote escrita para el anterior. */
+    protected function alElegirProducto(int $indice, Producto $producto): void
+    {
+        $this->lineas[$indice]['numero_lote'] = '';
+        $this->lineas[$indice]['fecha_vencimiento'] = '';
+        $this->lineas[$indice]['nota'] = '';
+    }
+
+    /** El producto de la línea usa lotes: pide N.º de lote, vencimiento y nota. */
+    public function lineaUsaLote(int $indice): bool
+    {
+        return (bool) $this->productoDeLinea($indice)?->maneja_vencimiento;
+    }
+
+    /** Lote que ya existe en el almacén con el N.º escrito en la línea (para avisar que se sumarán las unidades). */
+    public function loteExistenteDeLinea(int $indice): ?Lote
+    {
+        $numero = trim((string) ($this->lineas[$indice]['numero_lote'] ?? ''));
+        $producto = $this->lineas[$indice]['producto_id'] ?? null;
+
+        if ($numero === '' || ! $producto || ! $this->almacen_id || ! $this->lineaUsaLote($indice)) {
+            return null;
+        }
+
+        return app(LoteRepository::class)->buscarEnAlmacen((int) $producto, (int) $this->almacen_id, $numero);
     }
 
     public function agregarLinea(): void
@@ -165,6 +196,12 @@ class CompraForm extends Component
             $reglas["lineas.{$indice}.producto_id"] = ['required', 'exists:productos,id'];
             $reglas["lineas.{$indice}.cantidad"] = ['required', 'integer', 'min:1'];
             $reglas["lineas.{$indice}.costo_unitario"] = ['required', 'numeric', 'min:0'];
+
+            if ($this->lineaUsaLote($indice)) {
+                $reglas["lineas.{$indice}.numero_lote"] = ['required', 'string', 'max:50', Rule::notIn([Lote::SIN_LOTE])];
+                $reglas["lineas.{$indice}.fecha_vencimiento"] = ['required', 'date', 'after_or_equal:today'];
+                $reglas["lineas.{$indice}.nota"] = ['nullable', 'string', 'max:255'];
+            }
         }
 
         return $reglas;
@@ -181,13 +218,53 @@ class CompraForm extends Component
             '*.cantidad.required' => 'La cantidad es obligatoria.',
             '*.cantidad.min' => 'La cantidad debe ser mayor a cero.',
             '*.costo_unitario.required' => 'El costo unitario es obligatorio.',
+            '*.numero_lote.required' => 'Escriba el N.º de lote.',
+            '*.numero_lote.not_in' => 'Ese N.º de lote está reservado. Escriba el N.º que trae el envase.',
+            '*.fecha_vencimiento.required' => 'Escriba la fecha de vencimiento del lote.',
+            '*.fecha_vencimiento.after_or_equal' => 'El vencimiento no puede ser anterior a hoy.',
         ];
+    }
+
+    /**
+     * Un lote que ya existe en el almacén conserva su vencimiento: la línea debe traer el mismo.
+     * Tampoco puede repetirse en la misma compra el mismo lote con vencimientos distintos.
+     */
+    private function validarLotesExistentes(): bool
+    {
+        $vistos = [];
+        $valido = true;
+
+        foreach ($this->lineas as $indice => $linea) {
+            if (! $this->lineaUsaLote($indice)) {
+                continue;
+            }
+
+            $numero = trim($linea['numero_lote']);
+            $clave = $linea['producto_id'].'|'.$numero;
+            $fecha = Carbon::parse($linea['fecha_vencimiento'])->toDateString();
+            $existente = $this->loteExistenteDeLinea($indice);
+            $esperada = $vistos[$clave] ?? $existente?->fecha_vencimiento?->toDateString();
+
+            if ($esperada !== null && $esperada !== $fecha) {
+                $this->addError("lineas.{$indice}.fecha_vencimiento", "El lote {$numero} ya tiene vencimiento ".Carbon::parse($esperada)->format('d/m/Y').'. Use el mismo vencimiento o cambie el N.º de lote.');
+                $valido = false;
+            }
+
+            $vistos[$clave] ??= $fecha;
+        }
+
+        return $valido;
     }
 
     /** Valida todo y pasa al resumen con el total; todavía no se guarda nada. */
     public function revisar(): void
     {
         $this->validate();
+
+        if (! $this->validarLotesExistentes()) {
+            return;
+        }
+
         $this->confirmando = true;
     }
 
@@ -199,6 +276,12 @@ class CompraForm extends Component
     public function guardar(CompraService $servicio): void
     {
         $data = $this->validate();
+
+        if (! $this->validarLotesExistentes()) {
+            $this->confirmando = false;
+
+            return;
+        }
 
         $compra = $servicio->registrar(
             [

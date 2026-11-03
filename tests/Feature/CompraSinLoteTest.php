@@ -15,8 +15,9 @@ use Livewire\Livewire;
 use Tests\TestCase;
 
 /**
- * Compras ya no pide N.º de lote ni vencimiento: el N.º de lote y el vencimiento se definen en el
- * formulario de Producto («Usa lotes»). La compra solo suma stock, y el sistema se encarga del lote.
+ * Un producto que no usa lotes se compra sin datos de lote y acumula en su lote automático «Sin lote».
+ * Los productos con lotes piden su información de lote en la compra (ver CompraConLoteTest); el lote
+ * automático «C{compra}-{línea}» solo se usa si la línea llega sin N.º de lote (por ejemplo, desde la API).
  */
 class CompraSinLoteTest extends TestCase
 {
@@ -43,27 +44,27 @@ class CompraSinLoteTest extends TestCase
         );
     }
 
-    public function test_el_formulario_ya_no_muestra_n_de_lote_ni_vencimiento(): void
+    public function test_un_producto_sin_lotes_no_pide_informacion_de_lote(): void
     {
-        $producto = Producto::factory()->create(['maneja_vencimiento' => true]);
+        $producto = Producto::factory()->create(['maneja_vencimiento' => false]);
 
         $componente = Livewire::actingAs($this->usuario)->test(CompraForm::class)
             ->call('elegirProductoLinea', 0, $producto->id);
 
         $texto = preg_replace('/\s+/u', ' ', strip_tags($componente->html()));
 
+        $this->assertStringNotContainsString('Información del lote', $texto);
         $this->assertStringNotContainsString('N.º de lote', $texto);
-        $this->assertStringNotContainsString('Vencimiento', $texto);
     }
 
-    public function test_se_guarda_la_compra_sin_lote_ni_vencimiento_aunque_el_producto_use_lotes(): void
+    public function test_un_producto_sin_lotes_se_compra_sin_datos_de_lote(): void
     {
-        $producto = Producto::factory()->create(['maneja_vencimiento' => true]);
+        $producto = Producto::factory()->create(['maneja_vencimiento' => false]);
 
         Livewire::actingAs($this->usuario)
             ->test(CompraForm::class)
             ->call('elegirProveedor', Proveedor::factory()->create(['nombre' => 'Agro Sur'])->id)
-            ->set('lineas.0.producto_id', $producto->id)
+            ->call('elegirProductoLinea', 0, $producto->id)
             ->set('lineas.0.cantidad', 12)
             ->set('lineas.0.costo_unitario', 4)
             ->call('revisar')
@@ -101,7 +102,7 @@ class CompraSinLoteTest extends TestCase
         $this->assertSame('3.50', Lote::where('producto_id', $producto->id)->first()->costo_unitario);
     }
 
-    public function test_un_producto_que_usa_lotes_recibe_un_lote_nuevo_por_compra_para_completar_en_lotes(): void
+    public function test_una_linea_sin_numero_de_lote_recibe_un_lote_automatico_por_compra(): void
     {
         $producto = Producto::factory()->create(['maneja_vencimiento' => true]);
 
