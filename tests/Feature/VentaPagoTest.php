@@ -126,6 +126,61 @@ class VentaPagoTest extends TestCase
             ->assertSet('monto_recibido', '');
     }
 
+    // ---------- Total y monto en vivo ----------
+
+    public function test_cantidad_y_precio_se_actualizan_mientras_se_escribe(): void
+    {
+        $html = $this->venta()->html();
+
+        $this->assertStringContainsString('wire:model.live.debounce.300ms="lineas.0.cantidad"', $html);
+        $this->assertStringContainsString('wire:model.live.debounce.300ms="lineas.0.precio_unitario"', $html);
+    }
+
+    public function test_el_total_sigue_a_la_cantidad_en_una_venta_por_mayor(): void
+    {
+        $c = $this->venta(30)
+            ->set('lineas.0.por_mayor', true)
+            ->set('lineas.0.precio_unitario', '9');
+
+        $this->assertSame(270.0, $c->instance()->total);
+
+        $c->set('lineas.0.cantidad', 20);
+
+        $this->assertSame(180.0, $c->instance()->total);
+        $c->assertSee('S/ 180.00');
+    }
+
+    public function test_el_vuelto_se_recalcula_al_cambiar_la_cantidad_con_un_monto_ya_escrito(): void
+    {
+        $c = $this->venta(30)->set('monto_recibido', '300');
+        $this->assertSame(0.0, $c->instance()->vuelto);
+
+        $c->set('lineas.0.cantidad', 20);
+
+        $this->assertSame(100.0, $c->instance()->vuelto);
+    }
+
+    public function test_el_monto_exacto_acompana_al_total_cuando_cambian_cantidad_o_precio(): void
+    {
+        $c = $this->venta(3)
+            ->call('montoExacto')
+            ->assertSet('monto_recibido', '30.00')
+            ->set('lineas.0.cantidad', 5)
+            ->assertSet('monto_recibido', '50.00')
+            ->set('lineas.0.precio_unitario', '8')
+            ->assertSet('monto_recibido', '40.00');
+
+        $this->assertSame(0.0, $c->instance()->vuelto);
+    }
+
+    public function test_si_se_escribe_el_monto_a_mano_deja_de_seguir_al_total(): void
+    {
+        $this->venta(3)
+            ->call('montoExacto')
+            ->set('monto_recibido', '100')
+            ->set('lineas.0.cantidad', 5)
+            ->assertSet('monto_recibido', '100');
+    }
     // ---------- Guardado ----------
 
     public function test_en_efectivo_se_guardan_monto_recibido_y_vuelto(): void

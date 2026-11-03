@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Lote;
 use App\Repositories\Concerns\EscapaComodinesLike;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -69,13 +70,38 @@ class LoteRepository
             ->first();
     }
 
-    public function ordenadosParaSalida(int $productoId, bool $manejaVencimiento): Collection
+    /**
+     * Lotes de los que se puede descontar, en el orden de salida: FEFO (vence antes, sale antes; los
+     * lotes sin fecha, al final) si el producto maneja vencimiento, o FIFO (ingresó antes, sale antes).
+     * Por defecto se dejan fuera los lotes ya vencidos: un producto vencido no se vende.
+     */
+    public function ordenadosParaSalida(int $productoId, bool $manejaVencimiento, bool $excluirVencidos = true): Collection
     {
-        $query = Lote::where('producto_id', $productoId)->where('cantidad', '>', 0);
+        return $this->ordenarParaSalida(
+            Lote::where('producto_id', $productoId)->where('cantidad', '>', 0),
+            $manejaVencimiento,
+            $excluirVencidos,
+        );
+    }
+
+    /** Unidades en lotes vencidos (con stock) de un producto, opcionalmente de un solo almacén. */
+    public function unidadesVencidas(int $productoId, ?int $almacenId = null): int
+    {
+        return (int) Lote::where('producto_id', $productoId)
+            ->when($almacenId, fn ($q) => $q->where('almacen_id', $almacenId))
+            ->conEstado('vencido')
+            ->sum('cantidad');
+    }
+
+    private function ordenarParaSalida(Builder $query, bool $manejaVencimiento, bool $excluirVencidos): Collection
+    {
+        if ($excluirVencidos) {
+            $query->where(fn ($q) => $q->whereNull('fecha_vencimiento')->orWhereDate('fecha_vencimiento', '>=', today()->toDateString()));
+        }
 
         return $manejaVencimiento
-            ? $query->orderBy('fecha_vencimiento', 'asc')->get()   // FEFO
-            : $query->orderBy('fecha_ingreso', 'asc')->get();       // FIFO
+            ? $query->orderByRaw('fecha_vencimiento IS NULL')->orderBy('fecha_vencimiento', 'asc')->orderBy('id')->get()   // FEFO
+            : $query->orderBy('fecha_ingreso', 'asc')->orderBy('id')->get();                                                 // FIFO
     }
 
     /**
@@ -201,14 +227,13 @@ class LoteRepository
         return Lote::where('cantidad', '>', 0)->count();
     }
 
-    public function ordenadosParaSalidaEnAlmacen(int $productoId, int $almacenId, bool $manejaVencimiento): Collection
+    /** Igual que {@see ordenadosParaSalida}, solo con los lotes de un almacén. */
+    public function ordenadosParaSalidaEnAlmacen(int $productoId, int $almacenId, bool $manejaVencimiento, bool $excluirVencidos = true): Collection
     {
-        $query = Lote::where('producto_id', $productoId)
-            ->where('almacen_id', $almacenId)
-            ->where('cantidad', '>', 0);
-
-        return $manejaVencimiento
-            ? $query->orderBy('fecha_vencimiento', 'asc')->get()   // FEFO
-            : $query->orderBy('fecha_ingreso', 'asc')->get();       // FIFO
+        return $this->ordenarParaSalida(
+            Lote::where('producto_id', $productoId)->where('almacen_id', $almacenId)->where('cantidad', '>', 0),
+            $manejaVencimiento,
+            $excluirVencidos,
+        );
     }
 }

@@ -43,6 +43,9 @@ class VentaForm extends Component
     /** Solo en efectivo: lo que entrega el cliente. Vacío = paga el total exacto. */
     public string $monto_recibido = '';
 
+    /** El monto recibido se puso con «Exacto»: sigue al total mientras se cambian cantidades o precios. */
+    public bool $montoSigueTotal = false;
+
     /** @var array<int, array{producto_id: ?int, cantidad: int, precio_unitario: string, por_mayor: bool, precio_manual: bool}> */
     public array $lineas = [];
 
@@ -79,6 +82,10 @@ class VentaForm extends Component
         unset($this->lineas[$indice]);
         $this->lineas = array_values($this->lineas);
         $this->quitarBusquedaDeLinea($indice);
+
+        if ($this->montoSigueTotal) {
+            $this->sincronizarMontoExacto();
+        }
     }
 
     #[Computed]
@@ -137,12 +144,26 @@ class VentaForm extends Component
     public function updatedMetodoPago(): void
     {
         $this->monto_recibido = '';
+        $this->montoSigueTotal = false;
         $this->resetErrorBag('monto_recibido');
+    }
+
+    /** Escribir el monto a mano lo desvincula del total. */
+    public function updatedMontoRecibido(): void
+    {
+        $this->montoSigueTotal = false;
     }
 
     /** El cliente paga justo el total: deja el monto recibido igual al total. */
     public function montoExacto(): void
     {
+        $this->montoSigueTotal = true;
+        $this->sincronizarMontoExacto();
+    }
+
+    private function sincronizarMontoExacto(): void
+    {
+        unset($this->total); // el total depende de las líneas que acaban de cambiar
         $this->monto_recibido = number_format($this->total, 2, '.', '');
     }
 
@@ -181,12 +202,12 @@ class VentaForm extends Component
     /** Al elegir el producto se propone su precio normal, sin pisar uno escrito a mano. */
     protected function alElegirProducto(int $indice, Producto $producto): void
     {
-        if ($this->lineas[$indice]['por_mayor']) {
-            return;
+        if (! $this->lineas[$indice]['por_mayor'] && ! $this->lineas[$indice]['precio_manual']) {
+            $this->lineas[$indice]['precio_unitario'] = (string) $producto->precio;
         }
 
-        if (! $this->lineas[$indice]['precio_manual']) {
-            $this->lineas[$indice]['precio_unitario'] = (string) $producto->precio;
+        if ($this->montoSigueTotal) {
+            $this->sincronizarMontoExacto();
         }
     }
 
@@ -214,6 +235,14 @@ class VentaForm extends Component
             $this->lineas[$indice]['precio_unitario'] = $this->lineas[$indice]['por_mayor'] || $producto === null
                 ? ''
                 : (string) $producto->precio;
+        }
+    }
+
+    /** Un cambio de cantidad o precio (ya aplicado por updatedLineas) mantiene al día el monto «Exacto». */
+    public function updated(string $property): void
+    {
+        if ($this->montoSigueTotal && str_starts_with($property, 'lineas')) {
+            $this->sincronizarMontoExacto();
         }
     }
 
@@ -315,7 +344,7 @@ class VentaForm extends Component
             return;
         }
 
-        $this->reset(['cliente_id', 'buscarCliente', 'listaClientes', 'numero_comprobante', 'monto_recibido']);
+        $this->reset(['cliente_id', 'buscarCliente', 'listaClientes', 'numero_comprobante', 'monto_recibido', 'montoSigueTotal']);
         $this->metodo_pago = Venta::EFECTIVO;
         $this->almacen_id = Almacen::unicoActivo()?->id;
         $this->lineas = [$this->lineaVacia()];

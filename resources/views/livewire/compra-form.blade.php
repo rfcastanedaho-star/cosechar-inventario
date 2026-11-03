@@ -220,7 +220,7 @@
 
                         <div class="sm:col-span-2">
                             <label class="mb-1 block text-xs font-medium text-cosechar-muted">Cantidad <x-obligatorio /></label>
-                            <input type="number" min="1" wire:model.blur="lineas.{{ $indice }}.cantidad" class="w-full rounded-md border border-cosechar-border px-2 py-1.5 text-sm">
+                            <input type="number" min="1" wire:model.live.debounce.300ms="lineas.{{ $indice }}.cantidad" class="w-full rounded-md border border-cosechar-border px-2 py-1.5 text-sm">
                             @error("lineas.{$indice}.cantidad")
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
@@ -228,7 +228,7 @@
 
                         <div class="sm:col-span-2">
                             <label class="mb-1 block text-xs font-medium text-cosechar-muted">Costo unitario (S/) <x-obligatorio /></label>
-                            <input type="number" step="0.01" min="0" wire:model.blur="lineas.{{ $indice }}.costo_unitario" class="w-full rounded-md border border-cosechar-border px-2 py-1.5 text-sm">
+                            <input type="number" step="0.01" min="0" wire:model.live.debounce.300ms="lineas.{{ $indice }}.costo_unitario" class="w-full rounded-md border border-cosechar-border px-2 py-1.5 text-sm">
                             @error("lineas.{$indice}.costo_unitario")
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror

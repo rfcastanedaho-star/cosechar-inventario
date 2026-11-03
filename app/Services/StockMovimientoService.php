@@ -38,7 +38,7 @@ class StockMovimientoService
             $disponible = $lotesDisponibles->sum('cantidad');
 
             if ($disponible < $cantidad) {
-                throw StockInsuficienteException::paraProducto($producto, $cantidad, $disponible);
+                throw $this->sinStockVigente($producto, $cantidad, $disponible);
             }
 
             $restante = $cantidad;
@@ -87,7 +87,7 @@ class StockMovimientoService
             $disponible = $lotesDisponibles->sum('cantidad');
 
             if ($disponible < $cantidad) {
-                throw StockInsuficienteException::paraProducto($producto, $cantidad, $disponible);
+                throw $this->sinStockVigente($producto, $cantidad, $disponible, $almacenId);
             }
 
             $restante = $cantidad;
@@ -117,6 +117,16 @@ class StockMovimientoService
 
             return $movimientosCreados;
         });
+    }
+
+    /** Si lo que falta está en lotes vencidos, el mensaje lo dice; si no, es un stock insuficiente común. */
+    private function sinStockVigente(Producto $producto, int $cantidad, int $disponible, ?int $almacenId = null): StockInsuficienteException
+    {
+        $vencidas = $this->lotes->unidadesVencidas($producto->id, $almacenId);
+
+        return $vencidas > 0 && $disponible + $vencidas >= $cantidad
+            ? StockInsuficienteException::conVencidos($producto, $cantidad, $disponible, $vencidas)
+            : StockInsuficienteException::paraProducto($producto, $cantidad, $disponible);
     }
 
     /**
@@ -227,7 +237,7 @@ class StockMovimientoService
         }
 
         return DB::transaction(function () use ($producto, $almacenOrigenId, $almacenDestinoId, $cantidad, $responsable) {
-            $lotesDisponibles = $this->lotes->ordenadosParaSalidaEnAlmacen($producto->id, $almacenOrigenId, $producto->maneja_vencimiento);
+            $lotesDisponibles = $this->lotes->ordenadosParaSalidaEnAlmacen($producto->id, $almacenOrigenId, $producto->maneja_vencimiento, excluirVencidos: false);
             $disponible = $lotesDisponibles->sum('cantidad');
 
             if ($disponible < $cantidad) {

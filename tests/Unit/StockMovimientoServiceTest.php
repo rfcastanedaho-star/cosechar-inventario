@@ -48,8 +48,8 @@ class StockMovimientoServiceTest extends TestCase
         $producto = Producto::factory()->create(['maneja_vencimiento' => true]);
         $responsable = User::factory()->create();
 
-        $loteVenceLejos = Lote::factory()->for($producto, 'producto')->create(['fecha_ingreso' => '2026-01-01', 'fecha_vencimiento' => '2026-12-31', 'cantidad' => 50]);
-        $loteVenceCerca = Lote::factory()->for($producto, 'producto')->create(['fecha_ingreso' => '2026-02-01', 'fecha_vencimiento' => '2026-04-30', 'cantidad' => 50]);
+        $loteVenceLejos = Lote::factory()->for($producto, 'producto')->create(['fecha_ingreso' => '2026-01-01', 'fecha_vencimiento' => today()->addMonths(10)->toDateString(), 'cantidad' => 50]);
+        $loteVenceCerca = Lote::factory()->for($producto, 'producto')->create(['fecha_ingreso' => '2026-02-01', 'fecha_vencimiento' => today()->addMonths(2)->toDateString(), 'cantidad' => 50]);
 
         $this->service->registrarSalida($producto, 20, $responsable);
 
