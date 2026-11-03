@@ -150,8 +150,8 @@ class HistorialesFiltrosTest extends TestCase
 
     public function test_almacenes_busca_filtra_por_estado_y_sigue_mostrando_lotes(): void
     {
-        Almacen::factory()->create(['nombre' => 'Central', 'encargado' => 'Rosa Quispe']);
-        Almacen::factory()->create(['nombre' => 'Sur', 'activo' => false]);
+        Almacen::factory()->create(['nombre' => 'Central', 'encargado' => 'Rosa Quispe', 'direccion' => 'Av. Lima 123']);
+        Almacen::factory()->create(['nombre' => 'Sur', 'activo' => false, 'direccion' => 'Jr. Cusco 45', 'encargado' => 'Luis Vega']);
 
         $lista = $this->lista(AlmacenLista::class);
 

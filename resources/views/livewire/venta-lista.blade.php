@@ -30,6 +30,7 @@
                     <th class="px-4 py-3">Comprobante</th>
                     <th class="px-4 py-3">Productos</th>
                     <th class="px-4 py-3 text-right">Total</th>
+                    <th class="px-4 py-3">Pago</th>
                     <th class="px-4 py-3">Estado</th>
                 </tr>
             </thead>
@@ -48,6 +49,12 @@
                         <td class="px-4 py-3 text-cosechar-muted">{{ $venta->numero_comprobante ?: '—' }}</td>
                         <td class="px-4 py-3 text-cosechar-muted">{{ $venta->detalles->map(fn ($detalle) => $detalle->producto->nombre.($detalle->por_mayor ? ' (por mayor)' : ''))->join(', ') }}</td>
                         <td class="px-4 py-3 text-right font-medium {{ $venta->anulada_at ? 'line-through' : 'text-cosechar-ink' }}">S/ {{ number_format($venta->total, 2) }}</td>
+                        <td class="px-4 py-3 text-cosechar-muted">
+                            {{ $venta->etiquetaMetodoPago() }}
+                            @if ($venta->metodo_pago === \App\Models\Venta::EFECTIVO && $venta->monto_recibido !== null && (float) $venta->vuelto > 0)
+                                <span class="block text-xs">Recibido S/ {{ number_format($venta->monto_recibido, 2) }} · Vuelto S/ {{ number_format($venta->vuelto, 2) }}</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-3">
                             @if ($venta->anulada_at)
                                 <span class="rounded-full bg-[#F3E0DC] px-2 py-1 text-xs font-semibold text-cosechar-danger">Anulada</span>

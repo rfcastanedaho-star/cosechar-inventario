@@ -7,9 +7,12 @@ use App\Livewire\Concerns\BuscaProductoPorLinea;
 use App\Models\Almacen;
 use App\Models\Cliente;
 use App\Models\Producto;
+use App\Models\Venta;
 use App\Repositories\ClienteRepository;
 use App\Services\VentaService;
+use Closure;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -33,6 +36,12 @@ class VentaForm extends Component
     public string $fecha = '';
 
     public string $numero_comprobante = '';
+
+    /** Cómo paga el cliente: efectivo, tarjeta o transferencia. */
+    public string $metodo_pago = Venta::EFECTIVO;
+
+    /** Solo en efectivo: lo que entrega el cliente. Vacío = paga el total exacto. */
+    public string $monto_recibido = '';
 
     /** @var array<int, array{producto_id: ?int, cantidad: int, precio_unitario: string, por_mayor: bool, precio_manual: bool}> */
     public array $lineas = [];
@@ -124,6 +133,51 @@ class VentaForm extends Component
         $this->reset(['cliente_id', 'buscarCliente', 'listaClientes']);
     }
 
+    /** Al cambiar de método de pago se borra el monto recibido: solo aplica al efectivo. */
+    public function updatedMetodoPago(): void
+    {
+        $this->monto_recibido = '';
+        $this->resetErrorBag('monto_recibido');
+    }
+
+    /** El cliente paga justo el total: deja el monto recibido igual al total. */
+    public function montoExacto(): void
+    {
+        $this->monto_recibido = number_format($this->total, 2, '.', '');
+    }
+
+    /** ¿Se está cobrando en efectivo con un monto recibido escrito? */
+    private function hayMontoRecibido(): bool
+    {
+        return $this->metodo_pago === Venta::EFECTIVO && trim($this->monto_recibido) !== '' && is_numeric($this->monto_recibido);
+    }
+
+    /** Vuelto a entregar: lo recibido menos el total; null si no hay un monto recibido suficiente. */
+    #[Computed]
+    public function vuelto(): ?float
+    {
+        if (! $this->hayMontoRecibido()) {
+            return null;
+        }
+
+        $vuelto = round((float) $this->monto_recibido - $this->total, 2);
+
+        return $vuelto >= 0 ? $vuelto : null;
+    }
+
+    /** Lo que falta cuando el monto recibido no alcanza para pagar el total; null si alcanza o no hay monto. */
+    #[Computed]
+    public function faltante(): ?float
+    {
+        if (! $this->hayMontoRecibido()) {
+            return null;
+        }
+
+        $falta = round($this->total - (float) $this->monto_recibido, 2);
+
+        return $falta > 0 ? $falta : null;
+    }
+
     /** Al elegir el producto se propone su precio normal, sin pisar uno escrito a mano. */
     protected function alElegirProducto(int $indice, Producto $producto): void
     {
@@ -192,6 +246,13 @@ class VentaForm extends Component
             'numero_comprobante' => ['nullable', 'string', 'max:50'],
             'lineas' => ['required', 'array', 'min:1'],
             'cliente_id' => ['required', 'exists:clientes,id'],
+            'metodo_pago' => ['required', Rule::in(array_keys(Venta::METODOS_PAGO))],
+            'monto_recibido' => [
+                'nullable', 'numeric', 'min:0',
+                fn (string $atributo, mixed $valor, Closure $falla) => $this->metodo_pago === Venta::EFECTIVO && trim((string) $valor) !== '' && round((float) $valor, 2) < round($this->total, 2)
+                    ? $falla('El monto recibido es menor que el total: faltan S/ '.number_format($this->total - (float) $valor, 2).'.')
+                    : null,
+            ],
         ];
 
         foreach ($this->lineas as $indice => $linea) {
@@ -212,6 +273,9 @@ class VentaForm extends Component
     protected function messages(): array
     {
         return [
+            'metodo_pago.required' => 'Elija el método de pago.',
+            'metodo_pago.in' => 'Elija el método de pago.',
+            'monto_recibido.numeric' => 'Escriba el monto recibido en números.',
             'cliente_id.required' => 'Elija un cliente registrado. Si no está en la lista, regístrelo primero en Clientes.',
             'cliente_id.exists' => 'Elija un cliente registrado.',
             'almacen_id.required' => 'Debe seleccionar el almacén de origen.',
@@ -239,6 +303,8 @@ class VentaForm extends Component
                     'almacen_id' => $data['almacen_id'],
                     'fecha' => $data['fecha'],
                     'numero_comprobante' => $data['numero_comprobante'] ?: null,
+                    'metodo_pago' => $data['metodo_pago'],
+                    'monto_recibido' => $data['metodo_pago'] === Venta::EFECTIVO ? ($data['monto_recibido'] ?: null) : null,
                 ],
                 $data['lineas'],
                 auth()->user(),
@@ -249,7 +315,8 @@ class VentaForm extends Component
             return;
         }
 
-        $this->reset(['cliente_id', 'buscarCliente', 'listaClientes', 'numero_comprobante']);
+        $this->reset(['cliente_id', 'buscarCliente', 'listaClientes', 'numero_comprobante', 'monto_recibido']);
+        $this->metodo_pago = Venta::EFECTIVO;
         $this->almacen_id = Almacen::unicoActivo()?->id;
         $this->lineas = [$this->lineaVacia()];
         $this->busquedaProducto = [];

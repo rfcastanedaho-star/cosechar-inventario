@@ -132,12 +132,13 @@ class ReporteController extends Controller
             $venta->almacen->nombre,
             $venta->numero_comprobante,
             (float) $venta->total,
+            $venta->etiquetaMetodoPago(),
             $venta->anulada_at ? 'Anulada' : 'Vigente',
         ]);
 
         return $this->excel->descargar(
             'reporte-ventas.xlsx',
-            ['Fecha', 'Cliente', 'Documento', 'Almacén', 'Comprobante', 'Total (S/)', 'Estado'],
+            ['Fecha', 'Cliente', 'Documento', 'Almacén', 'Comprobante', 'Total (S/)', 'Pago', 'Estado'],
             $filas,
         );
     }

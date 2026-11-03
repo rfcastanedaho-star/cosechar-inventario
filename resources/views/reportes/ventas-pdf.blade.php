@@ -27,6 +27,7 @@
                 <th>Almacén</th>
                 <th>Comprobante</th>
                 <th class="derecha">Total (S/)</th>
+                <th>Pago</th>
                 <th>Estado</th>
             </tr>
         </thead>
@@ -38,6 +39,7 @@
                     <td>{{ $venta->almacen->nombre }}</td>
                     <td>{{ $venta->numero_comprobante ?: '—' }}</td>
                     <td class="derecha">{{ number_format($venta->total, 2) }}</td>
+                    <td>{{ $venta->etiquetaMetodoPago() }}</td>
                     <td>{{ $venta->anulada_at ? 'Anulada' : 'Vigente' }}</td>
                 </tr>
             @endforeach

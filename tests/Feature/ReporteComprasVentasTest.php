@@ -131,7 +131,7 @@ class ReporteComprasVentasTest extends TestCase
         );
 
         $this->assertSame('Cliente Anulado', $filas[1][1]);
-        $this->assertSame('Anulada', $filas[1][6]);
+        $this->assertSame('Anulada', $filas[1][7]);
     }
 
     public function test_el_excel_de_stock_incluye_el_almacen_y_respeta_el_filtro(): void

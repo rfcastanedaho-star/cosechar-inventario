@@ -26,6 +26,11 @@
         <tr><td class="etiqueta">Documento</td><td>{{ $venta->cliente_documento ?: '—' }}</td></tr>
         <tr><td class="etiqueta">Comprobante</td><td>{{ $venta->numero_comprobante ?: '—' }}</td></tr>
         <tr><td class="etiqueta">Almacén de origen</td><td>{{ $venta->almacen->nombre }}</td></tr>
+        <tr><td class="etiqueta">Método de pago</td><td>{{ $venta->etiquetaMetodoPago() }}</td></tr>
+        @if ($venta->metodo_pago === \App\Models\Venta::EFECTIVO && $venta->monto_recibido !== null)
+            <tr><td class="etiqueta">Monto recibido</td><td>S/ {{ number_format($venta->monto_recibido, 2) }}</td></tr>
+            <tr><td class="etiqueta">Vuelto</td><td>S/ {{ number_format($venta->vuelto, 2) }}</td></tr>
+        @endif
     </table>
 
     <table class="detalle">

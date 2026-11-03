@@ -160,6 +160,60 @@
             <span class="font-sans text-xl font-semibold text-cosechar-ink">S/ {{ number_format($this->total, 2) }}</span>
         </div>
 
+        <div class="rounded-xl border border-cosechar-border bg-white p-4">
+            <h2 class="mb-3 text-sm font-semibold text-cosechar-ink">Método de pago <x-obligatorio /></h2>
+
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                @foreach (\App\Models\Venta::METODOS_PAGO as $clave => $texto)
+                    <label
+                        wire:key="pago-{{ $clave }}"
+                        class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 px-4 py-3 text-sm font-semibold transition {{ $metodo_pago === $clave ? 'border-cosechar-forest bg-cosechar-forest/10 text-cosechar-forest' : 'border-cosechar-border text-cosechar-muted hover:bg-cosechar-cream' }}"
+                    >
+                        <input type="radio" wire:model.live="metodo_pago" value="{{ $clave }}" class="sr-only">
+                        <span aria-hidden="true">{{ ['efectivo' => '💵', 'tarjeta' => '💳', 'transferencia' => '🏦'][$clave] }}</span>
+                        {{ $texto }}
+                    </label>
+                @endforeach
+            </div>
+            @error('metodo_pago')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+
+            @if ($metodo_pago === \App\Models\Venta::EFECTIVO)
+                <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="monto_recibido" class="mb-1 block text-sm font-medium text-cosechar-ink">Monto recibido (S/) <span class="font-normal text-cosechar-muted">(opcional)</span></label>
+                        <div class="flex gap-2">
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                id="monto_recibido"
+                                wire:model.live.debounce.300ms="monto_recibido"
+                                placeholder="Vacío = paga el total exacto"
+                                class="w-full rounded-md border border-cosechar-border px-3 py-2 text-sm shadow-sm focus:border-cosechar-olive focus:ring"
+                            >
+                            <button type="button" wire:click="montoExacto" class="shrink-0 rounded-md border border-cosechar-border px-3 py-2 text-xs font-medium text-cosechar-ink hover:bg-cosechar-cream">Exacto</button>
+                        </div>
+                        @error('monto_recibido')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="flex items-center justify-between rounded-lg border px-4 py-3 {{ $this->faltante !== null ? 'border-red-300 bg-red-50' : 'border-cosechar-olive/40 bg-cosechar-cream' }}">
+                        @if ($this->faltante !== null)
+                            <span class="text-sm font-medium text-red-700">Falta dinero</span>
+                            <span class="font-sans text-2xl font-semibold text-red-700">S/ {{ number_format($this->faltante, 2) }}</span>
+                        @else
+                            <span class="text-sm font-medium text-cosechar-muted">Vuelto a entregar</span>
+                            <span class="font-sans text-2xl font-semibold text-cosechar-ink">S/ {{ number_format($this->vuelto ?? 0, 2) }}</span>
+                        @endif
+                    </div>
+                </div>
+            @else
+                <p class="mt-3 text-sm text-cosechar-muted">Se cobra el total exacto: S/ {{ number_format($this->total, 2) }}. No hay vuelto.</p>
+            @endif
+        </div>
         <button
             type="submit"
             wire:loading.attr="disabled"
